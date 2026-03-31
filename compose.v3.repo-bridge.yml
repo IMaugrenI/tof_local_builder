@@ -1,0 +1,51 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: tof_local_builder_ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    environment:
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-5m}
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ${OLLAMA_MODELS_PATH:-./data/ollama}:/root/.ollama
+
+  repo-bridge:
+    build:
+      context: ./services/repo_bridge
+      dockerfile: Dockerfile.repo_bridge
+    container_name: tof_local_builder_repo_bridge
+    restart: unless-stopped
+    ports:
+      - "${REPO_BRIDGE_PORT:-8099}:8099"
+    environment:
+      SOURCE_ROOT: /workspace/source_repo_ro
+      SANDBOX_ROOT: /workspace/builder_sandbox
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ${SOURCE_REPO_PATH}:/workspace/source_repo_ro:ro
+      - ${BUILDER_SANDBOX_PATH:-./sandbox}:/workspace/builder_sandbox
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: tof_local_builder_openwebui
+    restart: unless-stopped
+    depends_on:
+      - ollama
+      - repo-bridge
+    ports:
+      - "${OPENWEBUI_PORT:-3000}:8080"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      WEBUI_NAME: tof_local_builder_v3_repo_bridge
+      TZ: ${TZ:-Europe/Berlin}
+      REPO_BRIDGE_BASE_URL: http://repo-bridge:8099
+    volumes:
+      - ${OPENWEBUI_DATA_PATH:-./data/open-webui}:/app/backend/data
+      - ${SOURCE_REPO_PATH}:/workspace/source_repo_ro:ro
+      - ${BUILDER_SANDBOX_PATH:-./sandbox}:/workspace/builder_sandbox
+
+networks:
+  default:
+    name: tof_local_builder_net
