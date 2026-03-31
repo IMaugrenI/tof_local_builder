@@ -1,26 +1,14 @@
 # Sandbox
 
-This is the isolated write area for early local experiments.
+This directory is the only writable area for reviewed artifacts.
 
-## Purpose
+## Subdirectories
 
-The sandbox exists so that local AI-assisted work does not start inside real repos or active stacks.
+- `workspace/` for drafts and working notes
+- `output/` for reviewed outputs
+- `examples/` for tiny examples
 
-## Allowed here
+## Boundary
 
-- test files
-- draft docs
-- PlantUML files
-- small code experiments
-- scratch outputs
-
-## Typical paths
-
-- `sandbox/workspace/`
-- `sandbox/output/`
-- `sandbox/examples/`
-
-## Rule
-
-Work here first.
-Move reviewed results later.
+The source repo must stay read-only.
+Nothing should write back into the mounted source path.

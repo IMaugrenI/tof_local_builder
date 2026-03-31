@@ -1,83 +1,64 @@
 # tof_local_builder
 
-> English is the primary text in this repository. A German clone is available in `README_DE.md`.
+Local GUI-first builder for one-machine company use.
 
-Small local builder stack for repo work, audits, drift checks, and code assistance without strong cloud or token pressure.
+## What it does
 
-This repository is meant as a local, inspectable workspace for coding models and repo-focused work.
+- runs local models through Ollama
+- exposes a browser GUI through Open WebUI
+- reads a mounted source path as read-only
+- writes reviewed artifacts only into a local sandbox
 
-## Purpose
+## Product boundary
 
-`tof_local_builder` is a lightweight local workspace for:
+- source repo stays read-only
+- writes stay limited to `sandbox/workspace` and `sandbox/output`
+- no direct writes into the source repo
 
-- running local coding models with Ollama
-- using a browser GUI with Open WebUI
-- keeping reusable prompts and profiles for repo work
-- starting with a small, understandable Docker stack
+## Normal use
 
-## Core idea
-
-The builder itself is not a self-improving system.
-It is first a local workspace and tool carrier.
-
-It can become more useful through:
-
-- better prompts
-- better profiles
-- better workflows
-- later retrieval, memory, or fine-tuning layers
-
-But that is not automatic in the current baseline.
-
-## Included
-
-- `compose.yml` for Ollama + Open WebUI
-- reusable prompts for repo audits and drift checks
-- starter profiles for Ollama, Aider, and Continue
-- Ubuntu setup notes
-- English primary docs plus German `_DE` clones
-
-## Quick start
+1. copy `.env.example` to `.env`
+2. set `SOURCE_REPO_PATH`, `HOST_UID`, and `HOST_GID`
+3. run:
 
 ```bash
-cp .env.example .env
-bash scripts/bootstrap.sh
-bash scripts/healthcheck.sh
+bash scripts/start.sh
 ```
 
-Then open:
+4. check:
 
-- Open WebUI: `http://localhost:3000`
-- Ollama API: `http://localhost:11434`
+```bash
+bash scripts/check.sh
+```
 
-## Structure
+5. open:
 
-- English primary:
-  - `README.md`
-  - `docs/architecture.md`
-  - `docs/setup_ubuntu.md`
-  - `docs/usage.md`
-  - `docs/profiles_overview.md`
-  - `prompts/repo_audit.md`
-  - `prompts/drift_check.md`
-  - `prompts/codex_style_tasks.md`
+- `http://localhost:3000`
 
-- German clones:
-  - `README_DE.md`
-  - `docs/architecture_DE.md`
-  - `docs/setup_ubuntu_DE.md`
-  - `docs/usage_DE.md`
-  - `docs/profiles_overview_DE.md`
-  - `prompts/repo_audit_DE.md`
-  - `prompts/drift_check_DE.md`
-  - `prompts/codex_style_tasks_DE.md`
+6. in Open WebUI go to:
 
-## Profiles
+- `Tool-Server verwalten`
 
-The profile directory stays language-neutral for the actual config files.
-A short bilingual overview is documented here:
+7. paste:
 
-- English: `docs/profiles_overview.md`
-- German: `docs/profiles_overview_DE.md`
+- `http://127.0.0.1:8099/openapi.json`
 
-Technical files such as `compose.yml`, `.env.example`, scripts, and tool profile configs stay shared.
+## Required `.env` values
+
+```env
+SOURCE_REPO_PATH=/absolute/path/to/the/source/repo
+BUILDER_SANDBOX_PATH=./sandbox
+HOST_UID=1000
+HOST_GID=1000
+ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+
+## Files that matter
+
+- `compose.yml`
+- `.env.example`
+- `scripts/start.sh`
+- `scripts/check.sh`
+- `docs/quickstart.md`
+- `services/repo_bridge/`
+- `sandbox/`

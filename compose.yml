@@ -11,12 +11,31 @@ services:
     volumes:
       - ${OLLAMA_MODELS_PATH:-./data/ollama}:/root/.ollama
 
+  repo-bridge:
+    build:
+      context: ./services/repo_bridge
+      dockerfile: Dockerfile
+    container_name: tof_local_builder_repo_bridge
+    restart: unless-stopped
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    ports:
+      - "${REPO_BRIDGE_PORT:-8099}:8099"
+    environment:
+      SOURCE_ROOT: /workspace/source_repo_ro
+      SANDBOX_ROOT: /workspace/builder_sandbox
+      ALLOW_ORIGINS: ${ALLOW_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ${SOURCE_REPO_PATH}:/workspace/source_repo_ro:ro
+      - ${BUILDER_SANDBOX_PATH:-./sandbox}:/workspace/builder_sandbox
+
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: tof_local_builder_openwebui
     restart: unless-stopped
     depends_on:
       - ollama
+      - repo-bridge
     ports:
       - "${OPENWEBUI_PORT:-3000}:8080"
     environment:
@@ -25,6 +44,8 @@ services:
       TZ: ${TZ:-Europe/Berlin}
     volumes:
       - ${OPENWEBUI_DATA_PATH:-./data/open-webui}:/app/backend/data
+      - ${SOURCE_REPO_PATH}:/workspace/source_repo_ro:ro
+      - ${BUILDER_SANDBOX_PATH:-./sandbox}:/workspace/builder_sandbox
 
 networks:
   default:

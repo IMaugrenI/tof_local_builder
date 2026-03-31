@@ -1,7 +1,0 @@
-model: ollama_chat/qwen2.5-coder:14b
-editor-model: ollama_chat/qwen2.5-coder:14b
-architect-model: ollama_chat/qwen2.5-coder:14b
-pretty: true
-stream: true
-map-tokens: 4096
-gitignore: false
