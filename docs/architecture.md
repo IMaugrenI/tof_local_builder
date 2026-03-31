@@ -1,22 +1,24 @@
 # Architecture
 
-## Intent
+> English is the primary text. The German clone is `architecture_DE.md`.
 
-`tof_local_builder` is a small local stack for code-focused work without depending on cloud token budgets.
+## Purpose
 
-## Baseline components
+`tof_local_builder` is a small local stack for code-focused work without strong dependence on cloud token budgets.
+
+## Core parts
 
 ### 1. Ollama
 Runs local models and exposes an API on port `11434`.
 
 ### 2. Open WebUI
-Provides a browser UI that talks to the local Ollama instance.
+Provides a browser GUI and talks to the local Ollama instance.
 
 ### 3. Prompt library
-Stores repeatable work patterns such as repo audits, drift checks, and implementation tasks.
+Stores reusable work patterns such as repo audits, drift checks, and implementation tasks.
 
 ### 4. Editor profiles
-Starter configuration for tools that can talk to local models.
+Starter configuration for tools that can work with local models.
 
 ## Flow
 
@@ -30,14 +32,15 @@ User
 
 ## Why this shape
 
-- easy to run on one machine
+- easy to start on one machine
 - easy to inspect
-- easy to replace pieces later
-- minimal moving parts
+- easy to replace later
+- few moving parts
 
-## Future expansion
+## Later expansion
 
 Possible next layers:
+
 - local embeddings + RAG
 - repo watcher
 - patch/review worker

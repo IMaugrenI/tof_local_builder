@@ -1,10 +1,10 @@
 # tof_local_builder
 
-> English is the primary text in this repository. A German clone is available in `README_DE.md`.
+> Die englischen Dateien sind die Primärtexte in diesem Repository. Ein deutscher Klon liegt in `README_DE.md`.
 
-Kleiner lokaler Builder-Stack für Repo-Arbeit, Drift-Prüfung und Code-Unterstützung ohne starken Cloud- oder Token-Druck.
+Kleiner lokaler Builder-Stack für Repo-Arbeit, Audits, Drift-Prüfung und Code-Unterstützung ohne starken Cloud- oder Token-Druck.
 
-Dieses Repository ist für lokale, nachvollziehbare Arbeit mit Coding-Modellen gedacht.
+Dieses Repository ist als lokaler, nachvollziehbarer Arbeitsraum für Coding-Modelle und repo-bezogene Arbeit gedacht.
 
 ## Zweck
 
@@ -13,28 +13,29 @@ Dieses Repository ist für lokale, nachvollziehbare Arbeit mit Coding-Modellen g
 - lokale Coding-Modelle mit Ollama
 - eine Browser-GUI mit Open WebUI
 - wiederverwendbare Prompts und Profile für Repo-Arbeit
-- einen einfachen, gut neu aufsetzbaren Start
+- einen kleinen, verständlichen Docker-Start
 
 ## Kernidee
 
-Der Builder selbst ist kein magischer Selbstverbesserer.
-Er ist zunächst ein lokaler Arbeitsraum und Werkzeugträger.
+Der Builder selbst ist kein selbstverbesserndes System.
+Er ist zuerst ein lokaler Arbeitsraum und Werkzeugträger.
 
-Er kann besser werden durch:
+Er kann nützlicher werden durch:
 
 - bessere Prompts
 - bessere Profile
 - bessere Arbeitsabläufe
-- optional spätere Retrieval-, Memory- oder Fine-Tuning-Schichten
+- spätere Retrieval-, Memory- oder Fine-Tuning-Schichten
 
-Aber das ist nicht automatisch eingebaut.
+Das ist im aktuellen Grundstand aber nicht automatisch eingebaut.
 
 ## Enthalten
 
 - `compose.yml` für Ollama + Open WebUI
 - wiederverwendbare Prompts für Repo-Audits und Drift-Prüfung
 - Starter-Profile für Ollama, Aider und Continue
-- Setup-Hinweise für Ubuntu
+- Ubuntu-Setup-Hinweise
+- englische Primärdokumente plus deutsche `_DE`-Klone
 
 ## Schnellstart
 
@@ -45,5 +46,22 @@ bash scripts/healthcheck.sh
 ```
 
 Danach öffnen:
+
 - Open WebUI: `http://localhost:3000`
 - Ollama API: `http://localhost:11434`
+
+## Struktur
+
+- Englische Primärtexte:
+  - `README.md`
+  - `docs/architecture.md`
+  - `docs/setup_ubuntu.md`
+  - `docs/usage.md`
+
+- Deutsche Klone:
+  - `README_DE.md`
+  - `docs/architecture_DE.md`
+  - `docs/setup_ubuntu_DE.md`
+  - `docs/usage_DE.md`
+
+Sprachneutrale Technikdateien wie `compose.yml`, `.env.example`, Skripte und Tool-Profile bleiben gemeinsam.

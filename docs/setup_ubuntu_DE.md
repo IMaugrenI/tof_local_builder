@@ -1,5 +1,7 @@
 # Ubuntu-Setup
 
+> Der englische Primärtext ist `setup_ubuntu.md`. Diese Datei ist der deutsche Klon.
+
 ## 1. Docker installieren
 
 Nutze Docker Engine und das Docker-Compose-Plugin.
@@ -34,7 +36,8 @@ docker exec -it tof_local_builder_ollama ollama pull qwen2.5-coder:14b
 
 Öffne `http://localhost:3000`
 
-## Sprachregel
+## Hinweise
 
-Englische Dateien sind Primärtexte.
-Deutsche `_DE`-Dateien sind direkte Klone.
+- Auf kleineren Maschinen zuerst mit 7b oder 8b starten.
+- Auf stärkeren Maschinen 14b und höher nutzen.
+- Mit NVIDIA-GPU-Support kann `compose.yml` später für GPU-Nutzung erweitert werden.

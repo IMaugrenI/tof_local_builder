@@ -1,29 +1,41 @@
 # tof_local_builder
 
-A small local-first builder stack for repo work, audits, drift checks, and code assistance without cloud token pressure.
+> English is the primary text in this repository. A German clone is available in `README_DE.md`.
 
-## Goal
+Small local builder stack for repo work, audits, drift checks, and code assistance without strong cloud or token pressure.
+
+This repository is meant as a local, inspectable workspace for coding models and repo-focused work.
+
+## Purpose
 
 `tof_local_builder` is a lightweight local workspace for:
+
 - running local coding models with Ollama
-- using a chat UI with Open WebUI
+- using a browser GUI with Open WebUI
 - keeping reusable prompts and profiles for repo work
-- staying simple, inspectable, and easy to rebuild
+- starting with a small, understandable Docker stack
 
-## Principles
+## Core idea
 
-- local-first
-- small and understandable
-- replaceable parts
-- Docker-based start
-- explicit config
+The builder itself is not a self-improving system.
+It is first a local workspace and tool carrier.
+
+It can become more useful through:
+
+- better prompts
+- better profiles
+- better workflows
+- later retrieval, memory, or fine-tuning layers
+
+But that is not automatic in the current baseline.
 
 ## Included
 
 - `compose.yml` for Ollama + Open WebUI
 - reusable prompts for repo audits and drift checks
 - starter profiles for Ollama, Aider, and Continue
-- setup notes for Ubuntu
+- Ubuntu setup notes
+- English primary docs plus German `_DE` clones
 
 ## Quick start
 
@@ -34,40 +46,22 @@ bash scripts/healthcheck.sh
 ```
 
 Then open:
+
 - Open WebUI: `http://localhost:3000`
 - Ollama API: `http://localhost:11434`
 
-## Suggested first models
+## Structure
 
-- `qwen2.5-coder:7b`
-- `qwen2.5-coder:14b`
-- `deepseek-coder-v2:16b`
-- `llama3.1:8b`
+- English primary:
+  - `README.md`
+  - `docs/architecture.md`
+  - `docs/setup_ubuntu.md`
+  - `docs/usage.md`
 
-## Repo layout
+- German clones:
+  - `README_DE.md`
+  - `docs/architecture_DE.md`
+  - `docs/setup_ubuntu_DE.md`
+  - `docs/usage_DE.md`
 
-```text
-tof_local_builder/
-├── README.md
-├── .gitignore
-├── .env.example
-├── compose.yml
-├── docs/
-│   ├── architecture.md
-│   ├── setup_ubuntu.md
-│   └── usage.md
-├── prompts/
-│   ├── repo_audit.md
-│   ├── drift_check.md
-│   └── codex_style_tasks.md
-├── profiles/
-│   ├── ollama/
-│   │   └── models.md
-│   ├── aider/
-│   │   └── aider.conf.yml
-│   └── continue/
-│       └── config.example.json
-└── scripts/
-    ├── bootstrap.sh
-    └── healthcheck.sh
-```
+Technical files such as `compose.yml`, `.env.example`, scripts, and tool profiles stay language-neutral.

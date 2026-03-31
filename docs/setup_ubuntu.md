@@ -1,8 +1,10 @@
 # Ubuntu setup
 
+> English is the primary text. The German clone is `setup_ubuntu_DE.md`.
+
 ## 1. Install Docker
 
-Use Docker Engine and Docker Compose plugin.
+Use Docker Engine and the Docker Compose plugin.
 
 ## 2. Clone the repo
 
@@ -11,7 +13,7 @@ git clone https://github.com/IMaugrenI/tof_local_builder.git
 cd tof_local_builder
 ```
 
-## 3. Prepare env
+## 3. Prepare the environment
 
 ```bash
 cp .env.example .env
@@ -30,12 +32,12 @@ docker compose up -d
 docker exec -it tof_local_builder_ollama ollama pull qwen2.5-coder:14b
 ```
 
-## 6. Open UI
+## 6. Open the UI
 
 Open `http://localhost:3000`
 
 ## Notes
 
-- On small machines, start with 7b or 8b models.
-- On larger machines, use 14b and above.
-- If you have NVIDIA GPU support on the host, you can extend `compose.yml` later for GPU runtime.
+- On smaller machines, start with 7b or 8b models.
+- On stronger machines, use 14b and above.
+- With NVIDIA GPU support, `compose.yml` can later be extended for GPU usage.

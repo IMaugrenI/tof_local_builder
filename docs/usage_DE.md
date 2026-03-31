@@ -1,5 +1,7 @@
 # Nutzung
 
+> Der englische Primärtext ist `usage.md`. Diese Datei ist der deutsche Klon.
+
 ## Typische Einsätze
 
 - ein Repo lokal prüfen
@@ -21,7 +23,11 @@
 - Editor-Integration für Code-Änderungen
 - Prompt-Bibliothek für wiederholbare Aufgaben
 
-## Sprachregel
+## Erster nützlicher Prompt
 
-Englische Dateien sind Primärtexte.
-Deutsche `_DE`-Dateien sind direkte Klone.
+Bitte das Modell darum:
+
+- die Repo-Struktur zusammenzufassen
+- unklare Grenzen zu benennen
+- Drift zwischen Doku und Code zu markieren
+- den nächsten kleinsten sauberen Schritt vorzuschlagen
