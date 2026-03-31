@@ -57,11 +57,27 @@ Danach öffnen:
   - `docs/architecture.md`
   - `docs/setup_ubuntu.md`
   - `docs/usage.md`
+  - `docs/profiles_overview.md`
+  - `prompts/repo_audit.md`
+  - `prompts/drift_check.md`
+  - `prompts/codex_style_tasks.md`
 
 - Deutsche Klone:
   - `README_DE.md`
   - `docs/architecture_DE.md`
   - `docs/setup_ubuntu_DE.md`
   - `docs/usage_DE.md`
+  - `docs/profiles_overview_DE.md`
+  - `prompts/repo_audit_DE.md`
+  - `prompts/drift_check_DE.md`
+  - `prompts/codex_style_tasks_DE.md`
 
-Sprachneutrale Technikdateien wie `compose.yml`, `.env.example`, Skripte und Tool-Profile bleiben gemeinsam.
+## Profile
+
+Der Profil-Ordner bleibt bei den eigentlichen Konfigurationsdateien sprachneutral.
+Ein kurzer zweisprachiger Überblick liegt hier:
+
+- Englisch: `docs/profiles_overview.md`
+- Deutsch: `docs/profiles_overview_DE.md`
+
+Sprachneutrale Technikdateien wie `compose.yml`, `.env.example`, Skripte und Profil-Konfigurationen bleiben gemeinsam.

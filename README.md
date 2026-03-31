@@ -57,11 +57,27 @@ Then open:
   - `docs/architecture.md`
   - `docs/setup_ubuntu.md`
   - `docs/usage.md`
+  - `docs/profiles_overview.md`
+  - `prompts/repo_audit.md`
+  - `prompts/drift_check.md`
+  - `prompts/codex_style_tasks.md`
 
 - German clones:
   - `README_DE.md`
   - `docs/architecture_DE.md`
   - `docs/setup_ubuntu_DE.md`
   - `docs/usage_DE.md`
+  - `docs/profiles_overview_DE.md`
+  - `prompts/repo_audit_DE.md`
+  - `prompts/drift_check_DE.md`
+  - `prompts/codex_style_tasks_DE.md`
 
-Technical files such as `compose.yml`, `.env.example`, scripts, and tool profiles stay language-neutral.
+## Profiles
+
+The profile directory stays language-neutral for the actual config files.
+A short bilingual overview is documented here:
+
+- English: `docs/profiles_overview.md`
+- German: `docs/profiles_overview_DE.md`
+
+Technical files such as `compose.yml`, `.env.example`, scripts, and tool profile configs stay shared.
