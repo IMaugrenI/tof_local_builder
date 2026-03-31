@@ -1,0 +1,10 @@
+@startuml
+start
+:Generate random value;
+if (Heads?) then (yes)
+  :Return heads;
+else (no)
+  :Return tails;
+endif
+stop
+@enduml
