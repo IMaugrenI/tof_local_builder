@@ -1,0 +1,22 @@
+# env
+.env
+.env.local
+
+# local data
+/data/
+/models/
+/logs/
+/cache/
+
+# editor / system
+.DS_Store
+.vscode/
+.idea/
+
+# python
+__pycache__/
+*.pyc
+
+# temp
+*.tmp
+*.swp
