@@ -1,0 +1,10 @@
+workspace/*
+output/*
+
+!workspace/.gitkeep
+!output/.gitkeep
+!examples/
+!examples/**
+!README.md
+!README_DE.md
+!.gitignore
