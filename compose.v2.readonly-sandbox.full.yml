@@ -1,0 +1,33 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: tof_local_builder_ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    environment:
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-5m}
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ${OLLAMA_MODELS_PATH:-./data/ollama}:/root/.ollama
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: tof_local_builder_openwebui
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    ports:
+      - "${OPENWEBUI_PORT:-3000}:8080"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      WEBUI_NAME: tof_local_builder_v2_readonly_sandbox
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ${OPENWEBUI_DATA_PATH:-./data/open-webui}:/app/backend/data
+      - ${SOURCE_REPO_PATH}:/workspace/source_repo_ro:ro
+      - ${BUILDER_SANDBOX_PATH:-./sandbox}:/workspace/builder_sandbox
+
+networks:
+  default:
+    name: tof_local_builder_net
