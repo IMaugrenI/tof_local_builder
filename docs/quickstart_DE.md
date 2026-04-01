@@ -1,4 +1,4 @@
-# Quickstart
+# Schnellstart
 
 ## 1. `.env` anlegen
 

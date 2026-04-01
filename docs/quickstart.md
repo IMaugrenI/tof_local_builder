@@ -32,7 +32,7 @@ bash scripts/check.sh
 
 Go to:
 
-- `Tool-Server verwalten`
+- `Tool Server Management`
 
 Paste:
 
