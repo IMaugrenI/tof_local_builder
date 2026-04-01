@@ -36,31 +36,52 @@ Dieses Repository ist für kontrollierte lokale Builder-Workflows gedacht:
 
 ## Schnellstart
 
-1. `.env.example` nach `.env` kopieren
-2. `SOURCE_REPO_PATH`, `HOST_UID` und `HOST_GID` setzen
-3. starten:
+1. lokale Vorbereitung ausführen:
 
 ```bash
-bash scripts/start.sh
+bash scripts/setup.sh
 ```
 
-4. prüfen:
+2. den Stack starten:
+
+```bash
+bash scripts/up.sh
+```
+
+3. Health prüfen:
 
 ```bash
 bash scripts/check.sh
 ```
 
-5. öffnen:
+4. öffnen:
 
 - `http://localhost:3000`
 
-6. in Open WebUI zu folgendem Bereich gehen:
+5. in Open WebUI zu folgendem Bereich gehen:
 
 - `Tool-Server verwalten`
 
-7. dort einfügen:
+6. dort einfügen:
 
 - `http://127.0.0.1:8099/openapi.json`
+
+## Befehle für den Betrieb
+
+Nutze für den normalen Betrieb diese kleine Befehlsoberfläche:
+
+```bash
+bash scripts/setup.sh
+bash scripts/up.sh
+bash scripts/check.sh
+bash scripts/logs.sh
+bash scripts/down.sh
+```
+
+Mehr Details:
+
+- [`docs/commands.md`](docs/commands.md)
+- [`docs/commands_DE.md`](docs/commands_DE.md)
 
 ## Erforderliche `.env`-Werte
 
@@ -76,9 +97,12 @@ ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
 - `compose.yml`
 - `.env.example`
-- `scripts/start.sh`
+- `scripts/setup.sh`
+- `scripts/up.sh`
 - `scripts/check.sh`
+- `scripts/down.sh`
 - `docs/quickstart.md`
+- `docs/commands.md`
 - `services/repo_bridge/`
 - `sandbox/`
 

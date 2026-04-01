@@ -36,31 +36,52 @@ This repository is meant for controlled local builder workflows:
 
 ## Quick start
 
-1. copy `.env.example` to `.env`
-2. set `SOURCE_REPO_PATH`, `HOST_UID`, and `HOST_GID`
-3. run:
+1. prepare local setup:
 
 ```bash
-bash scripts/start.sh
+bash scripts/setup.sh
 ```
 
-4. check:
+2. start the stack:
+
+```bash
+bash scripts/up.sh
+```
+
+3. check health:
 
 ```bash
 bash scripts/check.sh
 ```
 
-5. open:
+4. open:
 
 - `http://localhost:3000`
 
-6. in Open WebUI go to:
+5. in Open WebUI go to:
 
 - `Tool-Server verwalten`
 
-7. paste:
+6. paste:
 
 - `http://127.0.0.1:8099/openapi.json`
+
+## Operator commands
+
+Use the small public command surface for normal operation:
+
+```bash
+bash scripts/setup.sh
+bash scripts/up.sh
+bash scripts/check.sh
+bash scripts/logs.sh
+bash scripts/down.sh
+```
+
+More details:
+
+- [`docs/commands.md`](docs/commands.md)
+- [`docs/commands_DE.md`](docs/commands_DE.md)
 
 ## Required `.env` values
 
@@ -76,9 +97,12 @@ ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
 - `compose.yml`
 - `.env.example`
-- `scripts/start.sh`
+- `scripts/setup.sh`
+- `scripts/up.sh`
 - `scripts/check.sh`
+- `scripts/down.sh`
 - `docs/quickstart.md`
+- `docs/commands.md`
 - `services/repo_bridge/`
 - `sandbox/`
 
