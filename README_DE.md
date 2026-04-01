@@ -80,7 +80,6 @@ bash scripts/down.sh
 
 Mehr Details:
 
-- [`docs/commands.md`](docs/commands.md)
 - [`docs/commands_DE.md`](docs/commands_DE.md)
 
 ## Erforderliche `.env`-Werte
@@ -101,8 +100,8 @@ ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 - `scripts/up.sh`
 - `scripts/check.sh`
 - `scripts/down.sh`
-- `docs/quickstart.md`
-- `docs/commands.md`
+- `docs/quickstart_DE.md`
+- `docs/commands_DE.md`
 - `services/repo_bridge/`
 - `sandbox/`
 
