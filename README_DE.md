@@ -1,27 +1,44 @@
 # tof_local_builder
 
-> Die englischen Dateien sind die Primärtexte in diesem Repository. Die deutschen `_DE`-Dateien sind direkte Text-Klone zum leichteren Lesen.
+> Deutsch ist die Spiegelversion dieses Repositories. Der englische Primärtext liegt in `README.md`.
 
-Lokaler GUI-first-Builder für den Einsatz auf einem einzelnen Rechner.
+Lokaler GUI-first Builder für Einzelplatz- oder kleine lokale Firmen-Setups.
 
-## Was dieses Repo tut
+## Kurzüberblick
 
-- startet lokale Modelle über Ollama
+- nutzt lokale Modelle über Ollama
 - stellt eine Browser-GUI über Open WebUI bereit
-- liest einen gemounteten Quellpfad nur read-only
-- schreibt überprüfte Artefakte nur in eine lokale Sandbox
+- liest einen gemounteten Quellpfad read-only
+- schreibt geprüfte Artefakte nur in eine lokale Sandbox
+- hält Quellraum und schreibbaren Ausgaberaum sauber getrennt
+
+## Wofür dieses Repo da ist
+
+Dieses Repository ist für kontrollierte lokale Builder-Workflows gedacht:
+
+- lokale Prompt- und editorbasierte Experimente
+- read-only Zugriff auf ein gemountetes Source-Repo oder einen Source-Pfad
+- geprüfte Writes in eine Sandbox statt in die Quelle
+- GUI-first lokale Interaktion über Open WebUI
 
 ## Produktgrenze
 
-- die Quell-Repo bleibt read-only
-- Schreiben bleibt auf `sandbox/workspace` und `sandbox/output` begrenzt
-- kein direktes Schreiben in die Quell-Repo
+- Source-Repo bleibt read-only
+- Writes bleiben auf `sandbox/workspace` und `sandbox/output` begrenzt
+- keine direkten Schreibzugriffe in das Source-Repo
+- das hier ist ein Builder-Stack, kein allgemeines Wissenssystem
 
-## Normale Nutzung
+## Runtime-Komponenten
+
+- `ollama` = lokaler Modellträger
+- `open-webui` = Browser-GUI
+- `repo-bridge` = kontrollierte Lese-/Schreibgrenze für Quelle und Sandbox
+
+## Schnellstart
 
 1. `.env.example` nach `.env` kopieren
 2. `SOURCE_REPO_PATH`, `HOST_UID` und `HOST_GID` setzen
-3. ausführen:
+3. starten:
 
 ```bash
 bash scripts/start.sh
@@ -37,7 +54,7 @@ bash scripts/check.sh
 
 - `http://localhost:3000`
 
-6. in Open WebUI zu Folgendem gehen:
+6. in Open WebUI zu folgendem Bereich gehen:
 
 - `Tool-Server verwalten`
 
@@ -57,20 +74,15 @@ ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
 ## Wichtige Dateien
 
-### Kern
 - `compose.yml`
 - `.env.example`
 - `scripts/start.sh`
 - `scripts/check.sh`
-
-### Doku
-- `README.md`
-- `README_DE.md`
 - `docs/quickstart.md`
-- `docs/quickstart_DE.md`
-- `sandbox/README.md`
-- `sandbox/README_DE.md`
-
-### Laufzeitteile
 - `services/repo_bridge/`
 - `sandbox/`
+
+## Verwandte öffentliche Repositories
+
+- [`tof-showcase`](https://github.com/IMaugrenI/tof-showcase) — öffentlicher Architekturrahmen
+- [`tof_local_knowledge`](https://github.com/IMaugrenI/tof_local_knowledge) — on-prem lokales Wissenssystem
