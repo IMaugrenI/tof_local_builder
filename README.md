@@ -1,6 +1,7 @@
 # tof_local_builder
 
 > English is the primary text in this repository. A German clone is available in `README_DE.md`.
+> Design reasoning: see `WHY.md`. A German clone is available in `WHY_DE.md`.
 
 Local GUI-first builder for one-machine or small local company use.
 
