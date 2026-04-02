@@ -11,6 +11,8 @@ if [ ! -f .env ]; then
   echo "Created .env from .env.example"
 fi
 
+python3 scripts/wizard.py --ensure
+
 if ! grep -q '^SOURCE_REPO_PATH=' .env; then
   echo "Missing SOURCE_REPO_PATH in .env"
   exit 1
@@ -46,3 +48,7 @@ echo "Default Ollama model: ${DEFAULT_OLLAMA_MODEL:-qwen2.5:0.5b}"
 echo "Open WebUI: http://localhost:3000"
 echo "Tool server base URL to paste into Open WebUI > Tool Server Management:"
 echo "http://127.0.0.1:8099"
+
+if [ "${BUILDER_OPEN_BROWSER:-1}" = "1" ]; then
+  python3 scripts/wizard.py --open-webui >/dev/null 2>&1 || true
+fi

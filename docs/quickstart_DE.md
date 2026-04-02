@@ -12,6 +12,8 @@ HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DEFAULT_OLLAMA_MODEL=qwen2.5:0.5b
 BUILDER_ACCELERATION=auto
+BUILDER_OPEN_BROWSER=1
+BUILDER_SETUP_DONE=0
 ```
 
 ## 2. Produkt starten
@@ -20,7 +22,7 @@ BUILDER_ACCELERATION=auto
 bash scripts/start.sh
 ```
 
-Der erste Start stellt sicher, dass das Default-Ollama-Modell vorhanden ist. Auf langsamen Leitungen oder kleineren Geräten kann das etwas länger dauern.
+Der erste Start stellt sicher, dass das Default-Ollama-Modell vorhanden ist. Wenn der Builder noch nicht eingerichtet ist, öffnet sich zuerst ein kleiner lokaler Setup-Wizard und übergibt danach an die Web-Oberfläche.
 
 ## 3. Produkt prüfen
 
@@ -47,3 +49,9 @@ Füge dort die Basis-URL ein:
 - Root der Quelle auflisten
 - `README.md` lesen
 - eine Notiz nach `output/test/chat_note.md` schreiben
+
+## 7. Wizard später erneut öffnen, wenn nötig
+
+```bash
+python3 scripts/wizard.py --force
+```

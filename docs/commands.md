@@ -17,13 +17,14 @@ bash scripts/down.sh
 ## Commands
 
 - `bash scripts/setup.sh` — prepare `.env` and local directories
-- `bash scripts/up.sh` — start the stack through the public wrapper, auto-detect Intel `/dev/dri` on Linux, and ensure the default Ollama model exists
+- `bash scripts/up.sh` — start the stack through the public wrapper, open the first-run setup wizard when needed, auto-detect Intel `/dev/dri` on Linux, and ensure the default Ollama model exists
 - `bash scripts/check.sh` — run health checks for the live stack and show the expected tool-server base URL
 - `bash scripts/logs.sh` — follow compose logs
 - `bash scripts/pull.sh` — pull upstream images where available
 - `bash scripts/down.sh` — stop the stack cleanly without deleting data
 - `bash scripts/restart.sh` — restart through the public wrappers
 - `bash scripts/reset.sh` — destructive reset for local service data and sandbox work/output
+- `python3 scripts/wizard.py --force` — reopen the local setup wizard intentionally
 
 ## Notes
 
@@ -33,3 +34,4 @@ bash scripts/down.sh
 - `reset.sh` is the destructive path and should be used deliberately
 - `DEFAULT_OLLAMA_MODEL` defaults to `qwen2.5:0.5b`
 - `BUILDER_ACCELERATION` accepts `auto`, `cpu`, or `intel`
+- `BUILDER_OPEN_BROWSER=1` opens the local WebUI after startup when possible

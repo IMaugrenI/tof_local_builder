@@ -12,6 +12,7 @@ Local GUI-first builder for one-machine or small local company use.
 - writes reviewed artifacts only into a local sandbox
 - keeps source and writable output clearly separated
 - first start ensures a small default Ollama model is present
+- first start opens a small local setup wizard and then hands over to the web surface
 - stays CPU-safe by default and auto-enables the Intel render-node path when available on Linux
 
 ## What this repo is for
@@ -35,6 +36,7 @@ This repository is meant for controlled local builder workflows:
 - `ollama` = local model runtime
 - `open-webui` = browser GUI
 - `repo-bridge` = controlled read/write boundary for source and sandbox
+- `wizard.py` = one-time local setup guide before the web handoff
 
 ## Quick start
 
@@ -56,9 +58,11 @@ bash scripts/up.sh
 bash scripts/check.sh
 ```
 
-4. open:
+4. first-run flow:
 
-- `http://localhost:3000`
+- a small local setup wizard appears if the builder is not configured yet
+- once the setup is saved, the normal builder start continues
+- after startup the flow hands over to `http://localhost:3000`
 
 5. in Open WebUI go to:
 
@@ -74,6 +78,7 @@ bash scripts/check.sh
 - the default model is `qwen2.5:0.5b`
 - stronger hardware can switch to a larger Ollama model later by changing `.env`
 - `BUILDER_ACCELERATION=auto` keeps the stack CPU-safe and auto-adds the Intel `/dev/dri` override when a Linux render node is present
+- the wizard can be reopened with `python3 scripts/wizard.py --force`
 
 ## Operator commands
 
@@ -102,6 +107,8 @@ HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DEFAULT_OLLAMA_MODEL=qwen2.5:0.5b
 BUILDER_ACCELERATION=auto
+BUILDER_OPEN_BROWSER=1
+BUILDER_SETUP_DONE=0
 ```
 
 ## Files that matter
@@ -115,6 +122,8 @@ BUILDER_ACCELERATION=auto
 - `scripts/down.sh`
 - `scripts/ensure_model.sh`
 - `scripts/compose_wrapper.sh`
+- `scripts/builder_bootstrap.py`
+- `scripts/wizard.py`
 - `docs/quickstart.md`
 - `docs/commands.md`
 - `services/repo_bridge/`

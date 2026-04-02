@@ -12,6 +12,7 @@ Lokaler GUI-first Builder für Einzelplatz- oder kleine lokale Firmen-Setups.
 - schreibt geprüfte Artefakte nur in eine lokale Sandbox
 - hält Quellraum und schreibbaren Ausgaberaum sauber getrennt
 - der erste Start stellt automatisch ein kleines Default-Modell bereit
+- der erste Start öffnet einen kleinen lokalen Setup-Wizard und übergibt danach an die Web-Oberfläche
 - bleibt standardmäßig CPU-sicher und aktiviert auf Linux automatisch den Intel-Render-Node-Pfad, wenn er vorhanden ist
 
 ## Wofür dieses Repo da ist
@@ -35,6 +36,7 @@ Dieses Repository ist für kontrollierte lokale Builder-Workflows gedacht:
 - `ollama` = lokaler Modellträger
 - `open-webui` = Browser-GUI
 - `repo-bridge` = kontrollierte Lese-/Schreibgrenze für Quelle und Sandbox
+- `wizard.py` = einmalige lokale Setup-Hilfe vor der Übergabe an die Web-Oberfläche
 
 ## Schnellstart
 
@@ -56,9 +58,11 @@ bash scripts/up.sh
 bash scripts/check.sh
 ```
 
-4. öffnen:
+4. First-Run-Fluss:
 
-- `http://localhost:3000`
+- ein kleiner lokaler Setup-Wizard erscheint, wenn der Builder noch nicht eingerichtet ist
+- sobald das Setup gespeichert ist, läuft der normale Builder-Start weiter
+- nach dem Start geht es weiter zu `http://localhost:3000`
 
 5. in Open WebUI zu folgendem Bereich gehen:
 
@@ -74,6 +78,7 @@ bash scripts/check.sh
 - das Standardmodell ist `qwen2.5:0.5b`
 - stärkere Hardware kann später über `.env` auf größere Ollama-Modelle wechseln
 - `BUILDER_ACCELERATION=auto` hält den Stack CPU-sicher und ergänzt automatisch den Intel-`/dev/dri`-Override, wenn auf Linux ein Render-Node vorhanden ist
+- der Wizard kann mit `python3 scripts/wizard.py --force` erneut geöffnet werden
 
 ## Befehle für den Betrieb
 
@@ -101,6 +106,8 @@ HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DEFAULT_OLLAMA_MODEL=qwen2.5:0.5b
 BUILDER_ACCELERATION=auto
+BUILDER_OPEN_BROWSER=1
+BUILDER_SETUP_DONE=0
 ```
 
 ## Wichtige Dateien
@@ -114,6 +121,8 @@ BUILDER_ACCELERATION=auto
 - `scripts/down.sh`
 - `scripts/ensure_model.sh`
 - `scripts/compose_wrapper.sh`
+- `scripts/builder_bootstrap.py`
+- `scripts/wizard.py`
 - `docs/quickstart_DE.md`
 - `docs/commands_DE.md`
 - `services/repo_bridge/`
