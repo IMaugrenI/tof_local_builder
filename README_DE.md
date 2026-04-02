@@ -11,6 +11,8 @@ Lokaler GUI-first Builder für Einzelplatz- oder kleine lokale Firmen-Setups.
 - liest einen gemounteten Quellpfad read-only
 - schreibt geprüfte Artefakte nur in eine lokale Sandbox
 - hält Quellraum und schreibbaren Ausgaberaum sauber getrennt
+- der erste Start stellt automatisch ein kleines Default-Modell bereit
+- bleibt standardmäßig CPU-sicher und aktiviert auf Linux automatisch den Intel-Render-Node-Pfad, wenn er vorhanden ist
 
 ## Wofür dieses Repo da ist
 
@@ -60,11 +62,18 @@ bash scripts/check.sh
 
 5. in Open WebUI zu folgendem Bereich gehen:
 
-- `Tool-Server verwalten`
+- `Tool Server Management`
 
-6. dort einfügen:
+6. dort die Basis-URL einfügen:
 
-- `http://127.0.0.1:8099/openapi.json`
+- `http://127.0.0.1:8099`
+
+## First-Run-Standards
+
+- der erste `up.sh`-Lauf stellt sicher, dass `DEFAULT_OLLAMA_MODEL` vorhanden ist
+- das Standardmodell ist `qwen2.5:0.5b`
+- stärkere Hardware kann später über `.env` auf größere Ollama-Modelle wechseln
+- `BUILDER_ACCELERATION=auto` hält den Stack CPU-sicher und ergänzt automatisch den Intel-`/dev/dri`-Override, wenn auf Linux ein Render-Node vorhanden ist
 
 ## Befehle für den Betrieb
 
@@ -90,16 +99,21 @@ BUILDER_SANDBOX_PATH=./sandbox
 HOST_UID=1000
 HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+DEFAULT_OLLAMA_MODEL=qwen2.5:0.5b
+BUILDER_ACCELERATION=auto
 ```
 
 ## Wichtige Dateien
 
 - `compose.yml`
+- `compose.intel.yml`
 - `.env.example`
 - `scripts/setup.sh`
 - `scripts/up.sh`
 - `scripts/check.sh`
 - `scripts/down.sh`
+- `scripts/ensure_model.sh`
+- `scripts/compose_wrapper.sh`
 - `docs/quickstart_DE.md`
 - `docs/commands_DE.md`
 - `services/repo_bridge/`

@@ -17,8 +17,8 @@ bash scripts/down.sh
 ## Befehle
 
 - `bash scripts/setup.sh` — `.env` und lokale Verzeichnisse vorbereiten
-- `bash scripts/up.sh` — den Stack über den öffentlichen Wrapper starten
-- `bash scripts/check.sh` — Health-Prüfungen für den laufenden Stack ausführen
+- `bash scripts/up.sh` — den Stack über den öffentlichen Wrapper starten, auf Linux Intel-`/dev/dri` automatisch erkennen und sicherstellen, dass das Default-Ollama-Modell vorhanden ist
+- `bash scripts/check.sh` — Health-Prüfungen für den laufenden Stack ausführen und die erwartete Tool-Server-Basis-URL anzeigen
 - `bash scripts/logs.sh` — Compose-Logs verfolgen
 - `bash scripts/pull.sh` — vorhandene Upstream-Images aktualisieren
 - `bash scripts/down.sh` — den Stack sauber stoppen, ohne Daten zu löschen
@@ -31,3 +31,5 @@ bash scripts/down.sh
 - `check.sh` bleibt der zentrale Health-Einstiegspunkt
 - `down.sh` ist standardmäßig nicht destruktiv
 - `reset.sh` ist der destruktive Pfad und sollte bewusst verwendet werden
+- `DEFAULT_OLLAMA_MODEL` ist standardmäßig `qwen2.5:0.5b`
+- `BUILDER_ACCELERATION` akzeptiert `auto`, `cpu` oder `intel`
