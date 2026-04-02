@@ -13,7 +13,7 @@ Lokaler GUI-first Builder für Einzelplatz- oder kleine lokale Firmen-Setups.
 - hält Quellraum und schreibbaren Ausgaberaum sauber getrennt
 - der erste Start stellt automatisch ein kleines Default-Modell bereit
 - der erste Start öffnet einen kleinen lokalen Setup-Wizard und übergibt danach an die Web-Oberfläche
-- bleibt standardmäßig CPU-sicher und aktiviert auf Linux automatisch den Intel-Render-Node-Pfad, wenn er vorhanden ist
+- bleibt standardmäßig CPU-sicher; optionale Beschleunigungsmodi können später aktiviert werden, wenn der Host sie sauber trägt
 
 ## Wofür dieses Repo da ist
 
@@ -77,7 +77,7 @@ bash scripts/check.sh
 - der erste `up.sh`-Lauf stellt sicher, dass `DEFAULT_OLLAMA_MODEL` vorhanden ist
 - das Standardmodell ist `qwen2.5:0.5b`
 - stärkere Hardware kann später über `.env` auf größere Ollama-Modelle wechseln
-- `BUILDER_ACCELERATION=auto` hält den Stack CPU-sicher und ergänzt automatisch den Intel-`/dev/dri`-Override, wenn auf Linux ein Render-Node vorhanden ist
+- `BUILDER_ACCELERATION=cpu` hält den Stack zunächst auf einer portablen Basis; später kann in `.env` bewusst auf `auto` oder `intel` gewechselt werden, wenn man Hardware-Beschleunigung testen will
 - der Wizard kann mit `python3 scripts/wizard.py --force` erneut geöffnet werden
 
 ## Befehle für den Betrieb
@@ -105,7 +105,7 @@ HOST_UID=1000
 HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DEFAULT_OLLAMA_MODEL=qwen2.5:0.5b
-BUILDER_ACCELERATION=auto
+BUILDER_ACCELERATION=cpu
 BUILDER_OPEN_BROWSER=1
 BUILDER_SETUP_DONE=0
 ```

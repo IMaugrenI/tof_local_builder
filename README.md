@@ -13,7 +13,7 @@ Local GUI-first builder for one-machine or small local company use.
 - keeps source and writable output clearly separated
 - first start ensures a small default Ollama model is present
 - first start opens a small local setup wizard and then hands over to the web surface
-- stays CPU-safe by default and auto-enables the Intel render-node path when available on Linux
+- stays CPU-safe by default; optional acceleration modes can be enabled later when the host supports them
 
 ## What this repo is for
 
@@ -77,7 +77,7 @@ bash scripts/check.sh
 - the first `up.sh` run ensures `DEFAULT_OLLAMA_MODEL` is available
 - the default model is `qwen2.5:0.5b`
 - stronger hardware can switch to a larger Ollama model later by changing `.env`
-- `BUILDER_ACCELERATION=auto` keeps the stack CPU-safe and auto-adds the Intel `/dev/dri` override when a Linux render node is present
+- `BUILDER_ACCELERATION=cpu` keeps the stack on the portable baseline by default; later you can switch to `auto` or `intel` in `.env` if you want to test hardware acceleration
 - the wizard can be reopened with `python3 scripts/wizard.py --force`
 
 ## Operator commands
@@ -106,7 +106,7 @@ HOST_UID=1000
 HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DEFAULT_OLLAMA_MODEL=qwen2.5:0.5b
-BUILDER_ACCELERATION=auto
+BUILDER_ACCELERATION=cpu
 BUILDER_OPEN_BROWSER=1
 BUILDER_SETUP_DONE=0
 ```

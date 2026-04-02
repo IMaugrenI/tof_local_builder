@@ -23,7 +23,7 @@ ENV_DEFAULTS = {
     "HOST_GID": "1000",
     "ALLOW_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000",
     "DEFAULT_OLLAMA_MODEL": "qwen2.5:0.5b",
-    "BUILDER_ACCELERATION": "auto",
+    "BUILDER_ACCELERATION": "cpu",
     "BUILDER_OPEN_BROWSER": "1",
     "BUILDER_SETUP_DONE": "0",
 }
@@ -136,7 +136,7 @@ def detect_host() -> Dict[str, object]:
     has_render_node = Path("/dev/dri/renderD128").exists()
     has_dri = Path("/dev/dri").exists()
     has_nvidia = shutil.which("nvidia-smi") is not None
-    recommended_acceleration = "auto" if system == "linux" and has_render_node else "cpu"
+    recommended_acceleration = "cpu"
     ram_gb = _ram_gb()
     return {
         "system": system,
