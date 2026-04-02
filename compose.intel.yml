@@ -1,0 +1,6 @@
+services:
+  ollama:
+    environment:
+      OLLAMA_VULKAN: "1"
+    devices:
+      - /dev/dri:/dev/dri

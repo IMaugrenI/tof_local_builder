@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+source scripts/compose_wrapper.sh
+
 if [ ! -f .env ]; then
   cp .env.example .env
   echo "Created .env from .env.example"
@@ -24,17 +26,23 @@ if ! grep -q '^HOST_GID=' .env; then
   exit 1
 fi
 
+set -a
+source .env
+set +a
+
 mkdir -p data/ollama data/open-webui sandbox/workspace sandbox/output sandbox/examples
 
-docker compose down --remove-orphans || true
-docker compose up -d --build
+compose_cmd down --remove-orphans || true
+compose_cmd up -d --build
 
 echo "Waiting for services..."
-sleep 8
+bash scripts/ensure_model.sh || true
 
 bash scripts/check.sh || true
 
 echo
+echo "Acceleration mode: ${BUILDER_COMPOSE_MODE}"
+echo "Default Ollama model: ${DEFAULT_OLLAMA_MODEL:-qwen2.5:0.5b}"
 echo "Open WebUI: http://localhost:3000"
-echo "Tool server URL to paste into Open WebUI > Tool-Server verwalten:"
-echo "http://127.0.0.1:8099/openapi.json"
+echo "Tool server base URL to paste into Open WebUI > Tool Server Management:"
+echo "http://127.0.0.1:8099"
