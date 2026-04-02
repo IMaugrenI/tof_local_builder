@@ -10,10 +10,6 @@ BUILDER_COMPOSE_MODE="cpu"
 
 case "$BUILDER_ACCELERATION" in
   auto)
-    if [ -e /dev/dri/renderD128 ]; then
-      BUILDER_COMPOSE_FILES+=(-f compose.intel.yml)
-      BUILDER_COMPOSE_MODE="intel"
-    fi
     ;;
   intel)
     if [ -e /dev/dri/renderD128 ]; then
