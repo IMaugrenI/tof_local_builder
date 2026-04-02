@@ -9,6 +9,10 @@ if [ ! -f .env ]; then
   echo "Created .env from .env.example"
 fi
 
+set -a
+source .env
+set +a
+
 mkdir -p data/ollama data/open-webui sandbox/workspace sandbox/output sandbox/examples
 
 echo
@@ -17,6 +21,12 @@ echo "Check or set these values in .env before starting:"
 echo "- SOURCE_REPO_PATH"
 echo "- HOST_UID"
 echo "- HOST_GID"
+echo "- DEFAULT_OLLAMA_MODEL (default: ${DEFAULT_OLLAMA_MODEL:-qwen2.5:0.5b})"
+echo "- BUILDER_ACCELERATION (default: ${BUILDER_ACCELERATION:-auto})"
+echo
+echo "Notes:"
+echo "- The first start will ensure a small default Ollama model is available."
+echo "- Tool server base URL for Open WebUI: http://127.0.0.1:8099"
 echo
 echo "Next steps:"
 echo "bash scripts/up.sh"

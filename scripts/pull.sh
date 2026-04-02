@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-docker compose pull --ignore-pull-failures || true
+source scripts/compose_wrapper.sh
+
+compose_cmd pull --ignore-pull-failures || true
 
 echo
 echo "Pull finished."
