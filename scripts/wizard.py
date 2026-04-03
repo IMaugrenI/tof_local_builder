@@ -2,9 +2,16 @@
 from __future__ import annotations
 
 import argparse
-import os
+import html
+import json
+import subprocess
 import sys
+import threading
+import time
+import urllib.parse
+import urllib.request
 import webbrowser
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from builder_bootstrap import (
@@ -22,15 +29,27 @@ from builder_bootstrap import (
     write_env_file,
 )
 
+WIZARD_HOST = "127.0.0.1"
+WIZARD_DEFAULT_PORT = 8765
+REDIRECT_DEFAULT_PORT = 8766
+REDIRECT_TIMEOUT_SECONDS = 900
 
-def _can_use_tk(info: dict) -> bool:
-    if not info.get("supports_gui"):
-        return False
-    try:
-        import tkinter  # noqa: F401
-        return True
-    except Exception:
-        return False
+
+def _supports_browser(info: dict) -> bool:
+    return bool(info.get("supports_gui"))
+
+
+def _find_free_port(preferred: int) -> int:
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind((WIZARD_HOST, preferred))
+            return preferred
+        except OSError:
+            sock.bind((WIZARD_HOST, 0))
+            return int(sock.getsockname()[1])
 
 
 def open_webui_browser() -> int:
@@ -134,301 +153,745 @@ def run_console_wizard(env_path: Path, env: dict, order: list[str], info: dict) 
     return 0
 
 
-def run_tk_wizard(env_path: Path, env: dict, order: list[str], info: dict) -> int:
-    import tkinter as tk
-    from tkinter import filedialog, messagebox, ttk
+class RedirectBridgeServer(ThreadingHTTPServer):
+    def __init__(self, server_address: tuple[str, int], target_url: str, timeout_seconds: int) -> None:
+        super().__init__(server_address, RedirectBridgeHandler)
+        self.target_url = target_url
+        self.expires_at = time.time() + timeout_seconds
+        self._shutdown_started = False
 
-    class WizardApp:
-        def __init__(self) -> None:
-            self.root = tk.Tk()
-            self.root.title("ToF Local Builder Setup / Einrichtung")
-            self.root.geometry("820x620")
-            self.root.resizable(False, False)
-            self.root.protocol("WM_DELETE_WINDOW", self.cancel)
+    def maybe_shutdown(self, delay: float = 1.0) -> None:
+        if self._shutdown_started:
+            return
+        self._shutdown_started = True
 
-            self.source_var = tk.StringVar(
-                value=env.get("SOURCE_REPO_PATH", "") if source_path_valid(env.get("SOURCE_REPO_PATH", "")) else ""
+        def _worker() -> None:
+            time.sleep(delay)
+            self.shutdown()
+
+        threading.Thread(target=_worker, daemon=True).start()
+
+    def target_ready(self) -> bool:
+        if time.time() >= self.expires_at:
+            self.maybe_shutdown(delay=0.0)
+            return False
+        try:
+            request = urllib.request.Request(self.target_url, method="GET")
+            with urllib.request.urlopen(request, timeout=1.5) as response:
+                return int(getattr(response, "status", 200)) < 500
+        except Exception:
+            return False
+
+
+class RedirectBridgeHandler(BaseHTTPRequestHandler):
+    server: RedirectBridgeServer
+
+    def log_message(self, _format: str, *_args) -> None:
+        return
+
+    def _send_json(self, payload: dict, status: int = 200) -> None:
+        body = json.dumps(payload).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _send_html(self, body: str, status: int = 200) -> None:
+        payload = body.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def do_GET(self) -> None:
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/status":
+            ready = self.server.target_ready()
+            if ready:
+                self.server.maybe_shutdown()
+            self._send_json({"ready": ready, "target_url": self.server.target_url})
+            return
+        if parsed.path == "/wait":
+            target_label = html.escape(self.server.target_url)
+            self._send_html(
+                f"""<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>ToF Builder startet / ToF Builder starting</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {{
+      color-scheme: dark;
+      --bg: #0b0f14;
+      --panel: #11161d;
+      --border: #243041;
+      --text: #d8dee9;
+      --muted: #93a1b5;
+      --accent: #69a7ff;
+      --ok: #7bd88f;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0a0f14 0%, #0f151d 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }}
+    .card {{
+      width: min(720px, 100%);
+      background: rgba(17, 22, 29, 0.96);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    }}
+    h1 {{ margin: 0 0 10px; font-size: 1.5rem; }}
+    p {{ line-height: 1.6; color: var(--muted); }}
+    .pulse {{
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 0 rgba(105, 167, 255, 0.8);
+      animation: pulse 1.6s infinite;
+      display: inline-block;
+      margin-right: 10px;
+    }}
+    @keyframes pulse {{
+      0% {{ box-shadow: 0 0 0 0 rgba(105, 167, 255, 0.65); }}
+      70% {{ box-shadow: 0 0 0 16px rgba(105, 167, 255, 0); }}
+      100% {{ box-shadow: 0 0 0 0 rgba(105, 167, 255, 0); }}
+    }}
+    .status {{
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(11, 15, 20, 0.7);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 600;
+    }}
+    a {{
+      color: var(--accent);
+      text-decoration: none;
+    }}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1><span class="pulse"></span>Setup gespeichert / Setup saved</h1>
+    <p>
+      Der Builder startet jetzt die Hauptoberfläche. Diese Seite prüft lokal weiter und leitet automatisch um,
+      sobald Open WebUI erreichbar ist.
+    </p>
+    <p>
+      The builder is now starting the main interface. This page keeps checking locally and redirects automatically
+      as soon as Open WebUI becomes reachable.
+    </p>
+    <div id="status" class="status">Warte auf Open WebUI… / Waiting for Open WebUI…</div>
+    <p>
+      Ziel / Target: <a href="{target_label}">{target_label}</a>
+    </p>
+  </main>
+  <script>
+    const statusNode = document.getElementById("status");
+    const poll = async () => {{
+      try {{
+        const response = await fetch("/status", {{ cache: "no-store" }});
+        const data = await response.json();
+        if (data.ready) {{
+          statusNode.textContent = "Open WebUI ist bereit. Weiterleitung… / Open WebUI is ready. Redirecting…";
+          window.location.replace(data.target_url);
+          return;
+        }}
+        statusNode.textContent = "Stack startet noch… / Stack is still starting…";
+      }} catch (_error) {{
+        statusNode.textContent = "Prüfe lokale Oberfläche… / Checking local interface…";
+      }}
+      window.setTimeout(poll, 1200);
+    }};
+    poll();
+  </script>
+</body>
+</html>"""
             )
-            self.model_var = tk.StringVar(value=env.get("DEFAULT_OLLAMA_MODEL", info["recommended_model"]))
-            self.custom_model_var = tk.StringVar("")
-            self.acceleration_var = tk.StringVar(
-                value=env.get("BUILDER_ACCELERATION", info["recommended_acceleration"])
+            return
+        self.send_error(404)
+
+
+def run_redirect_bridge(port: int, target_url: str) -> int:
+    server = RedirectBridgeServer((WIZARD_HOST, port), target_url, REDIRECT_TIMEOUT_SECONDS)
+    try:
+        server.serve_forever(poll_interval=0.2)
+    finally:
+        server.server_close()
+    return 0
+
+
+def spawn_redirect_bridge(target_url: str) -> str | None:
+    port = _find_free_port(REDIRECT_DEFAULT_PORT)
+    args = [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "--redirect-bridge",
+        "--port",
+        str(port),
+        "--target-url",
+        target_url,
+    ]
+    try:
+        subprocess.Popen(
+            args,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            close_fds=True,
+            start_new_session=True,
+        )
+    except Exception:
+        return None
+
+    status_url = f"http://{WIZARD_HOST}:{port}/status"
+    for _ in range(20):
+        try:
+            with urllib.request.urlopen(status_url, timeout=0.2):
+                return f"http://{WIZARD_HOST}:{port}/wait"
+        except Exception:
+            time.sleep(0.1)
+    return f"http://{WIZARD_HOST}:{port}/wait"
+
+
+class WizardState:
+    def __init__(self, env_path: Path, env: dict, order: list[str], info: dict) -> None:
+        self.env_path = env_path
+        self.env = env
+        self.order = order
+        self.info = info
+        self.saved_event = threading.Event()
+        self.cancelled_event = threading.Event()
+
+    @property
+    def current_source(self) -> str:
+        value = self.env.get("SOURCE_REPO_PATH", "")
+        return value if source_path_valid(value) else ""
+
+    @property
+    def current_model(self) -> str:
+        return self.env.get("DEFAULT_OLLAMA_MODEL", self.info["recommended_model"])
+
+    @property
+    def current_acceleration(self) -> str:
+        acceleration = self.env.get("BUILDER_ACCELERATION", self.info["recommended_acceleration"])
+        options = recommended_acceleration_options(self.info)
+        return acceleration if acceleration in options else self.info["recommended_acceleration"]
+
+    @property
+    def current_browser(self) -> bool:
+        return self.env.get("BUILDER_OPEN_BROWSER", "1") == "1"
+
+
+class WizardServer(ThreadingHTTPServer):
+    def __init__(self, server_address: tuple[str, int], state: WizardState) -> None:
+        super().__init__(server_address, WizardHandler)
+        self.state = state
+
+
+class WizardHandler(BaseHTTPRequestHandler):
+    server: WizardServer
+
+    def log_message(self, _format: str, *_args) -> None:
+        return
+
+    def _send_html(self, body: str, status: int = 200) -> None:
+        payload = body.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _redirect(self, location: str) -> None:
+        self.send_response(303)
+        self.send_header("Location", location)
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+
+    def _read_form(self) -> dict[str, str]:
+        length = int(self.headers.get("Content-Length", "0"))
+        raw = self.rfile.read(length).decode("utf-8")
+        parsed = urllib.parse.parse_qs(raw, keep_blank_values=True)
+        return {key: values[-1] if values else "" for key, values in parsed.items()}
+
+    def do_GET(self) -> None:
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/":
+            self._send_html(self._wizard_html())
+            return
+        if parsed.path == "/cancel":
+            self.server.state.cancelled_event.set()
+            self._send_html(
+                """<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Wizard abgebrochen</title></head>
+<body style="font-family:system-ui;padding:24px;background:#0b0f14;color:#d8dee9">
+<h1>Wizard abgebrochen / Wizard cancelled</h1>
+<p>Der Start wurde angehalten. Dieses Fenster kann geschlossen werden.</p>
+<p>The startup was stopped. You can close this window.</p>
+</body></html>"""
             )
-            self.open_browser_var = tk.BooleanVar(value=env.get("BUILDER_OPEN_BROWSER", "1") == "1")
+            return
+        self.send_error(404)
 
-            self.acceleration_options = recommended_acceleration_options(info)
-            if self.acceleration_var.get() not in self.acceleration_options:
-                self.acceleration_var.set(info["recommended_acceleration"])
-            if self.model_var.get() not in MODEL_OPTIONS:
-                self.custom_model_var.set(self.model_var.get())
-                self.model_var.set("custom")
+    def do_POST(self) -> None:
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path != "/submit":
+            self.send_error(404)
+            return
 
-            self.page_index = 0
-            self.pages: list[ttk.Frame] = []
+        form = self._read_form()
+        state = self.server.state
+        info = state.info
 
-            outer = ttk.Frame(self.root, padding=16)
-            outer.pack(fill="both", expand=True)
+        source_path = normalize_source_path(form.get("source_repo_path", ""))
+        if not source_path_valid(source_path):
+            self._send_html(self._wizard_html(error="Bitte einen existierenden Quellordner wählen. / Please choose an existing source directory."), status=400)
+            return
 
-            self.title_var = tk.StringVar()
-            ttk.Label(outer, textvariable=self.title_var, font=("TkDefaultFont", 14, "bold")).pack(anchor="w")
-            ttk.Label(
-                outer,
-                text=(
-                    "Einmaliger Setup-Wizard für den lokalen Builder. Danach geht es direkt auf die Web-Oberfläche.\n"
-                    "One-time setup wizard for the local builder. After that the flow continues to the web UI."
-                ),
-                wraplength=780,
-                justify="left",
-            ).pack(anchor="w", pady=(6, 12))
+        model_choice = form.get("model", "").strip() or state.current_model
+        custom_model = form.get("custom_model", "").strip()
+        model = custom_model if model_choice == "custom" else model_choice
+        if not model:
+            self._send_html(self._wizard_html(error="Bitte ein Modell wählen. / Please choose a model."), status=400)
+            return
 
-            self.content = ttk.Frame(outer)
-            self.content.pack(fill="both", expand=True)
+        acceleration_options = recommended_acceleration_options(info)
+        acceleration = form.get("acceleration", "").strip() or state.current_acceleration
+        if acceleration not in acceleration_options:
+            self._send_html(self._wizard_html(error="Ungültiger Beschleunigungsmodus. / Invalid acceleration mode."), status=400)
+            return
 
-            nav = ttk.Frame(outer)
-            nav.pack(fill="x", pady=(12, 0))
-            self.cancel_button = ttk.Button(nav, text="Abbrechen / Cancel", command=self.cancel)
-            self.cancel_button.pack(side="left")
-            self.back_button = ttk.Button(nav, text="Zurück / Back", command=self.back)
-            self.back_button.pack(side="left", padx=(8, 0))
-            self.next_button = ttk.Button(nav, text="Weiter / Next", command=self.next)
-            self.next_button.pack(side="right")
-            self.finish_button = ttk.Button(nav, text="Speichern und schließen / Save and close", command=self.finish)
-            self.finish_button.pack(side="right", padx=(0, 8))
+        open_browser = form.get("open_browser") == "1"
 
-            self.review_text: tk.Text | None = None
-            self.custom_model_entry: ttk.Entry | None = None
+        merged = apply_setup_values(
+            state.env,
+            source_repo_path=source_path,
+            default_model=model,
+            acceleration=acceleration,
+            open_browser=open_browser,
+        )
+        write_env_file(state.env_path, merged, state.order)
 
-            self._build_pages()
-            self.show_page(0)
+        target_url = f"http://localhost:{merged.get('OPENWEBUI_PORT', '3000')}"
+        wait_url = spawn_redirect_bridge(target_url) if open_browser else None
 
-        def _build_pages(self) -> None:
-            self.pages = [self._page_welcome(), self._page_source(), self._page_runtime(), self._page_review()]
-
-        def _page_welcome(self) -> ttk.Frame:
-            frame = ttk.Frame(self.content)
-            ttk.Label(
-                frame,
-                text=(
-                    "Willkommen. Der Wizard richtet Quelle, Modell und Beschleunigungsmodus ein und schreibt danach die .env für den Builder.\n\n"
-                    "Welcome. The wizard configures source, model, and acceleration mode, then writes the .env for the builder."
-                ),
-                wraplength=760,
-                justify="left",
-            ).pack(anchor="w")
-            summary = tk.Text(frame, height=16, wrap="word")
-            summary.pack(fill="both", expand=True, pady=(14, 0))
-            summary.insert("1.0", "\n".join(host_summary_lines(info)))
-            summary.configure(state="disabled")
-            return frame
-
-        def _page_source(self) -> ttk.Frame:
-            frame = ttk.Frame(self.content)
-            ttk.Label(frame, text="Schritt 1 – Quellpfad wählen / Step 1 – Choose source path", font=("TkDefaultFont", 11, "bold")).pack(anchor="w")
-            ttk.Label(
-                frame,
-                text=(
-                    "Der Builder liest diese Quelle nur read-only. Ausgaben landen weiter nur in der Sandbox.\n"
-                    "The builder reads this source in read-only mode. Outputs still go only into the sandbox."
-                ),
-                wraplength=760,
-                justify="left",
-            ).pack(anchor="w", pady=(8, 16))
-            row = ttk.Frame(frame)
-            row.pack(fill="x")
-            entry = ttk.Entry(row, textvariable=self.source_var)
-            entry.pack(side="left", fill="x", expand=True)
-            ttk.Button(row, text="Ordner wählen / Choose folder", command=self.choose_source).pack(side="left", padx=(8, 0))
-            ttk.Label(
-                frame,
-                text=(
-                    "Beispiel: ein lokales Arbeitsrepo oder ein read-only aufbereiteter Quellordner.\n"
-                    "Example: a local working repo or a prepared read-only source directory."
-                ),
-                wraplength=760,
-                justify="left",
-            ).pack(anchor="w", pady=(16, 0))
-            return frame
-
-        def _page_runtime(self) -> ttk.Frame:
-            frame = ttk.Frame(self.content)
-            ttk.Label(frame, text="Schritt 2 – Standardlaufzeit wählen / Step 2 – Choose runtime", font=("TkDefaultFont", 11, "bold")).pack(anchor="w")
-            ttk.Label(
-                frame,
-                text="Der Standard bleibt klein und einsteigerfreundlich. / The default stays small and beginner-friendly.",
-                wraplength=760,
-                justify="left",
-            ).pack(anchor="w", pady=(8, 16))
-
-            ttk.Label(frame, text="Standardmodell / Default model").pack(anchor="w")
-            model_box = ttk.Combobox(frame, textvariable=self.model_var, values=MODEL_OPTIONS, state="readonly")
-            model_box.pack(anchor="w", fill="x")
-            model_box.bind("<<ComboboxSelected>>", lambda _event: self.update_custom_model_state())
-
-            ttk.Label(frame, text="Eigenes Modell / Custom model", padding=(0, 16, 0, 0)).pack(anchor="w")
-            self.custom_model_entry = ttk.Entry(frame, textvariable=self.custom_model_var)
-            self.custom_model_entry.pack(anchor="w", fill="x")
-
-            ttk.Label(frame, text="Beschleunigungsmodus / Acceleration mode", padding=(0, 16, 0, 0)).pack(anchor="w")
-            ttk.Combobox(
-                frame,
-                textvariable=self.acceleration_var,
-                values=self.acceleration_options,
-                state="readonly",
-            ).pack(anchor="w", fill="x")
-
-            ttk.Checkbutton(
-                frame,
-                text="Web-Oberfläche nach dem Start automatisch im Browser öffnen / Open the web UI in the browser after startup",
-                variable=self.open_browser_var,
-            ).pack(anchor="w", pady=(16, 0))
-
-            host_note = tk.Text(frame, height=8, wrap="word")
-            host_note.pack(fill="both", expand=True, pady=(16, 0))
-            host_note.insert(
-                "1.0",
-                "\n".join(
-                    [
-                        f"Empfehlung dieses Hosts / Host recommendation: {info['recommended_acceleration']}",
-                        f"Empfohlenes Startmodell / Recommended starter model: {info['recommended_model']}",
-                        "Tipp / Tip: stärkere Geräte können später in der .env auf größere Modelle wechseln.",
-                    ]
-                ),
+        if wait_url:
+            self._redirect(wait_url)
+        else:
+            self._send_html(
+                f"""<!doctype html>
+<html lang="de">
+<head><meta charset="utf-8"><title>Setup gespeichert</title></head>
+<body style="font-family:system-ui;padding:24px;background:#0b0f14;color:#d8dee9">
+<h1>Setup gespeichert / Setup saved</h1>
+<p>Die Einrichtung wurde gespeichert. Der normale Builder-Start läuft jetzt weiter.</p>
+<p>The setup was saved. The normal builder startup now continues.</p>
+<p>Open WebUI wird nicht automatisch geöffnet. Ziel / Target:
+<a href="{html.escape(target_url)}">{html.escape(target_url)}</a></p>
+</body>
+</html>"""
             )
-            host_note.configure(state="disabled")
-            self.update_custom_model_state()
-            return frame
 
-        def _page_review(self) -> ttk.Frame:
-            frame = ttk.Frame(self.content)
-            ttk.Label(frame, text="Schritt 3 – Zusammenfassung / Step 3 – Review", font=("TkDefaultFont", 11, "bold")).pack(anchor="w")
-            ttk.Label(
-                frame,
-                text=(
-                    "Wenn du speicherst, schreibt der Wizard die .env und schließt sich danach. "
-                    "Dann läuft der normale Builder-Pfad weiter.\n"
-                    "When you save, the wizard writes the .env and then closes. "
-                    "After that the normal builder path continues."
-                ),
-                wraplength=760,
-                justify="left",
-            ).pack(anchor="w", pady=(8, 16))
-            self.review_text = tk.Text(frame, height=20, wrap="word")
-            self.review_text.pack(fill="both", expand=True)
-            return frame
+        state.saved_event.set()
 
-        def choose_source(self) -> None:
-            selected = filedialog.askdirectory(title="Quellordner wählen / Choose source folder")
-            if selected:
-                self.source_var.set(normalize_source_path(selected))
+    def _wizard_html(self, error: str | None = None) -> str:
+        state = self.server.state
+        info = state.info
+        acceleration_options = recommended_acceleration_options(info)
+        current_model = state.current_model
+        if current_model not in MODEL_OPTIONS:
+            model_choice = "custom"
+            custom_model = current_model
+        else:
+            model_choice = current_model
+            custom_model = ""
 
-        def update_custom_model_state(self) -> None:
-            if not self.custom_model_entry:
-                return
-            if self.model_var.get() == "custom":
-                self.custom_model_entry.configure(state="normal")
-            else:
-                self.custom_model_entry.configure(state="disabled")
-                self.custom_model_var.set("")
+        options_html = "".join(
+            f'<option value="{html.escape(option)}"{" selected" if option == model_choice else ""}>{html.escape(option)}</option>'
+            for option in MODEL_OPTIONS
+        )
+        acceleration_html = "".join(
+            f'<option value="{html.escape(option)}"{" selected" if option == state.current_acceleration else ""}>{html.escape(option)}</option>'
+            for option in acceleration_options
+        )
+        host_cards = "".join(
+            f"<li>{html.escape(line)}</li>"
+            for line in host_summary_lines(info)
+        )
+        error_html = (
+            f'<div class="notice error">{html.escape(error)}</div>'
+            if error
+            else ""
+        )
+        checked = "checked" if state.current_browser else ""
+        source_value = html.escape(state.current_source)
+        custom_value = html.escape(custom_model)
 
-        def current_model(self) -> str:
-            if self.model_var.get() == "custom":
-                return self.custom_model_var.get().strip()
-            return self.model_var.get().strip()
+        return f"""<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>ToF Local Builder – Setup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {{
+      color-scheme: dark;
+      --bg: #0b0f14;
+      --panel: rgba(17, 22, 29, 0.96);
+      --panel-soft: rgba(13, 18, 25, 0.92);
+      --border: #223042;
+      --text: #d8dee9;
+      --muted: #91a0b5;
+      --accent: #6ea8fe;
+      --accent-strong: #8ab8ff;
+      --danger: #ff8f8f;
+      --ok: #7bd88f;
+      --shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+      --radius: 18px;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(110, 168, 254, 0.12), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(123, 216, 143, 0.08), transparent 22%),
+        linear-gradient(180deg, #091018 0%, #0b0f14 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 20px 48px;
+    }}
+    .shell {{
+      width: min(1040px, 100%);
+      margin: 0 auto;
+    }}
+    .hero {{
+      display: grid;
+      gap: 24px;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      align-items: start;
+    }}
+    .panel {{
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }}
+    .intro {{
+      padding: 28px;
+    }}
+    .eyebrow {{
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(110, 168, 254, 0.26);
+      background: rgba(110, 168, 254, 0.08);
+      color: var(--accent-strong);
+      font-size: 0.86rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }}
+    h1 {{
+      margin: 16px 0 12px;
+      font-size: clamp(1.9rem, 4vw, 3rem);
+      line-height: 1.08;
+    }}
+    p {{
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.66;
+    }}
+    .grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 22px;
+    }}
+    .mini {{
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }}
+    .mini h2 {{
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }}
+    .mini ul {{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }}
+    .form-panel {{
+      padding: 28px;
+    }}
+    .form-title {{
+      margin: 0 0 6px;
+      font-size: 1.25rem;
+    }}
+    .notice {{
+      margin-bottom: 16px;
+      border-radius: 14px;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      background: rgba(11, 15, 20, 0.74);
+      color: var(--text);
+    }}
+    .notice.error {{
+      border-color: rgba(255, 143, 143, 0.36);
+      background: rgba(255, 143, 143, 0.08);
+      color: #ffd7d7;
+    }}
+    form {{
+      display: grid;
+      gap: 16px;
+    }}
+    label {{
+      display: grid;
+      gap: 8px;
+      font-size: 0.94rem;
+      color: var(--text);
+    }}
+    label span small {{
+      display: block;
+      color: var(--muted);
+      font-size: 0.83rem;
+      margin-top: 4px;
+      font-weight: 400;
+    }}
+    input[type="text"], select {{
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(8, 12, 18, 0.92);
+      color: var(--text);
+      padding: 13px 14px;
+      font-size: 0.95rem;
+      outline: none;
+    }}
+    input[type="text"]:focus, select:focus {{
+      border-color: rgba(110, 168, 254, 0.7);
+      box-shadow: 0 0 0 3px rgba(110, 168, 254, 0.14);
+    }}
+    .checkbox {{
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }}
+    .checkbox input {{
+      margin-top: 2px;
+    }}
+    .actions {{
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }}
+    button, .link-button {{
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 18px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }}
+    button {{
+      background: linear-gradient(180deg, #79b0ff 0%, #5f9fff 100%);
+      color: #07111b;
+      min-width: 220px;
+    }}
+    .link-button {{
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }}
+    .host-list {{
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }}
+    .host-list li {{
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 13px;
+      color: var(--muted);
+    }}
+    @media (max-width: 860px) {{
+      .hero {{
+        grid-template-columns: 1fr;
+      }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="hero">
+      <section class="panel intro">
+        <div class="eyebrow">local setup · de / en</div>
+        <h1>ToF Local Builder<br>Erstsetup / First setup</h1>
+        <p>
+          Diese kurze lokale Seite richtet den Builder einmal ein und übergibt danach an die Hauptoberfläche.
+          Die Quelle bleibt read-only. Schreibpfade bleiben in der Sandbox.
+        </p>
+        <p>
+          This short local page configures the builder once and then hands over to the main interface.
+          The source remains read-only. Writable paths stay inside the sandbox.
+        </p>
+        <div class="grid">
+          <article class="mini">
+            <h2>Was hier gesetzt wird / What gets configured</h2>
+            <ul>
+              <li>Quellpfad / Source path</li>
+              <li>Standardmodell / Default model</li>
+              <li>Beschleunigungsmodus / Acceleration mode</li>
+              <li>Browser-Weitergabe / Browser handoff</li>
+            </ul>
+          </article>
+          <article class="mini">
+            <h2>Ablauf / Flow</h2>
+            <ul>
+              <li>Setup speichern / Save setup</li>
+              <li>Normaler Start läuft weiter / Normal startup continues</li>
+              <li>Danach Übergabe an Open WebUI / Then handoff to Open WebUI</li>
+            </ul>
+          </article>
+        </div>
+      </section>
 
-        def validate_current_page(self) -> bool:
-            if self.page_index == 1:
-                candidate = normalize_source_path(self.source_var.get())
-                if not source_path_valid(candidate):
-                    messagebox.showerror(
-                        "Ungültiger Pfad / Invalid path",
-                        "Bitte einen existierenden Quellordner auswählen.\nPlease choose an existing source directory.",
-                    )
-                    return False
-                self.source_var.set(candidate)
-            if self.page_index == 2 and not self.current_model():
-                messagebox.showerror(
-                    "Modell fehlt / Model missing",
-                    "Bitte ein Standardmodell auswählen oder einen eigenen Modellnamen eingeben.\n"
-                    "Please choose a default model or enter a custom model name.",
-                )
-                return False
-            return True
+      <section class="panel form-panel">
+        <h2 class="form-title">Lokale Einrichtung / Local configuration</h2>
+        <p>Der Standard bleibt klein und einsteigerfreundlich. / The default stays small and beginner-friendly.</p>
+        {error_html}
+        <form method="post" action="/submit">
+          <label>
+            <span>Quellpfad / Source path
+              <small>Existierender Ordner, read-only genutzt. / Existing directory, used read-only.</small>
+            </span>
+            <input type="text" name="source_repo_path" value="{source_value}" placeholder="/home/.../mein_repo" required>
+          </label>
 
-        def refresh_review(self) -> None:
-            if not self.review_text:
-                return
-            model = self.current_model() or info["recommended_model"]
-            content = [
-                "Builder-Zusammenfassung / Builder review",
-                "",
-                f"SOURCE_REPO_PATH={normalize_source_path(self.source_var.get())}",
-                f"DEFAULT_OLLAMA_MODEL={model}",
-                f"BUILDER_ACCELERATION={self.acceleration_var.get()}",
-                f"BUILDER_OPEN_BROWSER={'1' if self.open_browser_var.get() else '0'}",
-                "",
-                "Host-Erkennung / Host detection:",
-                *host_summary_lines(info),
-                "",
-                "Hinweis / Note: Nach dem Speichern schließt sich der Wizard. Danach startet der normale Builder weiter.",
-            ]
-            self.review_text.configure(state="normal")
-            self.review_text.delete("1.0", "end")
-            self.review_text.insert("1.0", "\n".join(content))
-            self.review_text.configure(state="disabled")
+          <label>
+            <span>Standardmodell / Default model</span>
+            <select name="model" id="model">
+              {options_html}
+            </select>
+          </label>
 
-        def show_page(self, index: int) -> None:
-            self.page_index = index
-            titles = [
-                "Willkommen / Welcome",
-                "Quelle auswählen / Choose source",
-                "Laufzeit festlegen / Choose runtime",
-                "Zusammenfassung / Review",
-            ]
-            self.title_var.set(titles[index])
-            for child in self.content.winfo_children():
-                child.pack_forget()
-            self.pages[index].pack(fill="both", expand=True)
-            self.back_button.configure(state="normal" if index > 0 else "disabled")
-            self.next_button.configure(state="normal" if index < len(self.pages) - 1 else "disabled")
-            self.finish_button.configure(state="normal" if index == len(self.pages) - 1 else "disabled")
-            if index == len(self.pages) - 1:
-                self.refresh_review()
+          <label>
+            <span>Eigenes Modell / Custom model
+              <small>Nur nötig, wenn oben „custom“ gewählt ist. / Only needed when “custom” is selected above.</small>
+            </span>
+            <input type="text" id="custom_model" name="custom_model" value="{custom_value}" placeholder="qwen2.5-coder:1.5b">
+          </label>
 
-        def next(self) -> None:
-            if not self.validate_current_page():
-                return
-            self.show_page(min(self.page_index + 1, len(self.pages) - 1))
+          <label>
+            <span>Beschleunigungsmodus / Acceleration mode</span>
+            <select name="acceleration">
+              {acceleration_html}
+            </select>
+          </label>
 
-        def back(self) -> None:
-            self.show_page(max(self.page_index - 1, 0))
+          <label class="checkbox">
+            <input type="checkbox" name="open_browser" value="1" {checked}>
+            <span>
+              <strong>Nach dem Start automatisch an die Hauptoberfläche übergeben / Automatically hand off to the main interface after startup</strong>
+            </span>
+          </label>
 
-        def cancel(self) -> None:
-            self.root.destroy()
+          <div class="actions">
+            <button type="submit">Speichern und weiter / Save and continue</button>
+            <a class="link-button" href="/cancel">Abbrechen / Cancel</a>
+          </div>
+        </form>
+      </section>
+    </div>
 
-        def finish(self) -> None:
-            if not self.validate_current_page():
-                return
-            merged = apply_setup_values(
-                env,
-                source_repo_path=self.source_var.get(),
-                default_model=self.current_model(),
-                acceleration=self.acceleration_var.get(),
-                open_browser=self.open_browser_var.get(),
-            )
-            write_env_file(env_path, merged, order)
-            messagebox.showinfo(
-                "Setup gespeichert / Setup saved",
-                "Die lokale Einrichtung wurde gespeichert. Der Wizard schließt sich jetzt.\n"
-                "The local setup has been saved. The wizard will close now.",
-            )
-            self.root.quit()
-            self.root.destroy()
+    <section class="panel" style="margin-top:24px;padding:24px;">
+      <h2 style="margin-top:0;">Erkannter Host / Detected host</h2>
+      <ul class="host-list">
+        {host_cards}
+      </ul>
+    </section>
+  </div>
+  <script>
+    const modelSelect = document.getElementById("model");
+    const customInput = document.getElementById("custom_model");
+    const syncCustomState = () => {{
+      const enabled = modelSelect.value === "custom";
+      customInput.disabled = !enabled;
+      if (!enabled) {{
+        customInput.value = "";
+      }}
+    }};
+    modelSelect.addEventListener("change", syncCustomState);
+    syncCustomState();
+  </script>
+</body>
+</html>"""
 
-        def run(self) -> int:
-            self.root.mainloop()
-            return 0
 
-    return WizardApp().run()
+def run_web_wizard(env_path: Path, env: dict, order: list[str], info: dict) -> int:
+    state = WizardState(env_path, env, order, info)
+    port = _find_free_port(WIZARD_DEFAULT_PORT)
+    server = WizardServer((WIZARD_HOST, port), state)
+    thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.2}, daemon=True)
+    thread.start()
+
+    url = f"http://{WIZARD_HOST}:{port}/"
+    print(f"Opening setup wizard: {url}")
+    opened = False
+    try:
+        opened = webbrowser.open(url, new=1)
+    except Exception:
+        opened = False
+    if not opened:
+        print("Browser konnte nicht automatisch geöffnet werden. / Browser could not be opened automatically.")
+        print(f"Bitte lokal öffnen / Please open locally: {url}")
+
+    try:
+        while True:
+            if state.saved_event.wait(timeout=0.2):
+                return 0
+            if state.cancelled_event.is_set():
+                return 1
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2.0)
 
 
 def ensure_wizard(force: bool = False) -> int:
@@ -438,8 +901,8 @@ def ensure_wizard(force: bool = False) -> int:
     info = detect_host()
     if not force and not needs_first_run_wizard(env):
         return 0
-    if _can_use_tk(info):
-        return run_tk_wizard(env_path, env, order, info)
+    if _supports_browser(info):
+        return run_web_wizard(env_path, env, order, info)
     return run_console_wizard(env_path, env, order, info)
 
 
@@ -448,8 +911,15 @@ def main() -> int:
     parser.add_argument("--ensure", action="store_true", help="run the wizard only when setup is incomplete")
     parser.add_argument("--force", action="store_true", help="force the wizard to run")
     parser.add_argument("--open-webui", action="store_true", help="open the local WebUI in the default browser")
+    parser.add_argument("--redirect-bridge", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--port", type=int, default=0, help=argparse.SUPPRESS)
+    parser.add_argument("--target-url", default="", help=argparse.SUPPRESS)
     args = parser.parse_args()
 
+    if args.redirect_bridge:
+        if not args.port or not args.target_url:
+            return 2
+        return run_redirect_bridge(args.port, args.target_url)
     if args.open_webui:
         return open_webui_browser()
     if args.force:
