@@ -11,7 +11,7 @@ HOST_UID=1000
 HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DEFAULT_OLLAMA_MODEL=qwen2.5:0.5b
-BUILDER_ACCELERATION=auto
+BUILDER_ACCELERATION=cpu
 BUILDER_OPEN_BROWSER=1
 BUILDER_SETUP_DONE=0
 ```
@@ -19,10 +19,8 @@ BUILDER_SETUP_DONE=0
 ## 2. Produkt starten
 
 ```bash
-bash scripts/start.sh
+bash scripts/up.sh
 ```
-
-Der erste Start stellt sicher, dass das Default-Ollama-Modell vorhanden ist. Wenn der Builder noch nicht eingerichtet ist, öffnet sich zuerst ein kleiner lokaler Setup-Wizard und übergibt danach an die Web-Oberfläche.
 
 ## 3. Produkt prüfen
 
@@ -30,27 +28,15 @@ Der erste Start stellt sicher, dass das Default-Ollama-Modell vorhanden ist. Wen
 bash scripts/check.sh
 ```
 
-## 4. GUI öffnen
+## 4. Erste Tool-Tests
 
-- `http://localhost:3000`
+- `roots`
+- `tree` mit `root=source`
+- `read` mit `root=source` und `path=README.md`
+- `mkdir` mit `target_root=output` und `relative_path=test`
+- `write` mit `target_root=output` und `relative_path=test/chat_note.md`
 
-## 5. In Open WebUI
-
-Gehe zu:
-
-- `Tool Server Management`
-
-Füge dort die Basis-URL ein:
-
-- `http://127.0.0.1:8099`
-
-## 6. Erste Chat-Tests
-
-- Root der Quelle auflisten
-- `README.md` lesen
-- eine Notiz nach `output/test/chat_note.md` schreiben
-
-## 7. Wizard später erneut öffnen, wenn nötig
+## 5. Wizard später erneut öffnen
 
 ```bash
 python3 scripts/wizard.py --force
