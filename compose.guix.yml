@@ -1,0 +1,69 @@
+services:
+  setup-web:
+    build:
+      context: .
+      dockerfile: services/setup_web/Dockerfile
+    container_name: tof_local_builder_setup_web
+    restart: unless-stopped
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    ports:
+      - "${SETUP_UI_PORT:-3011}:3011"
+    environment:
+      ENV_FILE_PATH: /workspace/repo/.env
+      OPENWEBUI_URL: http://127.0.0.1:${OPENWEBUI_PORT:-3000}
+      SETUP_UI_PORT: ${SETUP_UI_PORT:-3011}
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ./:/workspace/repo
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: tof_local_builder_ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    environment:
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-5m}
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ${OLLAMA_MODELS_PATH:-./data/ollama}:/root/.ollama
+
+  repo-bridge-v2:
+    build:
+      context: .
+      dockerfile: services/repo_bridge_v2/Dockerfile
+    container_name: tof_local_builder_repo_bridge_v2
+    restart: unless-stopped
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    ports:
+      - "${REPO_BRIDGE_PORT:-8099}:8099"
+    environment:
+      SOURCE_ROOT: /workspace/source_repo_ro
+      SANDBOX_ROOT: /workspace/builder_sandbox
+      ALLOW_ORIGINS: ${ALLOW_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ${SOURCE_REPO_PATH}:/workspace/source_repo_ro:ro
+      - ${BUILDER_SANDBOX_PATH:-./sandbox}:/workspace/builder_sandbox
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: tof_local_builder_openwebui
+    restart: unless-stopped
+    depends_on:
+      - ollama
+      - repo-bridge-v2
+    ports:
+      - "${OPENWEBUI_PORT:-3000}:8080"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      WEBUI_NAME: tof_local_builder
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ${OPENWEBUI_DATA_PATH:-./data/open-webui}:/app/backend/data
+      - ${SOURCE_REPO_PATH}:/workspace/source_repo_ro:ro
+      - ${BUILDER_SANDBOX_PATH:-./sandbox}:/workspace/builder_sandbox
+
+networks:
+  default:
+    name: tof_local_builder_net
