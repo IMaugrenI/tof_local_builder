@@ -1,7 +1,8 @@
 # tof_local_builder
 
 > Deutsch ist die Spiegelversion dieses Repositories. Der englische Primärtext liegt in `README.md`.
-> Die Design-Begründung liegt in `WHY_DE.md`. Der englische Primärtext dazu liegt in `WHY.md`.
+> Die Design-Begründung liegt in `docs/product/WHY_DE.md`. Der englische Primärtext dazu liegt in `docs/product/WHY.md`.
+> Produkt-Einstieg und Repo-Notizen liegen in `docs/product/START_HERE.md` und `docs/product/REPO_NOTE.md`.
 
 Lokaler GUI-first Builder für Einzelplatz- oder kleine lokale Firmen-Setups.
 
@@ -58,6 +59,11 @@ Mehr Details und Beispiele:
 - [`docs/repo_bridge.md`](docs/repo_bridge.md)
 - [`docs/builder_system_plan_v1_DE.md`](docs/builder_system_plan_v1_DE.md)
 - [`docs/builder_system_plan_v1.md`](docs/builder_system_plan_v1.md)
+- [`docs/product/START_HERE.md`](docs/product/START_HERE.md)
+- [`docs/product/WHY_DE.md`](docs/product/WHY_DE.md)
+- [`docs/product/WHY.md`](docs/product/WHY.md)
+- [`docs/product/REPO_NOTE.md`](docs/product/REPO_NOTE.md)
+- [`docs/legal/LICENSE_NOTE.md`](docs/legal/LICENSE_NOTE.md)
 
 ## Schnellstart
 
@@ -145,7 +151,8 @@ BUILDER_SETUP_DONE=0
 ## Wichtige Dateien
 
 - `compose.yml`
-- `compose.intel.yml`
+- `deploy/compose/compose.intel.yml`
+- `deploy/compose/compose.guix.yml`
 - `.env.example`
 - `scripts/setup.sh`
 - `scripts/up.sh`
@@ -162,6 +169,11 @@ BUILDER_SETUP_DONE=0
 - `docs/repo_bridge_DE.md`
 - `docs/builder_system_plan_v1_DE.md`
 - `docs/builder_system_plan_v1.md`
+- `docs/product/START_HERE.md`
+- `docs/product/WHY_DE.md`
+- `docs/product/WHY.md`
+- `docs/product/REPO_NOTE.md`
+- `docs/legal/LICENSE_NOTE.md`
 - `services/repo_bridge/`
 - `sandbox/`
 
