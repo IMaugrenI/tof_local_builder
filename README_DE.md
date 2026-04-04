@@ -80,6 +80,8 @@ bash scripts/check.sh
 4. First-Run-Fluss:
 
 - ein kleiner lokaler Setup-Wizard erscheint, wenn der Builder noch nicht eingerichtet ist
+- der Wizard fragt jetzt zuerst, wofür der Builder hauptsächlich gebraucht wird und wie leicht das Setup bleiben soll
+- auf Basis von Aufgabe und Profil empfiehlt der Wizard passende Builder-Modelle aus dem gruppierten internen Katalog
 - sobald das Setup gespeichert ist, läuft der normale Builder-Start weiter
 - nach dem Start geht es weiter zu `http://localhost:3000`
 
@@ -94,8 +96,8 @@ bash scripts/check.sh
 ## First-Run-Standards
 
 - der erste `up.sh`-Lauf stellt sicher, dass `DEFAULT_OLLAMA_MODEL` vorhanden ist
-- das Standardmodell ist `qwen2.5:0.5b`
-- der Setup-Wizard zeigt aktuell noch eine flache Modellauswahl, aber die Builder-Modellwahl wird nun aus gruppierten Katalogdaten in `model_catalog/` abgeleitet, damit der spätere task-first-Wizard auf einem stabilen internen Modellschnitt aufbauen kann
+- das Standardmodell bleibt `qwen2.5:0.5b`
+- der Wizard ist jetzt task-first und profile-first: erst Aufgabe und Setup-Gewicht, dann passende Modell-Empfehlung aus `model_catalog/`
 - der aktuelle kuratierte First-Run-Modellraum des Builders umfasst `qwen2.5:0.5b`, `qwen2.5:1.5b`, `qwen2.5:3b`, `llama3.2:1b`, `llama3.2:3b`, `gemma2:2b`, `qwen2.5-coder:0.5b`, `qwen2.5-coder:1.5b`, `qwen2.5-coder:3b` sowie `custom` für manuelle Tags
 - stärkere Hardware kann später über `.env` auf größere Ollama-Modelle wechseln
 - `BUILDER_ACCELERATION=cpu` hält den Stack zunächst auf einer portablen Basis; später kann in `.env` bewusst auf `auto` oder `intel` gewechselt werden, wenn man Hardware-Beschleunigung testen will
