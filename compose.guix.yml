@@ -10,7 +10,9 @@ services:
       - "${SETUP_UI_PORT:-3011}:3011"
     environment:
       ENV_FILE_PATH: /workspace/repo/.env
-      OPENWEBUI_URL: http://127.0.0.1:${OPENWEBUI_PORT:-3000}
+      HOST_SNAPSHOT_PATH: /workspace/repo/.runtime/host_snapshot.json
+      OPENWEBUI_BROWSER_URL: http://127.0.0.1:${OPENWEBUI_PORT:-3000}
+      OPENWEBUI_READY_URL: http://open-webui:8080
       SETUP_UI_PORT: ${SETUP_UI_PORT:-3011}
       TZ: ${TZ:-Europe/Berlin}
     volumes:
