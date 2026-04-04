@@ -39,6 +39,24 @@ This repository is meant for controlled local builder workflows:
 - `repo-bridge` = controlled read/write boundary for source and sandbox
 - `wizard.py` = one-time local setup guide before the web handoff
 
+## Repo-bridge tool surface
+
+The bridge is intentionally split into small clear operations so the tool layer stays easier to understand:
+
+- `roots` = show the available roots
+- `tree` = list a directory
+- `read` = read a file
+- `find` = find file and directory names
+- `search` = search text content inside files
+- `mkdir` = create a sandbox directory
+- `write` = write a text file into the sandbox
+- `doit` = small guided wrapper for `mkdir` and `write`
+
+More details and examples:
+
+- [`docs/repo_bridge.md`](docs/repo_bridge.md)
+- [`docs/repo_bridge_DE.md`](docs/repo_bridge_DE.md)
+
 ## Quick start
 
 1. prepare local setup:
@@ -80,6 +98,7 @@ bash scripts/check.sh
 - stronger hardware can switch to a larger Ollama model later by changing `.env`
 - `BUILDER_ACCELERATION=cpu` keeps the stack on the portable baseline by default; later you can switch to `auto` or `intel` in `.env` if you want to test hardware acceleration
 - the wizard can be reopened with `python3 scripts/wizard.py --force`
+- the GUI wizard is bilingual (`de/en`) and closes itself after the setup is saved
 
 ## Operator commands
 
@@ -127,6 +146,7 @@ BUILDER_SETUP_DONE=0
 - `scripts/wizard.py`
 - `docs/quickstart.md`
 - `docs/commands.md`
+- `docs/repo_bridge.md`
 - `services/repo_bridge/`
 - `sandbox/`
 

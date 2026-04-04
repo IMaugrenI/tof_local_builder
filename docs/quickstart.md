@@ -11,7 +11,7 @@ HOST_UID=1000
 HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DEFAULT_OLLAMA_MODEL=qwen2.5:0.5b
-BUILDER_ACCELERATION=auto
+BUILDER_ACCELERATION=cpu
 BUILDER_OPEN_BROWSER=1
 BUILDER_SETUP_DONE=0
 ```
@@ -19,7 +19,7 @@ BUILDER_SETUP_DONE=0
 ## 2. Start the product
 
 ```bash
-bash scripts/start.sh
+bash scripts/up.sh
 ```
 
 The first startup ensures the default Ollama model is present. If the builder is not configured yet, a small local setup wizard opens first and then hands over to the web surface.
@@ -46,9 +46,11 @@ Paste the base URL:
 
 ## 6. First chat tests
 
-- list the source root
-- read `README.md`
-- write a note into `output/test/chat_note.md`
+- call `roots`
+- call `tree` with `root=source`
+- call `read` with `root=source` and `path=README.md`
+- call `mkdir` with `target_root=output` and `relative_path=test`
+- call `write` with `target_root=output` and `relative_path=test/chat_note.md`
 
 ## 7. Reopen the setup wizard later if needed
 

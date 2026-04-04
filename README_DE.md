@@ -1,6 +1,7 @@
 # tof_local_builder
 
 > Deutsch ist die Spiegelversion dieses Repositories. Der englische Primärtext liegt in `README.md`.
+> Die Design-Begründung liegt in `WHY_DE.md`. Der englische Primärtext dazu liegt in `WHY.md`.
 
 Lokaler GUI-first Builder für Einzelplatz- oder kleine lokale Firmen-Setups.
 
@@ -37,6 +38,24 @@ Dieses Repository ist für kontrollierte lokale Builder-Workflows gedacht:
 - `open-webui` = Browser-GUI
 - `repo-bridge` = kontrollierte Lese-/Schreibgrenze für Quelle und Sandbox
 - `wizard.py` = einmalige lokale Setup-Hilfe vor der Übergabe an die Web-Oberfläche
+
+## Repo-Bridge-Werkzeugfläche
+
+Die Bridge ist bewusst in kleine klare Operationen geschnitten, damit die Tool-Ebene leichter verständlich bleibt:
+
+- `roots` = verfügbare Wurzeln anzeigen
+- `tree` = Verzeichnis auflisten
+- `read` = Datei lesen
+- `find` = Datei- und Ordnernamen finden
+- `search` = Textinhalt in Dateien suchen
+- `mkdir` = Sandbox-Ordner anlegen
+- `write` = Textdatei in die Sandbox schreiben
+- `doit` = kleiner geführter Wrapper für `mkdir` und `write`
+
+Mehr Details und Beispiele:
+
+- [`docs/repo_bridge_DE.md`](docs/repo_bridge_DE.md)
+- [`docs/repo_bridge.md`](docs/repo_bridge.md)
 
 ## Schnellstart
 
@@ -79,6 +98,7 @@ bash scripts/check.sh
 - stärkere Hardware kann später über `.env` auf größere Ollama-Modelle wechseln
 - `BUILDER_ACCELERATION=cpu` hält den Stack zunächst auf einer portablen Basis; später kann in `.env` bewusst auf `auto` oder `intel` gewechselt werden, wenn man Hardware-Beschleunigung testen will
 - der Wizard kann mit `python3 scripts/wizard.py --force` erneut geöffnet werden
+- der GUI-Wizard ist bilingual (`de/en`) und schließt sich nach dem Speichern selbst
 
 ## Befehle für den Betrieb
 
@@ -95,6 +115,7 @@ bash scripts/down.sh
 Mehr Details:
 
 - [`docs/commands_DE.md`](docs/commands_DE.md)
+- [`docs/commands.md`](docs/commands.md)
 
 ## Erforderliche `.env`-Werte
 
@@ -125,6 +146,7 @@ BUILDER_SETUP_DONE=0
 - `scripts/wizard.py`
 - `docs/quickstart_DE.md`
 - `docs/commands_DE.md`
+- `docs/repo_bridge_DE.md`
 - `services/repo_bridge/`
 - `sandbox/`
 
