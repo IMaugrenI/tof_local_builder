@@ -1,6 +1,6 @@
 # Warum dieses Repository existiert
 
-> Englisch ist der Primärtext dieses Repositories. Ein deutscher Klon liegt in `WHY_DE.md`.
+> Englisch ist der Primärtext dieses Repositories. Der englische Primärtext liegt in `WHY.md`.
 
 ## Problem
 
