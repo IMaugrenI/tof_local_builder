@@ -97,6 +97,7 @@ bash scripts/check.sh
 - the default model is `qwen2.5:0.5b`
 - stronger hardware can switch to a larger Ollama model later by changing `.env`
 - `BUILDER_ACCELERATION=cpu` keeps the stack on the portable baseline by default; later you can switch to `auto` or `intel` in `.env` if you want to test hardware acceleration
+- `BUILDER_BIND_HOST=127.0.0.1` keeps the published ports local-only by default; only change it if you intentionally want host-external access
 - the wizard can be reopened with `python3 scripts/wizard.py --force`
 - the GUI wizard is bilingual (`de/en`) and closes itself after the setup is saved
 
@@ -122,6 +123,7 @@ More details:
 ```env
 SOURCE_REPO_PATH=/absolute/path/to/the/source/repo
 BUILDER_SANDBOX_PATH=./sandbox
+BUILDER_BIND_HOST=127.0.0.1
 HOST_UID=1000
 HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000

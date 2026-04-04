@@ -4,7 +4,7 @@ services:
     container_name: tof_local_builder_ollama
     restart: unless-stopped
     ports:
-      - "${OLLAMA_PORT:-11434}:11434"
+      - "${BUILDER_BIND_HOST:-127.0.0.1}:${OLLAMA_PORT:-11434}:11434"
     environment:
       OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-5m}
       TZ: ${TZ:-Europe/Berlin}
@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     ports:
-      - "${REPO_BRIDGE_PORT:-8099}:8099"
+      - "${BUILDER_BIND_HOST:-127.0.0.1}:${REPO_BRIDGE_PORT:-8099}:8099"
     environment:
       SOURCE_ROOT: /workspace/source_repo_ro
       SANDBOX_ROOT: /workspace/builder_sandbox
@@ -37,7 +37,7 @@ services:
       - ollama
       - repo-bridge
     ports:
-      - "${OPENWEBUI_PORT:-3000}:8080"
+      - "${BUILDER_BIND_HOST:-127.0.0.1}:${OPENWEBUI_PORT:-3000}:8080"
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
       WEBUI_NAME: tof_local_builder

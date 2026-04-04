@@ -7,6 +7,7 @@ Copy `.env.example` to `.env` and set at least:
 ```env
 SOURCE_REPO_PATH=/absolute/path/to/the/source/repo
 BUILDER_SANDBOX_PATH=./sandbox
+BUILDER_BIND_HOST=127.0.0.1
 HOST_UID=1000
 HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
@@ -33,6 +34,8 @@ bash scripts/check.sh
 ## 4. Open the GUI
 
 - `http://localhost:3000`
+
+Published ports stay bound to `127.0.0.1` by default through `BUILDER_BIND_HOST`.
 
 ## 5. In Open WebUI
 
