@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import os
 import platform
 import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 ENV_DEFAULTS = {
     "TZ": "Europe/Berlin",
@@ -54,7 +55,7 @@ ENV_KEY_ORDER = [
 ]
 
 PLACEHOLDER_SOURCE = "/absolute/path/to/the/source/repo"
-MODEL_OPTIONS = [
+FALLBACK_MODEL_OPTIONS = [
     "qwen2.5:0.5b",
     "qwen2.5:1.5b",
     "qwen2.5:3b",
@@ -66,6 +67,89 @@ MODEL_OPTIONS = [
     "qwen2.5-coder:3b",
     "custom",
 ]
+
+
+def get_root_dir() -> Path:
+    return Path(__file__).resolve().parent.parent
+
+
+def get_default_env_path() -> Path:
+    return get_root_dir() / ".env"
+
+
+def get_model_catalog_dir() -> Path:
+    return get_root_dir() / "model_catalog"
+
+
+def get_builder_catalog_path() -> Path:
+    return get_model_catalog_dir() / "builder_catalog.json"
+
+
+def load_builder_catalog(path: Path | None = None) -> Dict[str, Any]:
+    catalog_path = path or get_builder_catalog_path()
+    if not catalog_path.exists():
+        return {}
+    try:
+        payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _append_unique_tag(options: List[str], seen: set[str], raw_tag: Any) -> None:
+    if not isinstance(raw_tag, str):
+        return
+    tag = raw_tag.strip()
+    if not tag or tag in seen:
+        return
+    seen.add(tag)
+    options.append(tag)
+
+
+def _flatten_builder_catalog(catalog: Dict[str, Any]) -> List[str]:
+    options: List[str] = []
+    seen: set[str] = set()
+
+    groups = catalog.get("groups")
+    if isinstance(groups, list):
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            profiles = group.get("profiles")
+            if not isinstance(profiles, list):
+                continue
+            for profile in profiles:
+                if not isinstance(profile, dict):
+                    continue
+                models = profile.get("models")
+                if not isinstance(models, list):
+                    continue
+                for model in models:
+                    if isinstance(model, dict):
+                        _append_unique_tag(options, seen, model.get("tag"))
+                    else:
+                        _append_unique_tag(options, seen, model)
+
+    manual_fallback = catalog.get("manual_fallback")
+    if isinstance(manual_fallback, dict):
+        _append_unique_tag(options, seen, manual_fallback.get("tag"))
+    elif isinstance(manual_fallback, list):
+        for item in manual_fallback:
+            if isinstance(item, dict):
+                _append_unique_tag(options, seen, item.get("tag"))
+            else:
+                _append_unique_tag(options, seen, item)
+
+    return options
+
+
+def load_model_options() -> List[str]:
+    catalog = load_builder_catalog()
+    options = _flatten_builder_catalog(catalog)
+    return options or list(FALLBACK_MODEL_OPTIONS)
+
+
+MODEL_OPTIONS = load_model_options()
 
 
 def parse_env_file(path: Path) -> Tuple[Dict[str, str], List[str]]:
@@ -105,14 +189,6 @@ def write_env_file(path: Path, env: Dict[str, str], existing_order: List[str] | 
             keys.append(key)
     lines = [f"{key}={env[key]}" for key in keys if key in env and env[key] is not None]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
-def get_root_dir() -> Path:
-    return Path(__file__).resolve().parent.parent
-
-
-def get_default_env_path() -> Path:
-    return get_root_dir() / ".env"
 
 
 def _ram_gb() -> float | None:

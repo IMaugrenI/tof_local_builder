@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "product": "tof_local_builder",
+  "description": "Grouped builder model catalog used to prepare the future task-first wizard while preserving the current flat model selection flow.",
+  "groups": [
+    {
+      "key": "general",
+      "label": "General",
+      "profiles": [
+        {
+          "key": "cpu_light",
+          "label": "CPU-light",
+          "task_labels": ["chat", "writing"],
+          "models": [
+            {
+              "tag": "qwen2.5:0.5b",
+              "recommended": true,
+              "default_candidate": true,
+              "visible_in_wizard": true,
+              "experimental": false,
+              "notes": "Smallest default builder general model."
+            },
+            {
+              "tag": "llama3.2:1b",
+              "recommended": true,
+              "default_candidate": false,
+              "visible_in_wizard": true,
+              "experimental": false,
+              "notes": "Light alternative for general local work."
+            }
+          ]
+        },
+        {
+          "key": "cpu_balanced",
+          "label": "CPU-balanced",
+          "task_labels": ["chat", "writing", "analysis"],
+          "models": [
+            {
+              "tag": "qwen2.5:1.5b",
+              "recommended": true,
+              "default_candidate": false,
+              "visible_in_wizard": true,
+              "experimental": false,
+              "notes": "Balanced general builder option."
+            },
+            {
+              "tag": "gemma2:2b",
+              "recommended": true,
+              "default_candidate": false,
+              "visible_in_wizard": true,
+              "experimental": false,
+              "notes": "Balanced stronger general alternative."
+            }
+          ]
+        },
+        {
+          "key": "optional_3b",
+          "label": "Optional 3B",
+          "task_labels": ["chat", "writing", "analysis"],
+          "models": [
+            {
+              "tag": "qwen2.5:3b",
+              "recommended": true,
+              "default_candidate": false,
+              "visible_in_wizard": true,
+              "experimental": false,
+              "notes": "Explicit stronger general profile."
+            },
+            {
+              "tag": "llama3.2:3b",
+              "recommended": true,
+              "default_candidate": false,
+              "visible_in_wizard": true,
+              "experimental": false,
+              "notes": "Explicit stronger general alternative."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "code",
+      "label": "Code",
+      "profiles": [
+        {
+          "key": "cpu_light",
+          "label": "CPU-light",
+          "task_labels": ["code", "repo_help"],
+          "models": [
+            {
+              "tag": "qwen2.5-coder:0.5b",
+              "recommended": true,
+              "default_candidate": false,
+              "visible_in_wizard": true,
+              "experimental": false,
+              "notes": "Lightest coding helper profile."
+            }
+          ]
+        },
+        {
+          "key": "cpu_balanced",
+          "label": "CPU-balanced",
+          "task_labels": ["code", "repo_help"],
+          "models": [
+            {
+              "tag": "qwen2.5-coder:1.5b",
+              "recommended": true,
+              "default_candidate": false,
+              "visible_in_wizard": true,
+              "experimental": false,
+              "notes": "Balanced coding helper profile."
+            }
+          ]
+        },
+        {
+          "key": "optional_3b",
+          "label": "Optional 3B",
+          "task_labels": ["code", "repo_help"],
+          "models": [
+            {
+              "tag": "qwen2.5-coder:3b",
+              "recommended": true,
+              "default_candidate": false,
+              "visible_in_wizard": true,
+              "experimental": false,
+              "notes": "Explicit stronger coding profile."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "manual_fallback": {
+    "tag": "custom",
+    "label": "Custom",
+    "visible_in_wizard": true,
+    "experimental": false,
+    "notes": "Manual model tag entry for advanced users."
+  }
+}
