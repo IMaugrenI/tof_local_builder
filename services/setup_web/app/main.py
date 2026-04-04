@@ -14,11 +14,10 @@ from builder_bootstrap import (  # type: ignore
     MODEL_OPTIONS,
     apply_setup_values,
     detect_host,
+    is_placeholder_source,
     merge_env,
-    needs_first_run_wizard,
     parse_env_file,
     recommended_acceleration_options,
-    source_path_valid,
     write_env_file,
 )
 
@@ -26,7 +25,7 @@ APP_TITLE = "tof_local_builder_setup_web"
 OPENWEBUI_URL = os.getenv("OPENWEBUI_URL", "http://127.0.0.1:3000")
 ENV_FILE_PATH = Path(os.getenv("ENV_FILE_PATH", "/workspace/repo/.env")).resolve()
 
-app = FastAPI(title=APP_TITLE, version="0.1.0")
+app = FastAPI(title=APP_TITLE, version="0.1.1")
 
 
 class SaveSetupRequest(BaseModel):
@@ -41,12 +40,34 @@ def load_env() -> tuple[dict[str, str], list[str]]:
     return merge_env(env), order
 
 
+def web_setup_saved(env: dict[str, str]) -> bool:
+    source = (env.get("SOURCE_REPO_PATH") or "").strip()
+    if env.get("BUILDER_SETUP_DONE") != "1":
+        return False
+    if is_placeholder_source(source):
+        return False
+    if not env.get("HOST_UID") or not env.get("HOST_GID"):
+        return False
+    return True
+
+
+def normalize_web_source_path(value: str) -> str:
+    candidate = value.strip()
+    if not candidate:
+        return ""
+    if candidate.startswith("~"):
+        return candidate
+    if candidate.startswith("/"):
+        return str(Path(candidate).resolve())
+    return candidate
+
+
 @app.get("/health")
 def health() -> dict[str, object]:
     env, _ = load_env()
     return {
         "status": "ok",
-        "configured": not needs_first_run_wizard(env),
+        "configured": web_setup_saved(env),
         "env_file": str(ENV_FILE_PATH),
         "openwebui_url": OPENWEBUI_URL,
     }
@@ -57,7 +78,7 @@ def api_state() -> dict[str, object]:
     env, _ = load_env()
     info = detect_host()
     return {
-        "configured": not needs_first_run_wizard(env),
+        "configured": web_setup_saved(env),
         "env_file": str(ENV_FILE_PATH),
         "openwebui_url": OPENWEBUI_URL,
         "host": info,
@@ -76,8 +97,8 @@ def api_state() -> dict[str, object]:
 def api_save(payload: SaveSetupRequest) -> dict[str, object]:
     env, order = load_env()
     info = detect_host()
-    normalized_source = payload.source_repo_path.strip()
-    if not source_path_valid(normalized_source):
+    normalized_source = normalize_web_source_path(payload.source_repo_path)
+    if not normalized_source or is_placeholder_source(normalized_source):
         raise HTTPException(status_code=400, detail="SOURCE_REPO_PATH is missing or invalid.")
     allowed_acceleration = recommended_acceleration_options(info)
     if payload.acceleration not in allowed_acceleration:
@@ -95,7 +116,7 @@ def api_save(payload: SaveSetupRequest) -> dict[str, object]:
     write_env_file(ENV_FILE_PATH, merged, order)
     return {
         "status": "ok",
-        "configured": True,
+        "configured": web_setup_saved(merged),
         "openwebui_url": OPENWEBUI_URL,
         "saved": {
             "SOURCE_REPO_PATH": merged["SOURCE_REPO_PATH"],
