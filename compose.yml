@@ -1,6 +1,6 @@
 services:
   ollama:
-    image: ollama/ollama:latest
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
     container_name: tof_local_builder_ollama
     restart: unless-stopped
     ports:
@@ -30,7 +30,7 @@ services:
       - ${BUILDER_SANDBOX_PATH:-./sandbox}:/workspace/builder_sandbox
 
   open-webui:
-    image: ghcr.io/open-webui/open-webui:main
+    image: ${OPENWEBUI_IMAGE:-ghcr.io/open-webui/open-webui:main}
     container_name: tof_local_builder_openwebui
     restart: unless-stopped
     depends_on:
