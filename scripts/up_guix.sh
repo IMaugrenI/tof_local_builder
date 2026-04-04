@@ -24,15 +24,33 @@ raise SystemExit(0 if needs_first_run_wizard(env) else 1)
 PY
 }
 
+wait_for_url() {
+  local url="$1"
+  local label="$2"
+  local attempts="${3:-60}"
+  local sleep_seconds="${4:-2}"
+  for _ in $(seq 1 "$attempts"); do
+    if curl -fsS "$url" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep "$sleep_seconds"
+  done
+  echo "[fail] ${label} not ready -> ${url}" >&2
+  return 1
+}
+
 set -a
 source .env
 set +a
 
 mkdir -p data/ollama data/open-webui sandbox/workspace sandbox/output sandbox/examples
 
+wizard_needed=0
 if needs_wizard; then
+  wizard_needed=1
   compose_guix_cmd up -d --build setup-web
   SETUP_URL="http://127.0.0.1:${SETUP_UI_PORT:-3011}"
+  wait_for_url "${SETUP_URL}/health" "setup-web" 60 1
   echo
   echo "GUiX setup page: ${SETUP_URL}"
   echo "Save the setup there once. Afterwards this script continues automatically."
@@ -53,12 +71,8 @@ fi
 compose_guix_cmd up -d --build ollama repo-bridge-v2 open-webui
 
 echo "Waiting for services..."
-for _ in $(seq 1 45); do
-  if curl -fsS "http://127.0.0.1:${REPO_BRIDGE_PORT:-8099}/health" >/dev/null 2>&1; then
-    break
-  fi
-  sleep 2
-done
+wait_for_url "http://127.0.0.1:${REPO_BRIDGE_PORT:-8099}/health" "repo-bridge-v2" 45 2
+wait_for_url "http://127.0.0.1:${OPENWEBUI_PORT:-3000}" "open-webui" 90 2
 
 docker exec tof_local_builder_ollama ollama pull "${DEFAULT_OLLAMA_MODEL:-qwen2.5:0.5b}" >/dev/null 2>&1 || true
 
@@ -74,7 +88,7 @@ echo
 echo "Tool server base URL for Open WebUI > Tool Server Management:"
 echo "http://127.0.0.1:${REPO_BRIDGE_PORT:-8099}"
 
-if [ "${BUILDER_OPEN_BROWSER:-1}" = "1" ]; then
+if [ "${BUILDER_OPEN_BROWSER:-1}" = "1" ] && [ "$wizard_needed" -eq 0 ]; then
   python3 - <<PY >/dev/null 2>&1 || true
 import webbrowser
 webbrowser.open("http://127.0.0.1:${OPENWEBUI_PORT:-3000}", new=2)

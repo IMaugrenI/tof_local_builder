@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import urllib.request
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -25,7 +26,7 @@ APP_TITLE = "tof_local_builder_setup_web"
 OPENWEBUI_URL = os.getenv("OPENWEBUI_URL", "http://127.0.0.1:3000")
 ENV_FILE_PATH = Path(os.getenv("ENV_FILE_PATH", "/workspace/repo/.env")).resolve()
 
-app = FastAPI(title=APP_TITLE, version="0.1.1")
+app = FastAPI(title=APP_TITLE, version="0.1.2")
 
 
 class SaveSetupRequest(BaseModel):
@@ -62,6 +63,15 @@ def normalize_web_source_path(value: str) -> str:
     return candidate
 
 
+def openwebui_ready() -> bool:
+    try:
+        request = urllib.request.Request(OPENWEBUI_URL, method="GET")
+        with urllib.request.urlopen(request, timeout=1.5) as response:
+            return int(getattr(response, "status", 200)) < 500
+    except Exception:
+        return False
+
+
 @app.get("/health")
 def health() -> dict[str, object]:
     env, _ = load_env()
@@ -70,6 +80,7 @@ def health() -> dict[str, object]:
         "configured": web_setup_saved(env),
         "env_file": str(ENV_FILE_PATH),
         "openwebui_url": OPENWEBUI_URL,
+        "openwebui_ready": openwebui_ready(),
     }
 
 
@@ -81,6 +92,7 @@ def api_state() -> dict[str, object]:
         "configured": web_setup_saved(env),
         "env_file": str(ENV_FILE_PATH),
         "openwebui_url": OPENWEBUI_URL,
+        "openwebui_ready": openwebui_ready(),
         "host": info,
         "model_options": MODEL_OPTIONS,
         "acceleration_options": recommended_acceleration_options(info),
@@ -90,6 +102,15 @@ def api_state() -> dict[str, object]:
             "acceleration": env.get("BUILDER_ACCELERATION", info["recommended_acceleration"]),
             "open_browser": env.get("BUILDER_OPEN_BROWSER", "1") == "1",
         },
+    }
+
+
+@app.get("/api/openwebui-ready")
+def api_openwebui_ready() -> dict[str, object]:
+    return {
+        "status": "ok",
+        "openwebui_url": OPENWEBUI_URL,
+        "ready": openwebui_ready(),
     }
 
 
@@ -118,6 +139,7 @@ def api_save(payload: SaveSetupRequest) -> dict[str, object]:
         "status": "ok",
         "configured": web_setup_saved(merged),
         "openwebui_url": OPENWEBUI_URL,
+        "openwebui_ready": openwebui_ready(),
         "saved": {
             "SOURCE_REPO_PATH": merged["SOURCE_REPO_PATH"],
             "DEFAULT_OLLAMA_MODEL": merged["DEFAULT_OLLAMA_MODEL"],
@@ -129,11 +151,11 @@ def api_save(payload: SaveSetupRequest) -> dict[str, object]:
 
 
 INDEX_HTML = """<!doctype html>
-<html lang="de">
+<html lang=\"de\">
 <head>
-  <meta charset="utf-8" />
+  <meta charset=\"utf-8\" />
   <title>ToF Local Builder – GUiX Setup</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
   <style>
     :root {
       color-scheme: dark;
@@ -194,7 +216,7 @@ INDEX_HTML = """<!doctype html>
       font-size: 13px;
       margin-top: 6px;
     }
-    input[type="text"], select {
+    input[type=\"text\"], select {
       width: 100%;
       padding: 12px 14px;
       border-radius: 12px;
@@ -203,7 +225,7 @@ INDEX_HTML = """<!doctype html>
       color: var(--text);
       outline: none;
     }
-    input[type="checkbox"] {
+    input[type=\"checkbox\"] {
       transform: translateY(1px);
       margin-right: 8px;
     }
@@ -283,88 +305,89 @@ INDEX_HTML = """<!doctype html>
   </style>
 </head>
 <body>
-  <main class="shell">
-    <section class="card">
-      <div class="button-row" style="justify-content: space-between;">
+  <main class=\"shell\">
+    <section class=\"card\">
+      <div class=\"button-row\" style=\"justify-content: space-between;\">
         <div>
           <h1>ToF Local Builder – GUiX Setup</h1>
           <p>Lokaler Web-First-Wizard vor der Hauptoberfläche. / Local web-first wizard before the main surface.</p>
         </div>
-        <div id="configured-pill" class="status-pill status-warn">Setup offen / Setup pending</div>
+        <div id=\"configured-pill\" class=\"status-pill status-warn\">Setup offen / Setup pending</div>
       </div>
     </section>
 
-    <section class="card">
+    <section class=\"card\">
       <h2>Was passiert hier? / What happens here?</h2>
-      <div class="grid-2">
+      <div class=\"grid-2\">
         <div>
           <p>1. Du trägst den Quellpfad ein.</p>
           <p>2. Du wählst Modell und Beschleunigung.</p>
-          <p>3. Der Wizard speichert die lokale <span class="mono">.env</span>.</p>
-          <p>4. Danach startet der Hauptstack weiter und die Seite leitet auf Open WebUI um.</p>
+          <p>3. Der Wizard speichert die lokale <span class=\"mono\">.env</span>.</p>
+          <p>4. Danach wartet diese Seite, bis Open WebUI wirklich bereit ist, und leitet erst dann weiter.</p>
         </div>
         <div>
           <p>1. Enter the source path.</p>
           <p>2. Choose model and acceleration.</p>
-          <p>3. The wizard writes the local <span class="mono">.env</span>.</p>
-          <p>4. Then the main stack continues and the page redirects to Open WebUI.</p>
+          <p>3. The wizard writes the local <span class=\"mono\">.env</span>.</p>
+          <p>4. Afterwards this page waits until Open WebUI is actually ready and only then redirects.</p>
         </div>
       </div>
     </section>
 
-    <section class="card">
+    <section class=\"card\">
       <h2>Host-Erkennung / Host detection</h2>
-      <div id="host-grid" class="grid-3"></div>
+      <div id=\"host-grid\" class=\"grid-3\"></div>
     </section>
 
-    <section class="card">
+    <section class=\"card\">
       <h2>Einrichtung / Setup</h2>
-      <form id="setup-form">
-        <div style="margin-bottom: 16px;">
-          <label for="source_repo_path">Quellpfad / Source path</label>
-          <input id="source_repo_path" name="source_repo_path" type="text" placeholder="/absolute/path/to/source/repo" />
-          <div class="hint">Read-only Quelle für die Builder-Leseseite. / Read-only source for the builder read side.</div>
+      <form id=\"setup-form\">
+        <div style=\"margin-bottom: 16px;\">
+          <label for=\"source_repo_path\">Quellpfad / Source path</label>
+          <input id=\"source_repo_path\" name=\"source_repo_path\" type=\"text\" placeholder=\"/absolute/path/to/source/repo\" />
+          <div class=\"hint\">Read-only Quelle für die Builder-Leseseite. / Read-only source for the builder read side.</div>
         </div>
 
-        <div class="grid-2">
+        <div class=\"grid-2\">
           <div>
-            <label for="default_model">Standardmodell / Default model</label>
-            <select id="default_model" name="default_model"></select>
+            <label for=\"default_model\">Standardmodell / Default model</label>
+            <select id=\"default_model\" name=\"default_model\"></select>
           </div>
           <div>
-            <label for="acceleration">Beschleunigung / Acceleration</label>
-            <select id="acceleration" name="acceleration"></select>
+            <label for=\"acceleration\">Beschleunigung / Acceleration</label>
+            <select id=\"acceleration\" name=\"acceleration\"></select>
           </div>
         </div>
 
-        <div style="margin-top: 16px;">
+        <div style=\"margin-top: 16px;\">
           <label>
-            <input id="open_browser" name="open_browser" type="checkbox" />
+            <input id=\"open_browser\" name=\"open_browser\" type=\"checkbox\" />
             Browser nach Stack-Start automatisch öffnen / Open browser automatically after stack start
           </label>
         </div>
 
-        <div id="message" class="banner" style="margin-top: 16px;">
+        <div id=\"message\" class=\"banner\" style=\"margin-top: 16px;\">
           Noch nicht gespeichert. / Not saved yet.
         </div>
 
-        <div class="button-row" style="margin-top: 16px;">
-          <button type="submit">Speichern und weiter / Save and continue</button>
-          <a id="openwebui-link" class="button-link secondary" href="#" target="_blank" rel="noreferrer">Open WebUI</a>
+        <div class=\"button-row\" style=\"margin-top: 16px;\">
+          <button type=\"submit\">Speichern und weiter / Save and continue</button>
+          <a id=\"openwebui-link\" class=\"button-link secondary\" href=\"#\" target=\"_blank\" rel=\"noreferrer\">Open WebUI</a>
         </div>
       </form>
     </section>
 
-    <section class="card">
+    <section class=\"card\">
       <h2>Aktuelle Werte / Current values</h2>
-      <div id="current-values" class="kv mono"></div>
-      <p class="small">Wenn der Startpfad noch nicht fertig ist, bleibt diese Seite offen, speichert aber schon sauber die Builder-Konfiguration. / If the main stack is not ready yet, this page stays available while still saving the builder configuration cleanly.</p>
+      <div id=\"current-values\" class=\"kv mono\"></div>
+      <p class=\"small\">Wenn der Startpfad noch nicht fertig ist, bleibt diese Seite offen, speichert aber schon sauber die Builder-Konfiguration. / If the main stack is not ready yet, this page stays available while still saving the builder configuration cleanly.</p>
     </section>
   </main>
 
   <script>
     const stateUrl = "/api/state";
     const saveUrl = "/api/save";
+    const openWebUiReadyUrl = "/api/openwebui-ready";
     const hostGrid = document.getElementById("host-grid");
     const currentValues = document.getElementById("current-values");
     const form = document.getElementById("setup-form");
@@ -396,9 +419,9 @@ INDEX_HTML = """<!doctype html>
         ["Empfohlenes Modell / Recommended model", info.recommended_model],
       ];
       hostGrid.innerHTML = rows.map(([k, v]) => `
-        <div class="banner">
-          <div class="small">${k}</div>
-          <div class="mono">${v}</div>
+        <div class=\"banner\">
+          <div class=\"small\">${k}</div>
+          <div class=\"mono\">${v}</div>
         </div>
       `).join("");
     }
@@ -415,7 +438,7 @@ INDEX_HTML = """<!doctype html>
     }
 
     function renderOptions(select, values, selectedValue) {
-      select.innerHTML = values.map((value) => `<option value="${value}">${value}</option>`).join("");
+      select.innerHTML = values.map((value) => `<option value=\"${value}\">${value}</option>`).join("");
       if (selectedValue && values.includes(selectedValue)) {
         select.value = selectedValue;
       }
@@ -436,6 +459,26 @@ INDEX_HTML = """<!doctype html>
       }
     }
 
+    async function waitForOpenWebUiReady() {
+      for (let attempt = 0; attempt < 180; attempt += 1) {
+        try {
+          const response = await fetch(openWebUiReadyUrl, { cache: "no-store" });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.ready) {
+              setMessage("Open WebUI ist bereit. Weiterleitung... / Open WebUI is ready. Redirecting...", "success");
+              window.location.href = latestOpenWebUiUrl;
+              return;
+            }
+          }
+        } catch (_error) {
+        }
+        setMessage("Setup gespeichert. Runtime startet noch. Warte auf Open WebUI... / Setup saved. Runtime is still starting. Waiting for Open WebUI...", "success");
+        await new Promise((resolve) => window.setTimeout(resolve, 1500));
+      }
+      setMessage(`Setup gespeichert, aber Open WebUI ist noch nicht bereit. Bitte später manuell öffnen: ${latestOpenWebUiUrl}`, "error");
+    }
+
     async function loadState() {
       const response = await fetch(stateUrl);
       if (!response.ok) {
@@ -451,8 +494,10 @@ INDEX_HTML = """<!doctype html>
       sourceInput.value = data.current.source_repo_path || "";
       browserCheckbox.checked = Boolean(data.current.open_browser);
       renderCurrent(data.current, data.configured);
-      if (data.configured) {
-        setMessage("Setup bereits gespeichert. Die Hauptoberfläche liegt unter " + latestOpenWebUiUrl, "success");
+      if (data.configured && data.openwebui_ready) {
+        setMessage("Setup bereits gespeichert. Open WebUI ist bereit unter " + latestOpenWebUiUrl, "success");
+      } else if (data.configured) {
+        setMessage("Setup bereits gespeichert. Open WebUI startet eventuell noch unter " + latestOpenWebUiUrl, "success");
       }
     }
 
@@ -475,6 +520,8 @@ INDEX_HTML = """<!doctype html>
         setMessage(data.detail || "Speichern fehlgeschlagen / Save failed", "error");
         return;
       }
+      latestOpenWebUiUrl = data.openwebui_url || latestOpenWebUiUrl;
+      openWebUiLink.href = latestOpenWebUiUrl;
       renderConfigured(true);
       renderCurrent(
         {
@@ -485,10 +532,11 @@ INDEX_HTML = """<!doctype html>
         },
         true,
       );
-      setMessage("Setup gespeichert. Der Builder startet jetzt weiter. Weiterleitung auf Open WebUI in 8 Sekunden ... / Setup saved. The builder now continues. Redirecting to Open WebUI in 8 seconds ...", "success");
-      setTimeout(() => {
-        window.location.href = latestOpenWebUiUrl;
-      }, 8000);
+      if (payload.open_browser) {
+        await waitForOpenWebUiReady();
+      } else {
+        setMessage("Setup gespeichert. Open WebUI wird nicht automatisch geöffnet. / Setup saved. Open WebUI will not open automatically.", "success");
+      }
     });
 
     loadState().catch(() => {
