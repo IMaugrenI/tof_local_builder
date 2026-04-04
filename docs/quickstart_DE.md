@@ -8,6 +8,8 @@
 SOURCE_REPO_PATH=/absolute/path/to/the/source/repo
 BUILDER_SANDBOX_PATH=./sandbox
 BUILDER_BIND_HOST=127.0.0.1
+OLLAMA_IMAGE=ollama/ollama:latest
+OPENWEBUI_IMAGE=ghcr.io/open-webui/open-webui:main
 HOST_UID=1000
 HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
@@ -35,7 +37,17 @@ bash scripts/check.sh
 
 Standardmäßig bleiben veröffentlichte Ports über `BUILDER_BIND_HOST` an `127.0.0.1` gebunden.
 
-## 5. Wizard später erneut öffnen
+## 5. In Open WebUI
+
+Gehe zu:
+
+- `Tool Server Management`
+
+Füge dort diese Basis-URL ein:
+
+- `http://127.0.0.1:8099`
+
+## 6. Wizard später erneut öffnen
 
 ```bash
 python3 scripts/wizard.py --force
