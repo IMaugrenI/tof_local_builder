@@ -95,6 +95,7 @@ bash scripts/check.sh
 
 - the first `up.sh` run ensures `DEFAULT_OLLAMA_MODEL` is available
 - the default model is `qwen2.5:0.5b`
+- the setup wizard offers a small curated model list for first-run setup: `qwen2.5:0.5b`, `qwen2.5:1.5b`, `qwen2.5:3b`, `llama3.2:1b`, `llama3.2:3b`, `gemma2:2b`, `qwen2.5-coder:0.5b`, `qwen2.5-coder:1.5b`, `qwen2.5-coder:3b`, plus `custom` for manual tags
 - stronger hardware can switch to a larger Ollama model later by changing `.env`
 - `BUILDER_ACCELERATION=cpu` keeps the stack on the portable baseline by default; later you can switch to `auto` or `intel` in `.env` if you want to test hardware acceleration
 - `BUILDER_BIND_HOST=127.0.0.1` keeps the published ports local-only by default; only change it if you intentionally want host-external access
