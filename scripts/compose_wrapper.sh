@@ -13,6 +13,7 @@ fi
 BUILDER_ACCELERATION="${BUILDER_ACCELERATION:-cpu}"
 BUILDER_COMPOSE_FILES=(-f compose.yml)
 BUILDER_COMPOSE_MODE="cpu"
+COMPOSE_VARIANT_DIR="deploy/compose"
 
 has_intel_render_node() {
   [ "$(uname -s)" = "Linux" ] && [ -e /dev/dri/renderD128 ]
@@ -21,7 +22,7 @@ has_intel_render_node() {
 case "$BUILDER_ACCELERATION" in
   auto)
     if has_intel_render_node; then
-      BUILDER_COMPOSE_FILES+=(-f compose.intel.yml)
+      BUILDER_COMPOSE_FILES+=(-f "$COMPOSE_VARIANT_DIR/compose.intel.yml")
       BUILDER_COMPOSE_MODE="intel"
     else
       BUILDER_COMPOSE_MODE="cpu"
@@ -29,7 +30,7 @@ case "$BUILDER_ACCELERATION" in
     ;;
   intel)
     if has_intel_render_node; then
-      BUILDER_COMPOSE_FILES+=(-f compose.intel.yml)
+      BUILDER_COMPOSE_FILES+=(-f "$COMPOSE_VARIANT_DIR/compose.intel.yml")
       BUILDER_COMPOSE_MODE="intel"
     else
       echo "WARN: BUILDER_ACCELERATION=intel requested but /dev/dri/renderD128 was not found. Falling back to CPU." >&2

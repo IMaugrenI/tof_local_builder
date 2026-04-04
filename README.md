@@ -1,7 +1,8 @@
 # tof_local_builder
 
 > English is the primary text in this repository. A German clone is available in `README_DE.md`.
-> Design reasoning: see `WHY.md`. A German clone is available in `WHY_DE.md`.
+> Design reasoning: see `docs/product/WHY.md`. A German clone is available in `docs/product/WHY_DE.md`.
+> Product entry notes: see `docs/product/START_HERE.md` and `docs/product/REPO_NOTE.md`.
 
 Local GUI-first builder for one-machine or small local company use.
 
@@ -58,6 +59,11 @@ More details and examples:
 - [`docs/repo_bridge_DE.md`](docs/repo_bridge_DE.md)
 - [`docs/builder_system_plan_v1.md`](docs/builder_system_plan_v1.md)
 - [`docs/builder_system_plan_v1_DE.md`](docs/builder_system_plan_v1_DE.md)
+- [`docs/product/START_HERE.md`](docs/product/START_HERE.md)
+- [`docs/product/WHY.md`](docs/product/WHY.md)
+- [`docs/product/WHY_DE.md`](docs/product/WHY_DE.md)
+- [`docs/product/REPO_NOTE.md`](docs/product/REPO_NOTE.md)
+- [`docs/legal/LICENSE_NOTE.md`](docs/legal/LICENSE_NOTE.md)
 
 ## Quick start
 
@@ -145,7 +151,8 @@ BUILDER_SETUP_DONE=0
 ## Files that matter
 
 - `compose.yml`
-- `compose.intel.yml`
+- `deploy/compose/compose.intel.yml`
+- `deploy/compose/compose.guix.yml`
 - `.env.example`
 - `scripts/setup.sh`
 - `scripts/up.sh`
@@ -162,6 +169,11 @@ BUILDER_SETUP_DONE=0
 - `docs/repo_bridge.md`
 - `docs/builder_system_plan_v1.md`
 - `docs/builder_system_plan_v1_DE.md`
+- `docs/product/START_HERE.md`
+- `docs/product/WHY.md`
+- `docs/product/WHY_DE.md`
+- `docs/product/REPO_NOTE.md`
+- `docs/legal/LICENSE_NOTE.md`
 - `services/repo_bridge/`
 - `sandbox/`
 
