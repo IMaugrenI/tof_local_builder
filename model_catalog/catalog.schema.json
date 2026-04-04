@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/IMaugrenI/tof_local_builder/model_catalog/catalog.schema.json",
+  "title": "ToF Local Builder model catalog",
+  "type": "object",
+  "required": ["version", "product", "groups", "manual_fallback"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "product": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/group"
+      }
+    },
+    "manual_fallback": {
+      "oneOf": [
+        { "$ref": "#/$defs/model" },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/model"
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "group": {
+      "type": "object",
+      "required": ["key", "label", "profiles"],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/profile"
+          }
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "required": ["key", "label", "models"],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "task_labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/model" },
+              { "type": "string" }
+            ]
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "required": ["tag"],
+      "properties": {
+        "tag": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "recommended": {
+          "type": "boolean"
+        },
+        "default_candidate": {
+          "type": "boolean"
+        },
+        "visible_in_wizard": {
+          "type": "boolean"
+        },
+        "experimental": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
