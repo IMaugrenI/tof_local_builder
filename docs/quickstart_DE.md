@@ -7,6 +7,7 @@
 ```env
 SOURCE_REPO_PATH=/absolute/path/to/the/source/repo
 BUILDER_SANDBOX_PATH=./sandbox
+BUILDER_BIND_HOST=127.0.0.1
 HOST_UID=1000
 HOST_GID=1000
 ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
@@ -28,13 +29,11 @@ bash scripts/up.sh
 bash scripts/check.sh
 ```
 
-## 4. Erste Tool-Tests
+## 4. GUI öffnen
 
-- `roots`
-- `tree` mit `root=source`
-- `read` mit `root=source` und `path=README.md`
-- `mkdir` mit `target_root=output` und `relative_path=test`
-- `write` mit `target_root=output` und `relative_path=test/chat_note.md`
+- `http://localhost:3000`
+
+Standardmäßig bleiben veröffentlichte Ports über `BUILDER_BIND_HOST` an `127.0.0.1` gebunden.
 
 ## 5. Wizard später erneut öffnen
 
