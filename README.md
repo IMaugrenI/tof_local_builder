@@ -56,6 +56,8 @@ More details and examples:
 
 - [`docs/repo_bridge.md`](docs/repo_bridge.md)
 - [`docs/repo_bridge_DE.md`](docs/repo_bridge_DE.md)
+- [`docs/builder_system_plan_v1.md`](docs/builder_system_plan_v1.md)
+- [`docs/builder_system_plan_v1_DE.md`](docs/builder_system_plan_v1_DE.md)
 
 ## Quick start
 
@@ -152,6 +154,8 @@ BUILDER_SETUP_DONE=0
 - `docs/quickstart.md`
 - `docs/commands.md`
 - `docs/repo_bridge.md`
+- `docs/builder_system_plan_v1.md`
+- `docs/builder_system_plan_v1_DE.md`
 - `services/repo_bridge/`
 - `sandbox/`
 
