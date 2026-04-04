@@ -24,6 +24,25 @@ raise SystemExit(0 if needs_first_run_wizard(env) else 1)
 PY
 }
 
+write_host_snapshot() {
+  python3 - <<'PY'
+import json
+import sys
+from pathlib import Path
+sys.path.insert(0, "scripts")
+from builder_bootstrap import MODEL_OPTIONS, detect_host, recommended_acceleration_options
+
+root = Path(".").resolve()
+snapshot = detect_host()
+snapshot["acceleration_options"] = recommended_acceleration_options(snapshot)
+snapshot["model_options"] = list(MODEL_OPTIONS)
+snapshot["snapshot_source"] = "host"
+path = root / ".runtime" / "host_snapshot.json"
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
 wait_for_url() {
   local url="$1"
   local label="$2"
@@ -43,7 +62,11 @@ set -a
 source .env
 set +a
 
-mkdir -p data/ollama data/open-webui sandbox/workspace sandbox/output sandbox/examples
+mkdir -p .runtime data/ollama data/open-webui sandbox/workspace sandbox/output sandbox/examples
+
+if ! write_host_snapshot; then
+  echo "[warn] host snapshot could not be written; setup-web may fall back to container-local detection" >&2
+fi
 
 wizard_needed=0
 if needs_wizard; then
