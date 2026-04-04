@@ -82,6 +82,8 @@ bash scripts/check.sh
 4. first-run flow:
 
 - a small local setup wizard appears if the builder is not configured yet
+- the wizard now asks what the builder is mainly needed for and how light the setup should stay
+- based on task and profile, the wizard recommends matching builder models from the grouped internal catalog
 - once the setup is saved, the normal builder start continues
 - after startup the flow hands over to `http://localhost:3000`
 
@@ -96,8 +98,8 @@ bash scripts/check.sh
 ## First-run defaults
 
 - the first `up.sh` run ensures `DEFAULT_OLLAMA_MODEL` is available
-- the default model is `qwen2.5:0.5b`
-- the setup wizard still presents a flat model picker for now, but the builder model choices are now sourced from grouped catalog data in `model_catalog/` so the future task-first wizard can build on a stable internal model cut
+- the default model remains `qwen2.5:0.5b`
+- the wizard is now task-first and profile-first: it asks for task type and setup weight first, then recommends matching models from `model_catalog/`
 - the current curated first-run builder model space covers `qwen2.5:0.5b`, `qwen2.5:1.5b`, `qwen2.5:3b`, `llama3.2:1b`, `llama3.2:3b`, `gemma2:2b`, `qwen2.5-coder:0.5b`, `qwen2.5-coder:1.5b`, `qwen2.5-coder:3b`, plus `custom` for manual tags
 - stronger hardware can switch to a larger Ollama model later by changing `.env`
 - `BUILDER_ACCELERATION=cpu` keeps the stack on the portable baseline by default; later you can switch to `auto` or `intel` in `.env` if you want to test hardware acceleration

@@ -10,7 +10,7 @@
         {
           "key": "cpu_light",
           "label": "CPU-light",
-          "task_labels": ["chat", "writing"],
+          "task_labels": ["chat", "writing", "analysis"],
           "models": [
             {
               "tag": "qwen2.5:0.5b",
