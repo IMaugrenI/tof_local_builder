@@ -10,7 +10,17 @@ if [ -f .env ]; then
   set +a
 fi
 
+source scripts/compose_wrapper.sh
+
 bash scripts/healthcheck.sh || true
+
+echo
+echo "compose mode:"
+echo "${BUILDER_COMPOSE_MODE}"
+
+echo
+echo "compose service status:"
+compose_cmd ps || true
 
 echo
 echo "default model:"
