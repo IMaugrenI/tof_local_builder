@@ -1,183 +1,68 @@
 # tof_local_builder
 
 > English is the primary text in this repository. A German clone is available in `README_DE.md`.
-> Design reasoning: see `docs/product/WHY.md`. A German clone is available in `docs/product/WHY_DE.md`.
-> Product entry notes: see `docs/product/START_HERE.md` and `docs/product/REPO_NOTE.md`.
 
-Local GUI-first builder for one-machine or small local company use.
+Local AI builder for controlled work on one machine or in a small local team.
 
-## At a glance
+I built this repo to keep source access read_only, output sandboxed, and the workflow easy to start.
 
-- runs local models through Ollama
-- exposes a browser GUI through Open WebUI
-- reads a mounted source path as read-only
-- writes reviewed artifacts only into a local sandbox
-- keeps source and writable output clearly separated
-- first start ensures a small default Ollama model is present
-- first start opens a small local setup wizard and then hands over to the web surface
-- stays CPU-safe by default; optional acceleration modes can be enabled later when the host supports them
+## start_here
 
-## What this repo is for
+```bash
+bash scripts/setup.sh
+bash scripts/up.sh
+bash scripts/check.sh
+```
 
-This repository is meant for controlled local builder workflows:
+After startup, open `http://localhost:3000` and connect the tool server at `http://127.0.0.1:8099`.
 
-- local prompt and editor-based experimentation
-- read-only access to a mounted source repo or source path
-- reviewed writes into a sandbox instead of the source
-- GUI-first local interaction through Open WebUI
+## what_this_repo_does
 
-## Product boundary
+1. runs local models through Ollama
+2. exposes a browser GUI through Open WebUI
+3. reads a mounted source path as read_only
+4. writes reviewed artifacts only into a local sandbox
+5. uses a first_run wizard to guide setup and model choice
+6. stays CPU_safe by default, with optional later acceleration
 
-- source repo stays read-only
-- writes stay limited to `sandbox/workspace` and `sandbox/output`
-- no direct writes into the source repo
-- this is a builder stack, not a general-purpose knowledge system
+## what_this_shows
 
-## Runtime components
+1. hands_on Linux and Docker work
+2. clear source_vs_output boundaries
+3. product_minded local workflow design
+4. practical repo and documentation discipline
+5. controlled experimentation without direct source writes
+
+## boundary
+
+1. the source repo stays read_only
+2. writes stay limited to `sandbox/workspace` and `sandbox/output`
+3. this is a builder stack, not a general knowledge system
+4. local use comes first
+
+## key_runtime_parts
 
 - `ollama` = local model runtime
 - `open-webui` = browser GUI
-- `repo-bridge` = controlled read/write boundary for source and sandbox
-- `wizard.py` = one-time local setup guide before the web handoff
+- `repo-bridge` = controlled read_write boundary for source and sandbox
+- `wizard.py` = one_time local setup guide before web handoff
 
-## Repo-bridge tool surface
-
-The bridge is intentionally split into small clear operations so the tool layer stays easier to understand:
-
-- `roots` = show the available roots
-- `tree` = list a directory
-- `read` = read a file
-- `find` = find file and directory names
-- `search` = search text content inside files
-- `mkdir` = create a sandbox directory
-- `write` = write a text file into the sandbox
-- `doit` = small guided wrapper for `mkdir` and `write`
-
-More details and examples:
-
-- [`docs/repo_bridge.md`](docs/repo_bridge.md)
-- [`docs/repo_bridge_DE.md`](docs/repo_bridge_DE.md)
-- [`docs/builder_system_plan_v1.md`](docs/builder_system_plan_v1.md)
-- [`docs/builder_system_plan_v1_DE.md`](docs/builder_system_plan_v1_DE.md)
-- [`docs/product/START_HERE.md`](docs/product/START_HERE.md)
-- [`docs/product/WHY.md`](docs/product/WHY.md)
-- [`docs/product/WHY_DE.md`](docs/product/WHY_DE.md)
-- [`docs/product/REPO_NOTE.md`](docs/product/REPO_NOTE.md)
-- [`docs/legal/LICENSE_NOTE.md`](docs/legal/LICENSE_NOTE.md)
-
-## Quick start
-
-1. prepare local setup:
-
-```bash
-bash scripts/setup.sh
-```
-
-2. start the stack:
-
-```bash
-bash scripts/up.sh
-```
-
-3. check health:
-
-```bash
-bash scripts/check.sh
-```
-
-4. first-run flow:
-
-- a small local setup wizard appears if the builder is not configured yet
-- the wizard now asks what the builder is mainly needed for and how light the setup should stay
-- based on task and profile, the wizard recommends matching builder models from the grouped internal catalog
-- once the setup is saved, the normal builder start continues
-- after startup the flow hands over to `http://localhost:3000`
-
-5. in Open WebUI go to:
-
-- `Tool Server Management`
-
-6. paste the base URL:
-
-- `http://127.0.0.1:8099`
-
-## First-run defaults
-
-- the first `up.sh` run ensures `DEFAULT_OLLAMA_MODEL` is available
-- the default model remains `qwen2.5:0.5b`
-- the wizard is now task-first and profile-first: it asks for task type and setup weight first, then recommends matching models from `model_catalog/`
-- the current curated first-run builder model space covers `qwen2.5:0.5b`, `qwen2.5:1.5b`, `qwen2.5:3b`, `llama3.2:1b`, `llama3.2:3b`, `gemma2:2b`, `qwen2.5-coder:0.5b`, `qwen2.5-coder:1.5b`, `qwen2.5-coder:3b`, plus `custom` for manual tags
-- stronger hardware can switch to a larger Ollama model later by changing `.env`
-- `BUILDER_ACCELERATION=cpu` keeps the stack on the portable baseline by default; later you can switch to `auto` or `intel` in `.env` if you want to test hardware acceleration
-- `BUILDER_BIND_HOST=127.0.0.1` keeps the published ports local-only by default; only change it if you intentionally want host-external access
-- `OLLAMA_IMAGE` and `OPENWEBUI_IMAGE` expose the runtime image refs in `.env` so a tested pair can be held deliberately instead of editing `compose.yml`
-- the wizard can be reopened with `python3 scripts/wizard.py --force`
-- the GUI wizard is bilingual (`de/en`) and closes itself after the setup is saved
-
-## Operator commands
-
-Use the small public command surface for normal operation:
-
-```bash
-bash scripts/setup.sh
-bash scripts/up.sh
-bash scripts/check.sh
-bash scripts/logs.sh
-bash scripts/down.sh
-```
-
-More details:
-
-- [`docs/commands.md`](docs/commands.md)
-- [`docs/commands_DE.md`](docs/commands_DE.md)
-
-## Required `.env` values
-
-```env
-SOURCE_REPO_PATH=/absolute/path/to/the/source/repo
-BUILDER_SANDBOX_PATH=./sandbox
-BUILDER_BIND_HOST=127.0.0.1
-OLLAMA_IMAGE=ollama/ollama:latest
-OPENWEBUI_IMAGE=ghcr.io/open-webui/open-webui:main
-HOST_UID=1000
-HOST_GID=1000
-ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-DEFAULT_OLLAMA_MODEL=qwen2.5:0.5b
-BUILDER_ACCELERATION=cpu
-BUILDER_OPEN_BROWSER=1
-BUILDER_SETUP_DONE=0
-```
-
-## Files that matter
+## key_files
 
 - `compose.yml`
-- `deploy/compose/compose.intel.yml`
-- `deploy/compose/compose.guix.yml`
 - `.env.example`
 - `scripts/setup.sh`
 - `scripts/up.sh`
 - `scripts/check.sh`
 - `scripts/down.sh`
-- `scripts/ensure_model.sh`
-- `scripts/compose_wrapper.sh`
-- `scripts/builder_bootstrap.py`
 - `scripts/wizard.py`
-- `model_catalog/builder_catalog.json`
-- `model_catalog/catalog.schema.json`
-- `docs/quickstart.md`
-- `docs/commands.md`
-- `docs/repo_bridge.md`
-- `docs/builder_system_plan_v1.md`
-- `docs/builder_system_plan_v1_DE.md`
 - `docs/product/START_HERE.md`
 - `docs/product/WHY.md`
-- `docs/product/WHY_DE.md`
-- `docs/product/REPO_NOTE.md`
-- `docs/legal/LICENSE_NOTE.md`
+- `docs/repo_bridge.md`
 - `services/repo_bridge/`
-- `sandbox/`
 
-## Related public repos
+## related_public_repos
 
-- [`tof-showcase`](https://github.com/IMaugrenI/tof-showcase) — public architectural frame
-- [`tof_local_knowledge`](https://github.com/IMaugrenI/tof_local_knowledge) — on-prem local knowledge system
+- [`tof_local_knowledge`](https://github.com/IMaugrenI/tof_local_knowledge) — local document indexing and grounded answers
+- [`tof_showcase`](https://github.com/IMaugrenI/tof-showcase) — public architecture entry point
+- [`tof_v7_public_frame`](https://github.com/IMaugrenI/tof-v7-public-frame) — reduced V7 boundary frame
