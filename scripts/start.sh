@@ -11,7 +11,7 @@ if [ ! -f .env ]; then
   echo "Created .env from .env.example"
 fi
 
-python3 scripts/wizard.py --ensure
+python3 scripts/wizard_stacked.py --ensure
 
 if ! grep -q '^SOURCE_REPO_PATH=' .env; then
   echo "Missing SOURCE_REPO_PATH in .env"
@@ -50,5 +50,5 @@ echo "Tool server base URL to paste into Open WebUI > Tool Server Management:"
 echo "http://127.0.0.1:8099"
 
 if [ "${BUILDER_OPEN_BROWSER:-1}" = "1" ]; then
-  python3 scripts/wizard.py --open-webui >/dev/null 2>&1 || true
+  python3 scripts/wizard_stacked.py --open-webui >/dev/null 2>&1 || true
 fi
