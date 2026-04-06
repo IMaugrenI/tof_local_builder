@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import warnings
+
+warnings.filterwarnings("ignore", category=SyntaxWarning, module=r"wizard_stacked")
+
 import wizard_stacked as stacked
 
 
