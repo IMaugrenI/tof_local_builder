@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import warnings
 
-warnings.filterwarnings("ignore", category=SyntaxWarning, module=r"wizard_stacked")
+warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 import wizard_stacked as stacked
 
