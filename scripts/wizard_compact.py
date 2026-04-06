@@ -61,6 +61,7 @@ stacked._host_recommendation = _compact_host_recommendation
 
 def _compact_html(self, error: str | None = None) -> str:
     page = stacked._stacked_wizard_html(self, error)
+    page = page.replace("<\\/option>", "</option>")
     page = page.replace(
         "Diese Etage zeigt zuerst, wie der Builder den lokalen Rechner grob einordnet,\n          und gibt danach eine kleine Startempfehlung für Profil und Beschleunigung.",
         "Kurze Host-Einordnung plus kleine Startempfehlung für Profil und Beschleunigung. / Short host view plus a small starting recommendation for profile and acceleration.",
