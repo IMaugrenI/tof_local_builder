@@ -29,6 +29,8 @@ services:
     environment:
       SOURCE_ROOT: /workspace/source_repo_ro
       SANDBOX_ROOT: /workspace/builder_sandbox
+      SOURCE_HOST_PATH: ${SOURCE_REPO_PATH}
+      SANDBOX_HOST_PATH: ${BUILDER_SANDBOX_PATH:-./sandbox}
       ALLOW_ORIGINS: ${ALLOW_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
       TZ: ${TZ:-Europe/Berlin}
     volumes:

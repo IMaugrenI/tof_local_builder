@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-APP_VERSION = "0.3.0"
+APP_VERSION = "0.3.1"
 ROOT_NAME = Literal["source", "workspace", "output"]
 WRITE_ROOT_NAME = Literal["workspace", "output"]
 
@@ -36,6 +36,8 @@ SOURCE_ROOT = Path(os.getenv("SOURCE_ROOT", "/workspace/source_repo_ro")).resolv
 SANDBOX_ROOT = Path(os.getenv("SANDBOX_ROOT", "/workspace/builder_sandbox")).resolve()
 WORKSPACE_ROOT = (SANDBOX_ROOT / "workspace").resolve()
 OUTPUT_ROOT = (SANDBOX_ROOT / "output").resolve()
+SOURCE_HOST_PATH = (os.getenv("SOURCE_HOST_PATH", "") or "").strip() or None
+SANDBOX_HOST_PATH = (os.getenv("SANDBOX_HOST_PATH", "") or "").strip() or None
 
 MAX_FIND_RESULTS = 200
 MAX_SEARCH_RESULTS = 50
@@ -115,6 +117,31 @@ def available_roots() -> dict[str, Path]:
         "source": SOURCE_ROOT,
         "workspace": WORKSPACE_ROOT,
         "output": OUTPUT_ROOT,
+    }
+
+
+def _join_host_path(base: str | None, child: str) -> str | None:
+    if not base:
+        return None
+    return str(Path(base) / child)
+
+
+def path_view() -> dict[str, object]:
+    return {
+        "read_root_name": "source",
+        "write_root_names": ["workspace", "output"],
+        "host_paths": {
+            "source": SOURCE_HOST_PATH,
+            "sandbox": SANDBOX_HOST_PATH,
+            "workspace": _join_host_path(SANDBOX_HOST_PATH, "workspace"),
+            "output": _join_host_path(SANDBOX_HOST_PATH, "output"),
+        },
+        "container_paths": {
+            "source": str(SOURCE_ROOT),
+            "sandbox": str(SANDBOX_ROOT),
+            "workspace": str(WORKSPACE_ROOT),
+            "output": str(OUTPUT_ROOT),
+        },
     }
 
 
@@ -220,6 +247,7 @@ def health() -> dict[str, object]:
             "workspace": str(WORKSPACE_ROOT),
             "output": str(OUTPUT_ROOT),
         },
+        "path_view": path_view(),
     }
 
 
@@ -232,18 +260,27 @@ def api_config() -> dict[str, object]:
         "language_support": ["en", "de"],
         "capabilities": ["roots", "tree", "read", "find", "search", "mkdir", "write", "doit"],
         "notes": {
-            "en": "Source is read-only. Writes are limited to sandbox/workspace and sandbox/output.",
-            "de": "Die Quelle ist read-only. Schreibzugriffe sind auf sandbox/workspace und sandbox/output begrenzt.",
+            "en": "Source is read-only and selected through SOURCE_REPO_PATH. Writes are limited to sandbox/workspace and sandbox/output.",
+            "de": "Source ist read-only und wird über SOURCE_REPO_PATH ausgewählt. Schreibzugriffe sind auf sandbox/workspace und sandbox/output begrenzt.",
         },
     }
 
 
 @app.get("/roots", summary="List roots / Wurzeln anzeigen")
-def roots() -> dict[str, str]:
+def roots() -> dict[str, object]:
     return {
         "source_root": str(SOURCE_ROOT),
         "workspace_root": str(WORKSPACE_ROOT),
         "output_root": str(OUTPUT_ROOT),
+        "source_host_path": SOURCE_HOST_PATH,
+        "sandbox_host_path": SANDBOX_HOST_PATH,
+        "workspace_host_path": _join_host_path(SANDBOX_HOST_PATH, "workspace"),
+        "output_host_path": _join_host_path(SANDBOX_HOST_PATH, "output"),
+        "source_container_path": str(SOURCE_ROOT),
+        "workspace_container_path": str(WORKSPACE_ROOT),
+        "output_container_path": str(OUTPUT_ROOT),
+        "read_root_name": "source",
+        "write_root_names": ["workspace", "output"],
     }
 
 
