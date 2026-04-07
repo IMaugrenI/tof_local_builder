@@ -1,0 +1,19 @@
+product:
+  default_mode: light
+  supported_platforms:
+    - linux
+  builder_surface: open_webui
+paths:
+  source_path_required: true
+  output_path_required: true
+  source_writeback_allowed: false
+models:
+  slots:
+    - chat
+    - coding
+    - analysis
+    - task
+    - grounded_qa_optional
+runtime:
+  official_light_compose: runtime/compose.light.yml
+  official_grounded_compose: runtime/compose.grounded.yml

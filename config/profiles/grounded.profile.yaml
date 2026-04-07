@@ -1,0 +1,19 @@
+mode: grounded
+hardware_target: moderate_to_strong
+knowledge_enabled: true
+services:
+  - host_reader
+  - sandbox_writer
+  - ollama
+  - open_webui
+  - knowledge_postgres
+  - knowledge_search_api
+  - knowledge_qa_api
+model_slots:
+  required:
+    - chat
+    - coding
+    - analysis
+    - task
+  optional:
+    - grounded_qa

@@ -1,0 +1,50 @@
+include:
+  - compose.light.yml
+
+services:
+  knowledge_postgres:
+    image: pgvector/pgvector:pg17
+    container_name: tof_local_builder_knowledge_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${KNOWLEDGE_POSTGRES_DB:-tof_local_knowledge}
+      POSTGRES_USER: ${KNOWLEDGE_POSTGRES_USER:-tof_local_knowledge}
+      POSTGRES_PASSWORD: ${KNOWLEDGE_POSTGRES_PASSWORD:-local_dev_password}
+      TZ: ${TZ:-Europe/Berlin}
+    ports:
+      - "${KNOWLEDGE_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ./engines/tof_local_knowledge/db/init:/docker-entrypoint-initdb.d:ro
+      - ./engines/tof_local_knowledge/data/postgres:/var/lib/postgresql/data
+
+  knowledge_search_api:
+    build:
+      context: ./engines/tof_local_knowledge
+      dockerfile: services/_shared_fastapi.Dockerfile
+    container_name: tof_local_builder_knowledge_search_api
+    restart: unless-stopped
+    depends_on:
+      - knowledge_postgres
+    environment:
+      DATABASE_URL: ${KNOWLEDGE_DATABASE_URL:-postgresql://tof_local_knowledge:local_dev_password@knowledge_postgres:5432/tof_local_knowledge}
+      TOF_PORT: ${KNOWLEDGE_SEARCH_API_PORT:-8105}
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8105", "--app-dir", "/app/services/search_api"]
+    ports:
+      - "${KNOWLEDGE_SEARCH_API_PORT:-8105}:8105"
+
+  knowledge_qa_api:
+    build:
+      context: ./engines/tof_local_knowledge
+      dockerfile: services/_shared_fastapi.Dockerfile
+    container_name: tof_local_builder_knowledge_qa_api
+    restart: unless-stopped
+    depends_on:
+      - knowledge_postgres
+      - knowledge_search_api
+    environment:
+      DATABASE_URL: ${KNOWLEDGE_DATABASE_URL:-postgresql://tof_local_knowledge:local_dev_password@knowledge_postgres:5432/tof_local_knowledge}
+      TOF_PORT: ${KNOWLEDGE_QA_API_PORT:-8106}
+      OLLAMA_BASE_URL: http://ollama:11434
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8106", "--app-dir", "/app/services/qa_api"]
+    ports:
+      - "${KNOWLEDGE_QA_API_PORT:-8106}:8106"
