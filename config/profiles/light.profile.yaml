@@ -1,0 +1,14 @@
+mode: light
+hardware_target: weak_to_moderate
+knowledge_enabled: false
+services:
+  - host_reader
+  - sandbox_writer
+  - ollama
+  - open_webui
+model_slots:
+  required:
+    - chat
+    - coding
+    - analysis
+    - task
