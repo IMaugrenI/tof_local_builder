@@ -24,8 +24,10 @@ python run.py down
 
 - `run.py` is available now
 - `tof_cli/` contains the new command and core runtime modules
-- legacy shell scripts still remain for backward compatibility during transition
+- legacy shell entry scripts remain as thin wrappers for compatibility
 - builder-specific Python bridges exist for wizard, repo bridge and default model handling
+- `scripts/compose_wrapper.sh` is deprecated and no longer part of the supported runtime path
+- `scripts/ensure_model.sh` is deprecated and no longer part of the supported runtime path
 
 ## command summary
 
