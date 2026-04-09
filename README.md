@@ -4,9 +4,19 @@
 
 Local AI builder for controlled work on one machine or in a small local team.
 
-I built this repo to keep source access read_only, output sandboxed, and the workflow easy to start.
+I built this repo to keep source access read-only, output sandboxed, and the workflow easy to start.
 
-## start_here
+## Why this repo is shaped this way
+
+`tof_local_builder` is my strongest public proof because it shows how I turn architecture, build discipline, and clear separation into a concrete runnable form.
+
+The source stays read-only because I want to understand the source cleanly before anything is changed or processed further.
+
+Output goes into a sandbox because results should stay separate, reviewable, and free from silent mixing.
+
+The runtime is Python-first because the flow should stay clear, direct, and understandable.
+
+## Start here
 
 Primary runtime entrypoint:
 
@@ -24,7 +34,7 @@ python run.py doctor
 python run.py down
 ```
 
-## cross_platform_wrappers
+## Cross-platform wrappers
 
 The supported runtime truth is `python run.py ...`.
 
@@ -44,23 +54,27 @@ pwsh ./scripts/setup.ps1
 
 After startup, open `http://localhost:3000` and connect the tool server at `http://127.0.0.1:8099`.
 
-## what_this_repo_does
+## What you should understand quickly
+
+This repo is not a random AI playground. It is a controlled build layer that shows how I structure systems seriously, with boundaries, review paths, and disciplined runtime behavior.
+
+## What this repo does
 
 1. runs local models through Ollama
 2. exposes a browser GUI through Open WebUI
-3. reads a mounted source path as read_only
+3. reads a mounted source path as read-only
 4. writes reviewed artifacts only into a local sandbox
-5. uses a first_run wizard to guide setup and model choice
-6. stays CPU_safe by default, with optional later acceleration
+5. uses a first-run wizard to guide setup and model choice
+6. stays CPU-safe by default, with optional later acceleration
 
-## boundary
+## Boundary
 
-1. the source repo stays read_only
+1. the source repo stays read-only
 2. writes stay limited to `sandbox/workspace` and `sandbox/output`
 3. this is a builder stack, not a general knowledge system
 4. local use comes first
 
-## key_runtime_parts
+## Key runtime parts
 
 - `run.py`
 - `tof_cli/`
@@ -70,7 +84,7 @@ After startup, open `http://localhost:3000` and connect the tool server at `http
 - `services/repo_bridge/`
 - `scripts/wizard.py`
 
-## related_public_repos
+## Related public repos
 
 - [`tof_local_knowledge`](https://github.com/IMaugrenI/tof_local_knowledge) — local document indexing and grounded answers
 - [`tof_showcase`](https://github.com/IMaugrenI/tof-showcase) — public architecture entry point

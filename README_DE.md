@@ -2,13 +2,23 @@
 
 > Die englische Hauptfassung liegt in `README.md`.
 
-Lokaler KI_Builder fuer kontrolliertes Arbeiten auf einem einzelnen Rechner oder in einem kleinen lokalen Team.
+Lokaler KI-Builder für kontrolliertes Arbeiten auf einem einzelnen Rechner oder in einem kleinen lokalen Team.
 
-Ich habe dieses Repo gebaut, damit Quellzugriff read_only bleibt, Ausgaben sauber in einer Sandbox landen und der Einstieg moeglichst einfach ist.
+Ich habe dieses Repo gebaut, damit Quellzugriff read-only bleibt, Ausgaben sauber in einer Sandbox landen und der Einstieg möglichst einfach bleibt.
 
-## start_here
+## Warum dieses Repo so gebaut ist
 
-Primaerer Runtime_Einstieg:
+`tof_local_builder` ist mein stärkster öffentlicher Beweis, weil man daran direkt sieht, wie ich Architektur, Bauprinzipien und klare Trennung in eine konkrete, nachvollziehbare Form bringe.
+
+Die Quelle bleibt read-only, weil ich die Quelle zuerst sauber verstehen will, bevor irgendetwas verändert oder weiterverarbeitet wird.
+
+Ergebnisse gehen in eine Sandbox, weil sie getrennt, prüfbar und ohne Vermischung entstehen sollen.
+
+Die Runtime ist Python-first, weil der Ablauf klar, direkt und nachvollziehbar bleiben soll.
+
+## Einstieg
+
+Primärer Runtime-Einstieg:
 
 ```bash
 python run.py setup
@@ -16,7 +26,7 @@ python run.py up
 python run.py check
 ```
 
-Weitere Runtime_Befehle:
+Weitere Runtime-Befehle:
 
 ```bash
 python run.py status
@@ -24,15 +34,15 @@ python run.py doctor
 python run.py down
 ```
 
-## plattform_wrapper
+## Plattform-Wrapper
 
-Die unterstuetzte Runtime_Wahrheit ist `python run.py ...`.
+Die unterstützte Runtime-Wahrheit ist `python run.py ...`.
 
-Komfortstarter existieren jetzt fuer mehrere Betriebssysteme:
+Unterstützte Komfortstarter:
 
-- Linux: `scripts/*.sh`
-- Windows PowerShell: `scripts/*.ps1`
-- macOS Command_Starter: `scripts/*.command`
+- Linux: `scripts/setup.sh`, `scripts/up.sh`, `scripts/check.sh`, `scripts/down.sh`, `scripts/status.sh`, `scripts/doctor.sh`
+- Windows PowerShell: `scripts/setup.ps1`, `scripts/up.ps1`, `scripts/check.ps1`, `scripts/down.ps1`, `scripts/status.ps1`, `scripts/doctor.ps1`
+- macOS Command-Starter: `scripts/setup.command`, `scripts/up.command`, `scripts/check.command`, `scripts/down.command`, `scripts/status.command`, `scripts/doctor.command`
 
 Beispiele:
 
@@ -42,25 +52,29 @@ pwsh ./scripts/setup.ps1
 ./scripts/setup.command
 ```
 
-Nach dem Start oeffne `http://localhost:3000` und verbinde den Tool_Server unter `http://127.0.0.1:8099`.
+Nach dem Start öffne `http://localhost:3000` und verbinde den Tool-Server unter `http://127.0.0.1:8099`.
 
-## was_dieses_repo_macht
+## Was man schnell verstehen sollte
 
-1. es fuehrt lokale Modelle ueber Ollama aus
-2. es stellt eine Browser_GUI ueber Open WebUI bereit
-3. es liest einen eingebundenen Quellpfad read_only
-4. es schreibt gepruefte Artefakte nur in eine lokale Sandbox
-5. es nutzt einen first_run Wizard fuer Setup und Modellwahl
-6. es bleibt standardmaessig CPU_schonend, mit optionaler spaeterer Beschleunigung
+Dieses Repo ist kein beliebiger KI-Spielplatz. Es ist eine kontrollierte Bauschicht, an der sichtbar wird, dass ich Systeme ernsthaft durchdenke und auf saubere, kontrollierbare Weise aufbaue.
 
-## grenze
+## Was dieses Repo macht
 
-1. das Quellrepo bleibt read_only
-2. Schreibvorgaenge bleiben auf `sandbox/workspace` und `sandbox/output` begrenzt
-3. das ist ein Builder_Stack und kein allgemeines Wissenssystem
+1. führt lokale Modelle über Ollama aus
+2. stellt eine Browser-Oberfläche über Open WebUI bereit
+3. liest einen eingebundenen Quellpfad read-only
+4. schreibt geprüfte Artefakte nur in eine lokale Sandbox
+5. nutzt einen First-Run-Wizard für Setup und Modellwahl
+6. bleibt standardmäßig CPU-schonend, mit optionaler späterer Beschleunigung
+
+## Grenze
+
+1. das Quellrepo bleibt read-only
+2. Schreibvorgänge bleiben auf `sandbox/workspace` und `sandbox/output` begrenzt
+3. das ist ein Builder-Stack und kein allgemeines Wissenssystem
 4. lokaler Einsatz steht im Vordergrund
 
-## zentrale_runtime_teile
+## Zentrale Runtime-Teile
 
 - `run.py`
 - `tof_cli/`
@@ -70,14 +84,8 @@ Nach dem Start oeffne `http://localhost:3000` und verbinde den Tool_Server unter
 - `services/repo_bridge/`
 - `scripts/wizard.py`
 
-## wrapper_saetze
+## Verwandte öffentliche Repos
 
-- Linux Shell_Wrapper: `scripts/*.sh`
-- Windows PowerShell_Wrapper: `scripts/*.ps1`
-- macOS Command_Starter: `scripts/*.command`
-
-## verwandte_oeffentliche_repos
-
-- [`tof_local_knowledge`](https://github.com/IMaugrenI/tof_local_knowledge) — lokale Dokumenten_Indexierung und belegte Antworten
-- [`tof_showcase`](https://github.com/IMaugrenI/tof-showcase) — oeffentlicher Architektur_Einstieg
-- [`tof_v7_public_frame`](https://github.com/IMaugrenI/tof-v7-public-frame) — reduzierter V7_Grenzrahmen
+- [`tof_local_knowledge`](https://github.com/IMaugrenI/tof_local_knowledge) — lokale Dokumenten-Indexierung und belegte Antworten
+- [`tof_showcase`](https://github.com/IMaugrenI/tof-showcase) — öffentlicher Architektur-Einstieg
+- [`tof_v7_public_frame`](https://github.com/IMaugrenI/tof-v7-public-frame) — reduzierter V7-Grenzrahmen
