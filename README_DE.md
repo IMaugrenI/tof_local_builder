@@ -8,11 +8,23 @@ Ich habe dieses Repo gebaut, damit Quellzugriff read_only bleibt, Ausgaben saube
 
 ## start_here
 
+Primaerer Runtime_Einstieg:
+
 ```bash
-bash scripts/setup.sh
-bash scripts/up.sh
-bash scripts/check.sh
+python run.py setup
+python run.py up
+python run.py check
 ```
+
+Weitere Runtime_Befehle:
+
+```bash
+python run.py status
+python run.py doctor
+python run.py down
+```
+
+Linux Shell_Skripte existieren weiter, sind aber jetzt nur noch duenne Wrapper um `python run.py ...`.
 
 Nach dem Start oeffne `http://localhost:3000` und verbinde den Tool_Server unter `http://127.0.0.1:8099`.
 
@@ -25,14 +37,6 @@ Nach dem Start oeffne `http://localhost:3000` und verbinde den Tool_Server unter
 5. es nutzt einen first_run Wizard fuer Setup und Modellwahl
 6. es bleibt standardmaessig CPU_schonend, mit optionaler spaeterer Beschleunigung
 
-## was_dieses_repo_zeigt
-
-1. hands_on Arbeit mit Linux und Docker
-2. klare Grenzen zwischen Quelle und Ausgabe
-3. produktorientiertes Denken fuer lokale Workflows
-4. praktische Repo_ und Dokumentationsdisziplin
-5. kontrollierte Experimente ohne direkte Schreibzugriffe auf die Quelle
-
 ## grenze
 
 1. das Quellrepo bleibt read_only
@@ -42,24 +46,24 @@ Nach dem Start oeffne `http://localhost:3000` und verbinde den Tool_Server unter
 
 ## zentrale_runtime_teile
 
-- `ollama` = lokaler Modell_Runtime
-- `open-webui` = Browser_GUI
-- `repo-bridge` = kontrollierte read_write Grenze fuer Quelle und Sandbox
-- `wizard.py` = einmaliger lokaler Setup_Leitfaden vor der Web_Uebergabe
-
-## wichtige_dateien
-
+- `run.py`
+- `tof_cli/`
 - `compose.yml`
 - `.env.example`
+- `docs/13_python_cli_runtime.md`
+- `services/repo_bridge/`
+- `scripts/wizard.py`
+
+## legacy_shell_wrapper
+
 - `scripts/setup.sh`
 - `scripts/up.sh`
 - `scripts/check.sh`
 - `scripts/down.sh`
-- `scripts/wizard.py`
-- `docs/product/START_HERE.md`
-- `docs/product/WHY.md`
-- `docs/repo_bridge.md`
-- `services/repo_bridge/`
+- `scripts/status.sh`
+- `scripts/doctor.sh`
+- `scripts/start.sh`
+- `scripts/healthcheck.sh`
 
 ## verwandte_oeffentliche_repos
 

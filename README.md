@@ -8,11 +8,23 @@ I built this repo to keep source access read_only, output sandboxed, and the wor
 
 ## start_here
 
+Primary runtime entrypoint:
+
 ```bash
-bash scripts/setup.sh
-bash scripts/up.sh
-bash scripts/check.sh
+python run.py setup
+python run.py up
+python run.py check
 ```
+
+Additional runtime commands:
+
+```bash
+python run.py status
+python run.py doctor
+python run.py down
+```
+
+Linux shell scripts still exist, but they are now thin wrappers around `python run.py ...`.
 
 After startup, open `http://localhost:3000` and connect the tool server at `http://127.0.0.1:8099`.
 
@@ -25,14 +37,6 @@ After startup, open `http://localhost:3000` and connect the tool server at `http
 5. uses a first_run wizard to guide setup and model choice
 6. stays CPU_safe by default, with optional later acceleration
 
-## what_this_shows
-
-1. hands_on Linux and Docker work
-2. clear source_vs_output boundaries
-3. product_minded local workflow design
-4. practical repo and documentation discipline
-5. controlled experimentation without direct source writes
-
 ## boundary
 
 1. the source repo stays read_only
@@ -42,24 +46,24 @@ After startup, open `http://localhost:3000` and connect the tool server at `http
 
 ## key_runtime_parts
 
-- `ollama` = local model runtime
-- `open-webui` = browser GUI
-- `repo-bridge` = controlled read_write boundary for source and sandbox
-- `wizard.py` = one_time local setup guide before web handoff
-
-## key_files
-
+- `run.py`
+- `tof_cli/`
 - `compose.yml`
 - `.env.example`
+- `docs/13_python_cli_runtime.md`
+- `services/repo_bridge/`
+- `scripts/wizard.py`
+
+## legacy_shell_wrappers
+
 - `scripts/setup.sh`
 - `scripts/up.sh`
 - `scripts/check.sh`
 - `scripts/down.sh`
-- `scripts/wizard.py`
-- `docs/product/START_HERE.md`
-- `docs/product/WHY.md`
-- `docs/repo_bridge.md`
-- `services/repo_bridge/`
+- `scripts/status.sh`
+- `scripts/doctor.sh`
+- `scripts/start.sh`
+- `scripts/healthcheck.sh`
 
 ## related_public_repos
 
