@@ -13,6 +13,16 @@ python run.py doctor
 python run.py down
 ```
 
+## wrapper availability
+
+The runtime truth is `python run.py ...`.
+
+Platform-specific convenience wrappers are available as thin launchers:
+
+- Linux shell wrappers: `scripts/*.sh`
+- Windows PowerShell wrappers: `scripts/*.ps1`
+- macOS command launchers: `scripts/*.command`
+
 ## goal
 
 - one operational runtime entrypoint
@@ -28,6 +38,7 @@ python run.py down
 - builder-specific Python bridges exist for wizard, repo bridge and default model handling
 - `scripts/compose_wrapper.sh` is deprecated and no longer part of the supported runtime path
 - `scripts/ensure_model.sh` is deprecated and no longer part of the supported runtime path
+- Windows and macOS wrapper sets are available for the primary commands
 
 ## command summary
 

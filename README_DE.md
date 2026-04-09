@@ -24,7 +24,23 @@ python run.py doctor
 python run.py down
 ```
 
-Linux Shell_Skripte existieren weiter, sind aber jetzt nur noch duenne Wrapper um `python run.py ...`.
+## plattform_wrapper
+
+Die unterstuetzte Runtime_Wahrheit ist `python run.py ...`.
+
+Komfortstarter existieren jetzt fuer mehrere Betriebssysteme:
+
+- Linux: `scripts/*.sh`
+- Windows PowerShell: `scripts/*.ps1`
+- macOS Command_Starter: `scripts/*.command`
+
+Beispiele:
+
+```bash
+./scripts/setup.sh
+pwsh ./scripts/setup.ps1
+./scripts/setup.command
+```
 
 Nach dem Start oeffne `http://localhost:3000` und verbinde den Tool_Server unter `http://127.0.0.1:8099`.
 
@@ -54,16 +70,11 @@ Nach dem Start oeffne `http://localhost:3000` und verbinde den Tool_Server unter
 - `services/repo_bridge/`
 - `scripts/wizard.py`
 
-## legacy_shell_wrapper
+## wrapper_saetze
 
-- `scripts/setup.sh`
-- `scripts/up.sh`
-- `scripts/check.sh`
-- `scripts/down.sh`
-- `scripts/status.sh`
-- `scripts/doctor.sh`
-- `scripts/start.sh`
-- `scripts/healthcheck.sh`
+- Linux Shell_Wrapper: `scripts/*.sh`
+- Windows PowerShell_Wrapper: `scripts/*.ps1`
+- macOS Command_Starter: `scripts/*.command`
 
 ## verwandte_oeffentliche_repos
 

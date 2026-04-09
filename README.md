@@ -24,7 +24,23 @@ python run.py doctor
 python run.py down
 ```
 
-Linux shell scripts still exist, but they are now thin wrappers around `python run.py ...`.
+## cross_platform_wrappers
+
+The supported runtime truth is `python run.py ...`.
+
+Convenience wrappers now exist for multiple operating systems:
+
+- Linux: `scripts/*.sh`
+- Windows PowerShell: `scripts/*.ps1`
+- macOS command launchers: `scripts/*.command`
+
+Examples:
+
+```bash
+./scripts/setup.sh
+pwsh ./scripts/setup.ps1
+./scripts/setup.command
+```
 
 After startup, open `http://localhost:3000` and connect the tool server at `http://127.0.0.1:8099`.
 
@@ -54,16 +70,11 @@ After startup, open `http://localhost:3000` and connect the tool server at `http
 - `services/repo_bridge/`
 - `scripts/wizard.py`
 
-## legacy_shell_wrappers
+## wrapper_sets
 
-- `scripts/setup.sh`
-- `scripts/up.sh`
-- `scripts/check.sh`
-- `scripts/down.sh`
-- `scripts/status.sh`
-- `scripts/doctor.sh`
-- `scripts/start.sh`
-- `scripts/healthcheck.sh`
+- Linux shell wrappers: `scripts/*.sh`
+- Windows PowerShell wrappers: `scripts/*.ps1`
+- macOS command launchers: `scripts/*.command`
 
 ## related_public_repos
 
