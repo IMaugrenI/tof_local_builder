@@ -4,17 +4,31 @@
 
 Lokaler KI-Builder für kontrolliertes Arbeiten auf einem einzelnen Rechner oder in einem kleinen lokalen Team.
 
-Ich habe dieses Repo gebaut, damit Quellzugriff read-only bleibt, Ausgaben sauber in einer Sandbox landen und der Einstieg möglichst einfach bleibt.
+Dieses Repository ist ein öffentlicher Beleg für KI-gestützte Aufbauarbeit unter menschlicher Architekturführung.
+
+Ich stelle dieses Repo nicht als klassischen Beweis für manuell Zeile für Zeile geschriebenen Code dar. Ich stelle es als Beleg dafür dar, dass aus Architektur, Grenzziehung, Orchestrierung und Review in einem KI-gestützten Workflow eine konkrete lauffähige Form entstehen kann.
 
 ## Warum dieses Repo so gebaut ist
 
-`tof_local_builder` ist mein stärkster öffentlicher Beweis, weil man daran direkt sieht, wie ich Architektur, Bauprinzipien und klare Trennung in eine konkrete, nachvollziehbare Form bringe.
+`tof_local_builder` ist mein stärkstes öffentliches Beispiel, weil man daran direkt sieht, wie ich Struktur, Grenzen und Bauruhe in eine konkrete lauffähige Form bringe.
 
 Die Quelle bleibt read-only, weil ich die Quelle zuerst sauber verstehen will, bevor irgendetwas verändert oder weiterverarbeitet wird.
 
-Ergebnisse gehen in eine Sandbox, weil sie getrennt, prüfbar und ohne Vermischung entstehen sollen.
+Ergebnisse gehen in eine Sandbox, weil sie getrennt, prüfbar und ohne stille Vermischung entstehen sollen.
 
 Die Runtime ist Python-first, weil der Ablauf klar, direkt und nachvollziehbar bleiben soll.
+
+## Meine Rolle in diesem Repo
+
+Meine Rolle hier ist:
+
+- Architektur und Grenzdefinition
+- Workflow-Design und Runtime-Form
+- Review und Korrektur erzeugter Ausgaben
+- öffentliche Rahmung und bewusste Reduktion des Scopes
+- KI-gestützte Umsetzung unter meiner Führung
+
+Die konkrete Repo-Oberfläche ist stark KI-gestützt entstanden. Mein Anteil liegt in der Struktur dahinter: warum die Quelle read-only bleibt, warum Ausgaben in einer Sandbox landen, warum der Startpfad eng gehalten wird und was als zulässiger öffentlicher Beleg gilt.
 
 ## Einstieg
 
@@ -56,7 +70,7 @@ Nach dem Start öffne `http://localhost:3000` und verbinde den Tool-Server unter
 
 ## Was man schnell verstehen sollte
 
-Dieses Repo ist kein beliebiger KI-Spielplatz. Es ist eine kontrollierte Bauschicht, an der sichtbar wird, dass ich Systeme ernsthaft durchdenke und auf saubere, kontrollierbare Weise aufbaue.
+Dieses Repo ist kein beliebiger KI-Spielplatz. Es ist eine kontrollierte Bauschicht, an der sichtbar wird, dass auch KI-gestützte Umsetzung begrenzt, prüfbar und technisch ehrlich gehalten werden kann.
 
 ## Was dieses Repo macht
 
@@ -66,6 +80,14 @@ Dieses Repo ist kein beliebiger KI-Spielplatz. Es ist eine kontrollierte Bauschi
 4. schreibt geprüfte Artefakte nur in eine lokale Sandbox
 5. nutzt einen First-Run-Wizard für Setup und Modellwahl
 6. bleibt standardmäßig CPU-schonend, mit optionaler späterer Beschleunigung
+
+## Was dieses Repo zeigt
+
+1. Architektur vor Umsetzung
+2. explizite Grenzen zwischen Quelle, Runtime und Ausgabe
+3. KI-gestützte Aufbauarbeit unter menschlicher Führung
+4. praktische Lokalsystem-Denke statt vager KI-Rhetorik
+5. Dokumentations- und Runtime-Disziplin
 
 ## Grenze
 
