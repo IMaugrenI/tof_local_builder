@@ -4,6 +4,21 @@
 
 This repository exposes a small public operator path so local startup and shutdown stay easy to understand.
 
+## Fastest beginner path
+
+If you want the shortest safe path:
+
+```bash
+bash scripts/start_here.sh
+```
+
+Equivalent entry points:
+
+- PowerShell: `pwsh ./scripts/start_here.ps1`
+- macOS: `./scripts/start_here.command`
+
+That path runs setup, startup, and health check in the expected order.
+
 ## Standard command flow
 
 ```bash
@@ -16,6 +31,7 @@ bash scripts/down.sh
 
 ## Commands
 
+- `bash scripts/start_here.sh` — beginner path that runs setup, up, and check in sequence
 - `bash scripts/setup.sh` — prepare `.env` and local directories
 - `bash scripts/up.sh` — start the stack through the public wrapper, open the first-run setup wizard when needed, auto-detect Intel `/dev/dri` on Linux, and ensure the default Ollama model exists
 - `bash scripts/check.sh` — run health checks for the live stack and show the expected tool-server base URL
@@ -25,6 +41,12 @@ bash scripts/down.sh
 - `bash scripts/restart.sh` — restart through the public wrappers
 - `bash scripts/reset.sh` — destructive reset for local service data and sandbox work/output
 - `python3 scripts/wizard.py --force` — reopen the local setup wizard intentionally
+
+## Safety markers
+
+- SAFE: `start_here`, `setup`, `check`, `status`, `doctor`, `down`
+- ADVANCED: `logs`, `pull`, `restart`, `wizard --force`
+- DESTRUCTIVE: `reset`
 
 ## Notes
 
