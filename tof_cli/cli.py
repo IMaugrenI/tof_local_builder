@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import argparse
 
-from tof_cli.commands import check, doctor, down, setup, status, up
+from tof_cli.commands import check, doctor, down, setup, status, ui, up
 
 
-COMMAND_MODULES = [setup, up, check, down, status, doctor]
+COMMAND_MODULES = [setup, up, check, down, status, doctor, ui]
 
 
 def build_parser() -> argparse.ArgumentParser:
