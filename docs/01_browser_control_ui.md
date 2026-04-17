@@ -23,16 +23,22 @@ It currently exposes large buttons for:
 - run doctor
 - stop stack
 
+It also exposes direct local links for:
+
+- Open WebUI
+- repo bridge health
+- Ollama endpoint
+
 ## What it is not
 
 This is not the full builder workspace itself.
 
-It is a safe local control surface for the main runtime steps.
+It is a safe local control surface for the main runtime steps and a jump-off point into the real local builder environment.
 
 ## Suggested user path
 
 1. prepare local setup
 2. start builder stack
 3. check services
-4. show runtime status
-5. continue into the actual builder workflow
+4. open WebUI
+5. use the repo bridge or Ollama links only when needed for diagnosis or advanced checks
