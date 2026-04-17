@@ -19,6 +19,16 @@ Equivalent entry points:
 
 That path runs setup, startup, and health check in the expected order.
 
+## Browser control path
+
+If you want a simpler local control surface in the browser:
+
+```bash
+python run.py ui
+```
+
+That path opens a local page with large buttons for setup, start, check, status, doctor, and stop.
+
 ## Standard command flow
 
 ```bash
@@ -32,6 +42,7 @@ bash scripts/down.sh
 ## Commands
 
 - `bash scripts/start_here.sh` — beginner path that runs setup, up, and check in sequence
+- `python run.py ui` — local browser control surface for the main runtime steps
 - `bash scripts/setup.sh` — prepare `.env` and local directories
 - `bash scripts/up.sh` — start the stack through the public wrapper, open the first-run setup wizard when needed, auto-detect Intel `/dev/dri` on Linux, and ensure the default Ollama model exists
 - `bash scripts/check.sh` — run health checks for the live stack and show the expected tool-server base URL
@@ -44,7 +55,7 @@ bash scripts/down.sh
 
 ## Safety markers
 
-- SAFE: `start_here`, `setup`, `check`, `status`, `doctor`, `down`
+- SAFE: `start_here`, `setup`, `check`, `status`, `doctor`, `down`, `python run.py ui`
 - ADVANCED: `logs`, `pull`, `restart`, `wizard --force`
 - DESTRUCTIVE: `reset`
 
