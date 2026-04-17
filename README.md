@@ -8,6 +8,36 @@ This repository is public proof of AI-assisted build work under human architectu
 
 I do not present this repo as manual line-by-line coding proof in the traditional sense. I present it as proof that architecture, boundary definition, orchestration, and review can produce a concrete runnable system through an AI-assisted workflow.
 
+## Use this repo in the simplest way
+
+If you want the shortest safe path, start here:
+
+### Linux
+
+```bash
+bash scripts/start_here.sh
+```
+
+### Windows PowerShell
+
+```powershell
+pwsh ./scripts/start_here.ps1
+```
+
+### macOS
+
+```bash
+./scripts/start_here.command
+```
+
+That path runs:
+
+1. setup
+2. startup
+3. health check
+
+A beginner guide is available in `docs/00_beginner_quickstart.md`.
+
 ## Why this repo is shaped this way
 
 `tof_local_builder` is my strongest public example because it shows how I turn structure, boundaries, and build discipline into a concrete runnable form.
@@ -54,19 +84,28 @@ The supported runtime truth is `python run.py ...`.
 
 Supported convenience wrappers:
 
-- Linux: `scripts/setup.sh`, `scripts/up.sh`, `scripts/check.sh`, `scripts/down.sh`, `scripts/status.sh`, `scripts/doctor.sh`
-- Windows PowerShell: `scripts/setup.ps1`, `scripts/up.ps1`, `scripts/check.ps1`, `scripts/down.ps1`, `scripts/status.ps1`, `scripts/doctor.ps1`
-- macOS command launchers: `scripts/setup.command`, `scripts/up.command`, `scripts/check.command`, `scripts/down.command`, `scripts/status.command`, `scripts/doctor.command`
+- Linux: `scripts/setup.sh`, `scripts/up.sh`, `scripts/check.sh`, `scripts/down.sh`, `scripts/status.sh`, `scripts/doctor.sh`, `scripts/start_here.sh`
+- Windows PowerShell: `scripts/setup.ps1`, `scripts/up.ps1`, `scripts/check.ps1`, `scripts/down.ps1`, `scripts/status.ps1`, `scripts/doctor.ps1`, `scripts/start_here.ps1`
+- macOS command launchers: `scripts/setup.command`, `scripts/up.command`, `scripts/check.command`, `scripts/down.command`, `scripts/status.command`, `scripts/doctor.command`, `scripts/start_here.command`
 
 Examples:
 
 ```bash
-./scripts/setup.sh
-pwsh ./scripts/setup.ps1
-./scripts/setup.command
+./scripts/start_here.sh
+pwsh ./scripts/start_here.ps1
+./scripts/start_here.command
 ```
 
 After startup, open `http://localhost:3000` and connect the tool server at `http://127.0.0.1:8099`.
+
+## What success looks like
+
+A successful first run means:
+
+- the local builder stack is running
+- the browser-accessible WebUI opens correctly
+- the tool server is reachable
+- output stays inside the sandbox paths
 
 ## What you should understand quickly
 
