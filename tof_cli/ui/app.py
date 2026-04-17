@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import io
 import json
+import urllib.error
+import urllib.request
 import webbrowser
 from contextlib import redirect_stdout
 from dataclasses import dataclass
@@ -35,6 +37,12 @@ LINKS = {
     "ollama": {"label": "Open Ollama endpoint", "url": "http://127.0.0.1:11434"},
 }
 
+READINESS_TARGETS = {
+    "webui": {"label": "WebUI", "url": "http://127.0.0.1:3000"},
+    "repo_bridge": {"label": "Repo bridge", "url": "http://127.0.0.1:8099/health"},
+    "ollama": {"label": "Ollama", "url": "http://127.0.0.1:11434"},
+}
+
 
 HTML = """<!doctype html>
 <html lang=\"en\">
@@ -49,7 +57,9 @@ HTML = """<!doctype html>
     .panel { margin-top: 20px; }
     .lead { color: #4b5563; line-height: 1.5; }
     .note { color: #6b7280; font-size: 14px; }
-    .actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 18px; }
+    .actions, .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 18px; }
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; }
+    .card .value { font-size: 20px; font-weight: 700; margin-top: 6px; }
     button { border: 0; border-radius: 12px; padding: 14px 16px; font-size: 15px; cursor: pointer; background: #1f6feb; color: white; }
     button.secondary { background: #0f766e; }
     button.ghost { background: #e5e7eb; color: #111827; }
@@ -63,8 +73,14 @@ HTML = """<!doctype html>
   <div class=\"wrap\">
     <div class=\"hero\">
       <h1>tof_local_builder</h1>
-      <p class=\"lead\">A simple local control surface for the builder stack. Use the buttons below to prepare the system, start the stack, check it, inspect status, open the main local pages, or stop it again.</p>
+      <p class=\"lead\">A simple local control surface for the builder stack. Use the buttons below to prepare the system, start the stack, check it, inspect readiness, open the main local pages, or stop it again.</p>
       <p class=\"note\">This is a local-only helper UI. It does not replace the main builder workspace itself.</p>
+    </div>
+
+    <div class=\"panel\">
+      <h2>Readiness</h2>
+      <div class=\"cards\" id=\"cards\"></div>
+      <div class=\"status\" id=\"next-step\">Loading current guidance ...</div>
     </div>
 
     <div class=\"panel\">
@@ -83,7 +99,6 @@ HTML = """<!doctype html>
         <button class=\"ghost\" onclick=\"openLink('repo_bridge_health')\">Open repo bridge health</button>
         <button class=\"ghost\" onclick=\"openLink('ollama')\">Open Ollama endpoint</button>
       </div>
-      <div class=\"status\" id=\"next-step\">Loading current guidance ...</div>
       <div class=\"log\"><pre id=\"log\">Starting tof_local_builder UI...</pre></div>
     </div>
   </div>
@@ -93,10 +108,22 @@ HTML = """<!doctype html>
       log.textContent = `[${new Date().toLocaleTimeString()}] ${text}\n\n` + log.textContent;
     }
 
+    function renderCards(data) {
+      const root = document.getElementById('cards');
+      root.innerHTML = '';
+      for (const item of data.items || []) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `<div>${item.label}</div><div class=\"value\">${item.state}</div><div>${item.url}</div>`;
+        root.appendChild(card);
+      }
+    }
+
     async function refreshSummary() {
       const response = await fetch('/api/summary');
       const data = await response.json();
       document.getElementById('next-step').textContent = data.next_step;
+      renderCards(data.readiness || { items: [] });
       appendLog('Summary refreshed.');
     }
 
@@ -146,61 +173,90 @@ def _open_link(name: str) -> dict[str, object]:
 
 
 
+def _probe_url(url: str) -> str:
+    try:
+        with urllib.request.urlopen(url, timeout=3) as response:
+            code = getattr(response, 'status', 200)
+            return 'ready' if int(code) < 500 else f'http_{code}'
+    except urllib.error.HTTPError as exc:
+        return f'http_{exc.code}'
+    except Exception:
+        return 'not_reachable'
+
+
+
+def _readiness_payload() -> dict[str, object]:
+    items = []
+    for key, target in READINESS_TARGETS.items():
+        state = _probe_url(target['url'])
+        items.append({'name': key, 'label': target['label'], 'url': target['url'], 'state': state})
+    return {'items': items}
+
+
+
 def _summary_payload() -> dict[str, object]:
+    readiness = _readiness_payload()
+    webui_ready = any(item['name'] == 'webui' and item['state'] == 'ready' for item in readiness['items'])
+    next_step = (
+        'WebUI is reachable. Open WebUI and continue the real builder work there.'
+        if webui_ready
+        else 'Recommended order: prepare local setup, start the builder stack, check services, then wait until WebUI becomes reachable.'
+    )
     return {
-        "next_step": "Recommended order: prepare local setup, start the builder stack, check services, then open the main local pages from the useful-links section.",
-        "actions": [
-            {"name": key, "label": spec.label, "safe_level": spec.safe_level}
+        'next_step': next_step,
+        'actions': [
+            {'name': key, 'label': spec.label, 'safe_level': spec.safe_level}
             for key, spec in ACTIONS.items()
         ],
-        "links": LINKS,
+        'links': LINKS,
+        'readiness': readiness,
     }
 
 
 
 def _json_bytes(payload: dict[str, object]) -> bytes:
-    return json.dumps(payload, indent=2).encode("utf-8")
+    return json.dumps(payload, indent=2).encode('utf-8')
 
 
 
-def run_ui(host: str = "127.0.0.1", port: int = 8795, open_browser: bool = True) -> int:
+def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True) -> int:
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code: int, content_type: str, body: bytes) -> None:
             self.send_response(code)
-            self.send_header("Content-Type", content_type)
-            self.send_header("Content-Length", str(len(body)))
+            self.send_header('Content-Type', content_type)
+            self.send_header('Content-Length', str(len(body)))
             self.end_headers()
             self.wfile.write(body)
 
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
-            if parsed.path == "/":
-                self._send(200, "text/html; charset=utf-8", HTML.encode("utf-8"))
+            if parsed.path == '/':
+                self._send(200, 'text/html; charset=utf-8', HTML.encode('utf-8'))
                 return
-            if parsed.path == "/api/summary":
-                self._send(200, "application/json; charset=utf-8", _json_bytes(_summary_payload()))
+            if parsed.path == '/api/summary':
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(_summary_payload()))
                 return
-            self._send(404, "application/json; charset=utf-8", _json_bytes({"error": "not found"}))
+            self._send(404, 'application/json; charset=utf-8', _json_bytes({'error': 'not found'}))
 
         def do_POST(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
             action = parsed.path.removeprefix('/api/')
             if action in ACTIONS:
-                self._send(200, "application/json; charset=utf-8", _json_bytes(_run_action(action)))
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(_run_action(action)))
                 return
             if action.startswith('open/'):
                 name = action.removeprefix('open/')
                 if name in LINKS:
-                    self._send(200, "application/json; charset=utf-8", _json_bytes(_open_link(name)))
+                    self._send(200, 'application/json; charset=utf-8', _json_bytes(_open_link(name)))
                     return
-            self._send(404, "application/json; charset=utf-8", _json_bytes({"error": "not found"}))
+            self._send(404, 'application/json; charset=utf-8', _json_bytes({'error': 'not found'}))
 
         def log_message(self, fmt: str, *args: object) -> None:  # noqa: A003
             return
 
     server = ThreadingHTTPServer((host, port), Handler)
-    url = f"http://{host}:{port}"
-    print(json.dumps({"ui_url": url, "message": "tof_local_builder UI is running"}, indent=2))
+    url = f'http://{host}:{port}'
+    print(json.dumps({'ui_url': url, 'message': 'tof_local_builder UI is running'}, indent=2))
     if open_browser:
         webbrowser.open(url)
     try:
