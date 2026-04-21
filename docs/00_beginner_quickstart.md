@@ -2,12 +2,6 @@
 
 This guide is for people who want the shortest safe path.
 
-## What this repo is
-
-`tof_local_builder` gives you a local AI build workspace on your own machine.
-
-You do **not** need to understand the whole repo first.
-
 ## Fastest safe path
 
 ### Linux
@@ -28,59 +22,39 @@ pwsh ./scripts/start_here.ps1
 ./scripts/start_here.command
 ```
 
-## Alternative browser-first path
+## What happens (clear chain)
 
-If you want a simpler browser control path:
+The start-here path always does:
 
-```bash
-python run.py ui
-```
+1. setup (first-run wizard if needed)
+2. start the stack
+3. check health
 
-## What happens
+## What opens and what you use
 
-The start-here path does three things in order:
-
-1. prepares local folders and `.env` defaults
-2. starts the local builder stack
-3. checks whether the main services answered correctly
-
-The browser UI gives you:
-
-- stack control buttons
-- direct links to the main local pages
-- a simple local entry point into the builder environment
+- Wizard = first setup only
+- Local UI = control surface
+- Open WebUI = your actual workspace
 
 ## What success looks like
 
-You should end up with:
+You should see:
 
-- the local stack running
-- a browser-accessible WebUI
-- a working local builder environment
-- a browser page where you can open the main local services directly
+- running stack
+- reachable WebUI
+- working builder environment
 
-## Simple normal path
-
-- start the stack
-- open the browser UI
-- open WebUI
-- verify repo bridge or Ollama if needed
-- continue in the actual builder workspace
-
-## If something fails
-
-Run:
+## Everyday use
 
 ```bash
-python run.py doctor
-```
-
-Then read the printed checks and fix the first failing item.
-
-## Normal everyday commands after first startup
-
-```bash
+python run.py up
 python run.py status
 python run.py check
 python run.py down
+```
+
+## If something fails
+
+```bash
+python run.py doctor
 ```
