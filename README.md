@@ -46,6 +46,33 @@ That path runs:
 3. health check
 
 A beginner guide is available in `docs/00_beginner_quickstart.md`.
+A German quickstart clone is available in `docs/00_beginner_quickstart_DE.md`.
+
+## Role model: what opens, what controls, where you actually work
+
+This repo has three different browser-facing layers, and they should not be mixed up:
+
+1. **First-run wizard**
+   - runs during first setup when configuration is still incomplete
+   - helps choose task type, performance profile, default model, and source path
+   - writes the local setup once, then hands over
+
+2. **Local control UI**
+   - starts through `python run.py ui`
+   - acts as a local control surface
+   - helps you reach the main local pages and control the stack
+
+3. **Open WebUI**
+   - this is the main working surface after startup
+   - this is where normal builder work actually happens
+
+The runtime truth stays:
+
+```bash
+python run.py ...
+```
+
+The wrappers stay thin convenience launchers around that same command path.
 
 ## Why this repo is shaped this way
 
@@ -83,6 +110,7 @@ Additional runtime commands:
 python run.py status
 python run.py doctor
 python run.py down
+python run.py ui
 ```
 
 ## Cross-platform wrappers
@@ -103,16 +131,34 @@ pwsh ./scripts/start_here.ps1
 ./scripts/start_here.command
 ```
 
-After startup, open `http://localhost:3000` and connect the tool server at `http://127.0.0.1:8099`.
-
 ## What success looks like
 
 A successful first run means:
 
 - the local builder stack is running
+- the first-run setup has already been written
 - the browser-accessible WebUI opens correctly
 - the tool server is reachable
 - output stays inside the sandbox paths
+
+## Normal everyday path
+
+After first setup, the normal daily path is:
+
+1. start the stack
+2. open or verify the local control UI if needed
+3. continue in Open WebUI as the real working surface
+4. use `status` or `check` when you want confirmation
+5. stop the stack with `down`
+
+Daily commands:
+
+```bash
+python run.py up
+python run.py status
+python run.py check
+python run.py down
+```
 
 ## What this repo shows
 

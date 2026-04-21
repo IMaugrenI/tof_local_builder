@@ -1,113 +1,87 @@
 # tof_local_builder
 
+**Lokaler KI-Builder mit klaren Grenzen: read-only Quelle, Sandbox-Ausgabe**
+
+Ein lokaler Bauarbeitsraum für KI-gestützte Umsetzung unter menschlicher Architekturführung.
+
 > Die englische Hauptfassung liegt in `README.md`.
 
-Lokaler KI-Builder für kontrolliertes Arbeiten auf einem einzelnen Rechner oder in einem kleinen lokalen Team.
+## Einfachster Einstieg
 
-Dieses Repository ist ein öffentlicher Beleg für KI-gestützte Aufbauarbeit unter menschlicher Architekturführung.
-
-Ich stelle dieses Repo nicht als klassischen Beweis für manuell Zeile für Zeile geschriebenen Code dar. Ich stelle es als Beleg dafür dar, dass aus Architektur, Grenzziehung, Orchestrierung und Review in einem KI-gestützten Workflow eine konkrete lauffähige Form entstehen kann.
-
-## Warum dieses Repo so gebaut ist
-
-`tof_local_builder` ist mein stärkstes öffentliches Beispiel, weil man daran direkt sieht, wie ich Struktur, Grenzen und Bauruhe in eine konkrete lauffähige Form bringe.
-
-Die Quelle bleibt read-only, weil ich die Quelle zuerst sauber verstehen will, bevor irgendetwas verändert oder weiterverarbeitet wird.
-
-Ergebnisse gehen in eine Sandbox, weil sie getrennt, prüfbar und ohne stille Vermischung entstehen sollen.
-
-Die Runtime ist Python-first, weil der Ablauf klar, direkt und nachvollziehbar bleiben soll.
-
-## Meine Rolle in diesem Repo
-
-Meine Rolle hier ist:
-
-- Architektur und Grenzdefinition
-- Workflow-Design und Runtime-Form
-- Review und Korrektur erzeugter Ausgaben
-- öffentliche Rahmung und bewusste Reduktion des Scopes
-- KI-gestützte Umsetzung unter meiner Führung
-
-Die konkrete Repo-Oberfläche ist stark KI-gestützt entstanden. Mein Anteil liegt in der Struktur dahinter: warum die Quelle read-only bleibt, warum Ausgaben in einer Sandbox landen, warum der Startpfad eng gehalten wird und was als zulässiger öffentlicher Beleg gilt.
-
-## Einstieg
-
-Primärer Runtime-Einstieg:
+### Linux
 
 ```bash
-python run.py setup
-python run.py up
-python run.py check
+bash scripts/start_here.sh
 ```
 
-Weitere Runtime-Befehle:
+### Windows PowerShell
+
+```powershell
+pwsh ./scripts/start_here.ps1
+```
+
+### macOS
 
 ```bash
+./scripts/start_here.command
+```
+
+Das führt aus:
+
+1. setup
+2. start
+3. check
+
+Ein Einsteiger-Guide liegt in `docs/00_beginner_quickstart.md`.
+Ein deutscher Klon liegt in `docs/00_beginner_quickstart_DE.md`.
+
+## Rollen im System (wichtig)
+
+Dieses Repo hat drei unterschiedliche Ebenen:
+
+1. **Wizard (Erstsetup)**
+   - läuft beim ersten Start
+   - legt Modell, Pfad und Profil fest
+
+2. **Lokale Control-UI**
+   - startet über `python run.py ui`
+   - dient zur Steuerung und Übersicht
+
+3. **Open WebUI (Arbeitsfläche)**
+   - hier findet die eigentliche Arbeit statt
+
+Die Runtime-Wahrheit bleibt:
+
+```bash
+python run.py ...
+```
+
+## Erfolgszustand
+
+Ein erfolgreicher Start bedeutet:
+
+- Stack läuft
+- Setup ist abgeschlossen
+- WebUI ist erreichbar
+- Output bleibt sauber in der Sandbox
+
+## Alltagspfad
+
+```bash
+python run.py up
 python run.py status
-python run.py doctor
+python run.py check
 python run.py down
 ```
 
-## Plattform-Wrapper
+## Kernidee
 
-Die unterstützte Runtime-Wahrheit ist `python run.py ...`.
+- Quelle bleibt read-only
+- Ausgabe bleibt getrennt
+- Aufbau bleibt kontrolliert
 
-Unterstützte Komfortstarter:
+## Verwandte Repos
 
-- Linux: `scripts/setup.sh`, `scripts/up.sh`, `scripts/check.sh`, `scripts/down.sh`, `scripts/status.sh`, `scripts/doctor.sh`
-- Windows PowerShell: `scripts/setup.ps1`, `scripts/up.ps1`, `scripts/check.ps1`, `scripts/down.ps1`, `scripts/status.ps1`, `scripts/doctor.ps1`
-- macOS Command-Starter: `scripts/setup.command`, `scripts/up.command`, `scripts/check.command`, `scripts/down.command`, `scripts/status.command`, `scripts/doctor.command`
-
-Beispiele:
-
-```bash
-./scripts/setup.sh
-pwsh ./scripts/setup.ps1
-./scripts/setup.command
-```
-
-Nach dem Start öffne `http://localhost:3000` und verbinde den Tool-Server unter `http://127.0.0.1:8099`.
-
-## Was man schnell verstehen sollte
-
-Dieses Repo ist kein beliebiger KI-Spielplatz. Es ist eine kontrollierte Bauschicht, an der sichtbar wird, dass auch KI-gestützte Umsetzung begrenzt, prüfbar und technisch ehrlich gehalten werden kann.
-
-## Was dieses Repo macht
-
-1. führt lokale Modelle über Ollama aus
-2. stellt eine Browser-Oberfläche über Open WebUI bereit
-3. liest einen eingebundenen Quellpfad read-only
-4. schreibt geprüfte Artefakte nur in eine lokale Sandbox
-5. nutzt einen First-Run-Wizard für Setup und Modellwahl
-6. bleibt standardmäßig CPU-schonend, mit optionaler späterer Beschleunigung
-
-## Was dieses Repo zeigt
-
-1. Architektur vor Umsetzung
-2. explizite Grenzen zwischen Quelle, Runtime und Ausgabe
-3. KI-gestützte Aufbauarbeit unter menschlicher Führung
-4. praktische Lokalsystem-Denke statt vager KI-Rhetorik
-5. Dokumentations- und Runtime-Disziplin
-
-## Grenze
-
-1. das Quellrepo bleibt read-only
-2. Schreibvorgänge bleiben auf `sandbox/workspace` und `sandbox/output` begrenzt
-3. das ist ein Builder-Stack und kein allgemeines Wissenssystem
-4. lokaler Einsatz steht im Vordergrund
-
-## Zentrale Runtime-Teile
-
-- `run.py`
-- `tof_cli/`
-- `compose.yml`
-- `.env.example`
-- `docs/13_python_cli_runtime.md`
-- `services/repo_bridge/`
-- `scripts/wizard.py`
-
-## Verwandte öffentliche Repos
-
-- [`tof_local_knowledge`](https://github.com/IMaugrenI/tof_local_knowledge) — lokale Dokumenten-Indexierung und belegte Antworten
-- [`tof_showcase`](https://github.com/IMaugrenI/tof-showcase) — öffentlicher Architektur-Einstieg
-- [`tof_v7_public_frame`](https://github.com/IMaugrenI/tof-v7-public-frame) — reduzierter V7-Grenzrahmen
+- tof_local_knowledge
+- tof_showcase
+- tof_v7_public_frame
