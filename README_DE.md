@@ -6,6 +6,21 @@ Ein lokaler Bauarbeitsraum für KI-gestützte Umsetzung unter menschlicher Archi
 
 > Die englische Hauptfassung liegt in `README.md`.
 
+## Rolle in der öffentlichen Produktlinie
+
+Erzeugen (kontrollierte Erstellung)
+
+### Funktioniert allein
+Ja.
+
+### Kann kombiniert werden mit
+- `tof_local_knowledge` für evidenzgebundene Eingaben
+- `local_case_organizer` für die Strukturierung geprüfter Ausgaben
+
+### Nicht gedacht für
+- generierte Ergebnisse als Wahrheit in Knowledge zurückzuschreiben
+- als verschmolzenes Super-Tool mit den anderen Produkten zu enden
+
 ## Einfachster Einstieg
 
 ### Linux
