@@ -1,12 +1,21 @@
 # tof_local_builder
 
+**A controlled local AI builder with read-only source and sandboxed output**
+
+A local build workspace for AI-assisted implementation under human architectural control — with explicit source boundaries and isolated output paths.
+
 > English is the primary text in this repository. A German clone is available in `README_DE.md`.
 
 Local AI builder for controlled work on one machine or in a small local team.
 
-This repository is public proof of AI-assisted build work under human architectural control.
+## What this repo does
 
-I do not present this repo as manual line-by-line coding proof in the traditional sense. I present it as proof that architecture, boundary definition, orchestration, and review can produce a concrete runnable system through an AI-assisted workflow.
+1. runs local models through Ollama
+2. exposes a browser GUI through Open WebUI
+3. reads a mounted source path as read-only
+4. writes reviewed artifacts only into a local sandbox
+5. uses a first-run wizard to guide setup and model choice
+6. stays CPU-safe by default, with optional later acceleration
 
 ## Use this repo in the simplest way
 
@@ -58,8 +67,6 @@ My role here is:
 - public framing and scope reduction
 - AI-assisted implementation under my direction
 
-The concrete repo surface is heavily AI-assisted. What is mine is the structure behind it: why the source is read-only, why output is sandboxed, why the start path is kept narrow, and what counts as acceptable public proof.
-
 ## Start here
 
 Primary runtime entrypoint:
@@ -106,19 +113,6 @@ A successful first run means:
 - the browser-accessible WebUI opens correctly
 - the tool server is reachable
 - output stays inside the sandbox paths
-
-## What you should understand quickly
-
-This repo is not a random AI playground. It is a controlled build layer that shows how AI-assisted implementation can still stay bounded, reviewable, and technically honest.
-
-## What this repo does
-
-1. runs local models through Ollama
-2. exposes a browser GUI through Open WebUI
-3. reads a mounted source path as read-only
-4. writes reviewed artifacts only into a local sandbox
-5. uses a first-run wizard to guide setup and model choice
-6. stays CPU-safe by default, with optional later acceleration
 
 ## What this repo shows
 
