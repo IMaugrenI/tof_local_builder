@@ -160,6 +160,21 @@ python run.py check
 python run.py down
 ```
 
+## Role in the public product line
+
+Generate (controlled creation)
+
+### Works standalone
+Yes.
+
+### Can be combined with
+- `tof_local_knowledge` for evidence-grounded input
+- `local_case_organizer` for structuring reviewed outputs
+
+### Not intended for
+- feeding generated results back into knowledge as truth
+- becoming a merged super-tool with the other products
+
 ## What this repo shows
 
 1. architecture before implementation
