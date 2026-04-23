@@ -4,9 +4,27 @@
 
 A local build workspace for AI-assisted implementation under human architectural control — with explicit source boundaries and isolated output paths.
 
-> English is the primary text in this repository. A German clone is available in `README_DE.md`.
+> English is the primary text in this repository. A German mirror is available in `README_DE.md`.
 
 Local AI builder for controlled work on one machine or in a small local team.
+
+## What this repo is
+
+This repository is the public Generate repo in the product line.
+
+## Who it is for
+
+This repo is for builders, self-hosters, and small local teams who want controlled AI-assisted implementation with clear source boundaries and reviewable output.
+
+## What it is not
+
+This repo is not a general knowledge system, not a hidden cloud service, and not a merged super-tool.
+
+## Where to go next
+
+- `tof-showcase` — public architecture and product-line overview
+- `tof_local_knowledge` — evidence-grounded input before generation
+- `local_case_organizer` — structure reviewed output after builder work
 
 ## What this repo does
 
@@ -46,7 +64,7 @@ That path runs:
 3. health check
 
 A beginner guide is available in `docs/00_beginner_quickstart.md`.
-A German quickstart clone is available in `docs/00_beginner_quickstart_DE.md`.
+A German quickstart mirror is available in `docs/00_beginner_quickstart_DE.md`.
 
 ## Role model: what opens, what controls, where you actually work
 
@@ -203,5 +221,5 @@ Yes.
 ## Related public repos
 
 - [`tof_local_knowledge`](https://github.com/IMaugrenI/tof_local_knowledge) — local document indexing and grounded answers
-- [`tof_showcase`](https://github.com/IMaugrenI/tof-showcase) — public architecture entry point
-- [`tof_v7_public_frame`](https://github.com/IMaugrenI/tof-v7-public-frame) — reduced V7 boundary frame
+- [`tof-showcase`](https://github.com/IMaugrenI/tof-showcase) — public architecture entry point
+- [`tof-v7-public-frame`](https://github.com/IMaugrenI/tof-v7-public-frame) — reduced V7 boundary frame
