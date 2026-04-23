@@ -1,5 +1,9 @@
 # tof_local_builder
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/IMaugrenI/IMaugrenI/main/assets/banner/tof_local_builder_banner_v4_fixed.png" alt="tof_local_builder banner" width="100%" />
+</p>
+
 **A controlled local AI builder with read-only source and sandboxed output**
 
 A local build workspace for AI-assisted implementation under human architectural control — with explicit source boundaries and isolated output paths.
