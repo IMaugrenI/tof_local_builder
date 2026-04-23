@@ -48,7 +48,7 @@ Das führt aus:
 3. check
 
 Ein Einsteiger-Guide liegt in `docs/00_beginner_quickstart.md`.
-Ein deutscher Klon liegt in `docs/00_beginner_quickstart_DE.md`.
+Ein deutscher Spiegel liegt in `docs/00_beginner_quickstart_DE.md`.
 
 ## Rollen im System (wichtig)
 
@@ -97,6 +97,6 @@ python run.py down
 
 ## Verwandte Repos
 
-- tof_local_knowledge
-- tof_showcase
-- tof_v7_public_frame
+- `tof_local_knowledge`
+- `tof-showcase`
+- `tof-v7-public-frame`
