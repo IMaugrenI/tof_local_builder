@@ -352,6 +352,28 @@ HTML = """<!doctype html>
       margin-top: 24px;
     }
 
+    .action-feedback {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.015);
+      color: var(--muted);
+    }
+
+    .action-feedback.show { display: block; }
+    .action-feedback.ok {
+      color: var(--ok);
+      border-color: rgba(113,195,155,.28);
+      background: rgba(113,195,155,.045);
+    }
+    .action-feedback.attention {
+      color: #e5bf82;
+      border-color: rgba(216,168,95,.30);
+      background: rgba(216,168,95,.05);
+    }
+
     .btn {
       min-height: 48px;
       border-radius: 12px;
@@ -677,9 +699,10 @@ HTML = """<!doctype html>
             <button class="btn btn-primary" id="primary-action" type="button" onclick="runPrimaryAction()">Start workspace</button>
             <button class="btn btn-secondary" type="button" onclick="refreshSummary()">Check again</button>
           </div>
+          <div class="action-feedback" id="action-feedback" role="status" aria-live="polite"></div>
         </div>
 
-        <div class="readiness" id="cards" aria-label="Local service readiness"></div>
+        <div class="readiness" id="cards" aria-label="Workspace readiness"></div>
       </section>
 
       <section class="workflow" aria-labelledby="workflow-title">
@@ -759,6 +782,12 @@ HTML = """<!doctype html>
       log.textContent = `[${new Date().toLocaleTimeString()}] ${text}\n\n` + log.textContent;
     }
 
+    function showFeedback(message, kind = 'ok') {
+      const box = document.getElementById('action-feedback');
+      box.className = `action-feedback show ${kind}`;
+      box.textContent = message;
+    }
+
     function friendlyState(state) {
       if (state === 'ready') return 'Ready';
       if (state === 'not_reachable') return 'Not available';
@@ -827,7 +856,7 @@ HTML = """<!doctype html>
         primary.dataset.mode = 'open';
       } else {
         focusTitle.textContent = 'Start your workspace when you are ready.';
-        primary.textContent = 'Start workspace system';
+        primary.textContent = 'Start workspace';
         primary.dataset.mode = 'start';
       }
 
@@ -847,6 +876,7 @@ HTML = """<!doctype html>
         state.textContent = 'Could not check status';
         document.getElementById('focus-title').textContent = 'ToF could not check what is ready.';
         document.getElementById('next-step').textContent = 'Try checking again. If the problem remains, open “Problems & technical details” and choose “Find a problem”.';
+        showFeedback('I could not check the workspace. Try again. If it still fails, choose “Find a problem” below.', 'attention');
         appendLog('Summary refresh failed: ' + error);
       }
     }
@@ -884,7 +914,13 @@ HTML = """<!doctype html>
           const data = await response.json();
           const summary = data.output ? data.output : JSON.stringify(data, null, 2);
           appendLog(`${data.label || action}: ${summary || 'completed'}`);
+          if (!response.ok || Number(data.exit_code || 0) !== 0) {
+            showFeedback('That did not finish successfully. Open “Problems & technical details” and choose “Find a problem”.', 'attention');
+          } else {
+            showFeedback('Done. I checked the current state again for you.', 'ok');
+          }
         } catch (error) {
+          showFeedback('That did not work. Check that the local workspace is still running, then try again.', 'attention');
           appendLog(`Action ${action} failed: ${error}`);
         }
         await refreshSummary();
@@ -898,7 +934,9 @@ HTML = """<!doctype html>
           const response = await fetch(`/api/open/${name}`, { method: 'POST' });
           const data = await response.json();
           appendLog(data.opened ? `Opened ${data.opened}` : JSON.stringify(data, null, 2));
+          showFeedback(data.opened ? 'Opened on this computer.' : 'The page could not be opened automatically. Use the technical details below if you need the address.', data.opened ? 'ok' : 'attention');
         } catch (error) {
+          showFeedback('The page could not be opened automatically. Check that the local workspace is running.', 'attention');
           appendLog(`Could not open ${name}: ${error}`);
         }
       });

@@ -1,30 +1,22 @@
 # Start here
 
-This is the shortest supported path for a first-time user.
+This is the shortest path from a fresh clone to your first useful local AI workspace.
 
 > German version: [START_HERE_DE.md](START_HERE_DE.md)
 
-## What you are starting
+## What this product is for
 
-`tof_local_builder` is a local AI-assisted build workspace. The normal path gives you:
+Choose a project on your computer, work with local AI, and keep the original project protected.
 
-- a first-run setup wizard
-- local models through Ollama
-- Open WebUI as the main browser workspace
-- a selected source repository mounted read-only
-- writable output only inside the builder sandbox
+The normal workflow keeps the project you selected **read-only**. New work is created in a separate local work area until you decide what to keep.
 
-The normal start does **not** write back into the selected source repository.
-
-## Requirements
-
-Before the first start, have:
+## What you need
 
 - Python 3.11+ (`py` or `python` on Windows)
 - Docker with Docker Compose
-- enough local disk space for the selected Ollama model
+- enough local disk space for the AI model you choose
 
-Linux is the primary supported platform. Windows and macOS launchers exist, but Linux remains the deepest-supported path.
+Linux is the deepest-supported platform. Windows and macOS launchers are included.
 
 ## First start
 
@@ -52,81 +44,74 @@ cd tof_local_builder
 ./scripts/start_here.command
 ```
 
-The start-here path runs setup, opens the first-run wizard when configuration is incomplete, starts the stack, opens Open WebUI when `BUILDER_OPEN_BROWSER=1`, and checks health.
+On the first start, ToF asks you which local project you want to work with and prepares the local workspace.
 
-## What opens
+## What success looks like
 
-There are three surfaces:
+You are ready when the control page says **Everything ready** and the main button says **Open workspace**.
 
-1. **First-run wizard** — configuration during initial setup.
-2. **Local control UI** — optional control/diagnostic surface.
-3. **Open WebUI** — the main place where you work with the builder.
+Your normal path is then:
 
-If you only want to use the product, Open WebUI is the important one after setup.
+1. choose your project
+2. start the workspace
+3. check that everything is ready
+4. open the workspace and work with the project
+5. review new files before moving anything yourself
 
-## How to know it worked
+Your original project is not written to by the normal builder path.
 
-Run:
+## If something does not work
 
-```bash
-python run.py check
-```
+Use the control page and choose **Problems & technical details → Find a problem**.
 
-A good first run means:
-
-- Docker services are up
-- Open WebUI is reachable
-- the repo bridge is reachable
-- the selected local model is available
-- source and sandbox paths are configured
-
-## Everyday commands
-
-```bash
-python run.py up
-python run.py status
-python run.py check
-python run.py ui
-python run.py down
-```
-
-Use `doctor` if something is unclear:
+From the terminal, the same check is:
 
 ```bash
 python run.py doctor
 ```
 
-## Where files go
+The normal UI gives you the plain-language next step. Technical output stays available in the activity log when you need it.
 
-- **Source:** selected by you and mounted read-only in the normal mode.
-- **Workspace:** `sandbox/workspace/`
-- **Output:** `sandbox/output/`
+## Stop and come back later
 
-Generated work should stay in the sandbox until you review and move it yourself.
-
-## Advanced host-reader mode
-
-There is an optional host-native reader for trusted local use:
-
-```bash
-bash scripts/start_host_repo_bridge.sh
-```
-
-This mode can read absolute local paths that the current host user can access. It is intentionally more powerful than the normal source-root model.
-
-Read [STANDARD_START_HOST_READER.md](STANDARD_START_HOST_READER.md) before using it. Keep it local and do not expose the bridge to a LAN or the internet.
-
-## Stop
-
-Normal stack:
+Stop the local workspace with:
 
 ```bash
 python run.py down
 ```
 
-## If you want more detail
+Later, return with:
+
+```bash
+python run.py up
+python run.py ui
+```
+
+Your selected project and local settings remain in the local configuration.
+
+## Where new work goes
+
+The user-facing rule is simple:
+
+- **Your project** stays protected.
+- **New work** stays in a separate local work area.
+- **You** decide what is later moved or shared.
+
+For technical path details, see [docs/commands.md](docs/commands.md).
+
+## Advanced host-reader mode
+
+An optional advanced host-reader exists for trusted local use. It is more powerful than the normal protected-project workflow.
+
+Read [STANDARD_START_HOST_READER.md](STANDARD_START_HOST_READER.md) before using it. Keep it local and do not expose it to a LAN or the internet.
+
+## Real-life example
+
+See [docs/USER_JOURNEY.md](docs/USER_JOURNEY.md) for one complete first-time journey, including a realistic failure path.
+
+## More detail
 
 - [Beginner quickstart](docs/00_beginner_quickstart.md)
 - [Commands](docs/commands.md)
-- [Repo bridge](docs/repo_bridge.md)
+- [Technical project connection](docs/repo_bridge.md)
 - [Product constitution](docs/00_product/PRODUCT_CONSTITUTION_V1.md)
