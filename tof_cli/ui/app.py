@@ -23,24 +23,24 @@ class ActionSpec:
 
 
 ACTIONS = {
-    "setup": ActionSpec("Prepare local setup", setup.handle, {}, "SAFE"),
-    "up": ActionSpec("Start builder stack", up.handle, {"skip_wizard": False, "skip_model_ensure": False}, "SAFE"),
-    "check": ActionSpec("Check services", check.handle, {}, "SAFE"),
-    "status": ActionSpec("Show runtime status", status.handle, {}, "SAFE"),
-    "doctor": ActionSpec("Run doctor", doctor.handle, {}, "SAFE"),
-    "down": ActionSpec("Stop stack", down.handle, {"remove_orphans": False}, "SAFE"),
+    "setup": ActionSpec("Choose and prepare my project", setup.handle, {}, "SAFE"),
+    "up": ActionSpec("Start my workspace", up.handle, {"skip_wizard": False, "skip_model_ensure": False}, "SAFE"),
+    "check": ActionSpec("Check if everything is ready", check.handle, {}, "SAFE"),
+    "status": ActionSpec("Show technical status", status.handle, {}, "SAFE"),
+    "doctor": ActionSpec("Find problems", doctor.handle, {}, "SAFE"),
+    "down": ActionSpec("Stop my workspace", down.handle, {"remove_orphans": False}, "SAFE"),
 }
 
 LINKS = {
-    "openwebui": {"label": "Open WebUI", "url": "http://127.0.0.1:3000"},
-    "repo_bridge_health": {"label": "Open repo bridge health", "url": "http://127.0.0.1:8099/health"},
-    "ollama": {"label": "Open Ollama endpoint", "url": "http://127.0.0.1:11434"},
+    "openwebui": {"label": "Open workspace", "url": "http://127.0.0.1:3000"},
+    "repo_bridge_health": {"label": "Project connection details", "url": "http://127.0.0.1:8099/health"},
+    "ollama": {"label": "AI model details", "url": "http://127.0.0.1:11434"},
 }
 
 READINESS_TARGETS = {
-    "webui": {"label": "WebUI", "url": "http://127.0.0.1:3000"},
-    "repo_bridge": {"label": "Repo bridge", "url": "http://127.0.0.1:8099/health"},
-    "ollama": {"label": "Ollama", "url": "http://127.0.0.1:11434"},
+    "webui": {"label": "Workspace", "url": "http://127.0.0.1:3000"},
+    "repo_bridge": {"label": "Project access", "url": "http://127.0.0.1:8099/health"},
+    "ollama": {"label": "AI model", "url": "http://127.0.0.1:11434"},
 }
 
 
@@ -639,43 +639,43 @@ HTML = """<!doctype html>
         </span>
         <span class="brand-copy">
           <span class="brand-name">TOF SYSTEMS</span>
-          <span class="product-name">Local Builder</span>
+          <span class="product-name">Local Workspace</span>
         </span>
       </div>
-      <span class="local-pill">Local only · 127.0.0.1</span>
+      <span class="local-pill">Stays on this computer</span>
     </header>
 
     <main id="main">
       <section class="hero">
         <div>
-          <p class="eyebrow">CONTROLLED LOCAL AI WORKSPACE</p>
-          <h1>Build locally. Keep control.</h1>
-          <p class="lead">Work with local AI against a source you choose, while the normal builder path keeps that source read-only and writes generated work into a separate sandbox.</p>
+          <p class="eyebrow">LOCAL AI WORKSPACE</p>
+          <h1>Work with your project. Keep control.</h1>
+          <p class="lead">Choose a project on your computer and work with local AI without changing the original files. New work is kept separately until you decide what to keep.</p>
         </div>
 
         <div class="hero-principles" aria-label="Builder principles">
-          <div class="principle"><span>01</span><div>Source stays read-only in the normal workflow.</div></div>
-          <div class="principle"><span>02</span><div>Generated work stays inside the builder sandbox.</div></div>
-          <div class="principle"><span>03</span><div>You decide what leaves the local environment.</div></div>
+          <div class="principle"><span>01</span><div>Your original project stays untouched.</div></div>
+          <div class="principle"><span>02</span><div>New files are kept in a separate work area.</div></div>
+          <div class="principle"><span>03</span><div>You decide what is kept, moved or shared.</div></div>
         </div>
       </section>
 
       <section class="workspace" aria-labelledby="workspace-title">
         <div class="section-head">
           <div>
-            <p class="eyebrow">WORKSPACE</p>
-            <h2 id="workspace-title">Your next useful action.</h2>
+            <p class="eyebrow">YOUR WORKSPACE</p>
+            <h2 id="workspace-title">What should you do next?</h2>
           </div>
-          <span class="system-state offline" id="system-state">Checking system</span>
+          <span class="system-state offline" id="system-state">Checking what is ready</span>
         </div>
 
         <div class="focus-panel">
-          <p class="focus-label">Recommended next step</p>
-          <h3 id="focus-title">Checking local services…</h3>
-          <p class="next-step" id="next-step" aria-live="polite">Loading current guidance…</p>
+          <p class="focus-label">Next step</p>
+          <h3 id="focus-title">Checking your workspace…</h3>
+          <p class="next-step" id="next-step" aria-live="polite">Finding the best next step…</p>
           <div class="focus-actions">
-            <button class="btn btn-primary" id="primary-action" type="button" onclick="runPrimaryAction()">Start builder</button>
-            <button class="btn btn-secondary" type="button" onclick="refreshSummary()">Refresh status</button>
+            <button class="btn btn-primary" id="primary-action" type="button" onclick="runPrimaryAction()">Start workspace</button>
+            <button class="btn btn-secondary" type="button" onclick="refreshSummary()">Check again</button>
           </div>
         </div>
 
@@ -685,69 +685,69 @@ HTML = """<!doctype html>
       <section class="workflow" aria-labelledby="workflow-title">
         <div class="section-head">
           <div>
-            <p class="eyebrow">GUIDED FLOW</p>
-            <h2 id="workflow-title">Three steps, then work.</h2>
+            <p class="eyebrow">GET STARTED</p>
+            <h2 id="workflow-title">Three simple steps, then you can work.</h2>
           </div>
         </div>
 
         <div class="workflow-grid">
           <article class="step">
-            <span class="step-number">01 · SETUP</span>
-            <h3>Choose the local source.</h3>
-            <p>Prepare paths, model settings and the guarded source/sandbox boundary.</p>
-            <button class="btn btn-secondary" type="button" onclick="runAction('setup', this)">Prepare setup</button>
+            <span class="step-number">01 · CHOOSE</span>
+            <h3>Choose your project.</h3>
+            <p>Tell ToF which project you want to work with. Your original project stays protected.</p>
+            <button class="btn btn-secondary" type="button" onclick="runAction('setup', this)">Choose project</button>
           </article>
 
           <article class="step">
             <span class="step-number">02 · START</span>
-            <h3>Bring the workspace online.</h3>
-            <p>Start the local builder stack and ensure the configured local model is available.</p>
-            <button class="btn btn-secondary" type="button" onclick="runAction('up', this)">Start system</button>
+            <h3>Start your workspace.</h3>
+            <p>ToF starts the local tools it needs and prepares your AI model.</p>
+            <button class="btn btn-secondary" type="button" onclick="runAction('up', this)">Start workspace</button>
           </article>
 
           <article class="step">
-            <span class="step-number">03 · VERIFY</span>
-            <h3>Confirm readiness.</h3>
-            <p>Check the services before moving into the actual builder workspace.</p>
-            <button class="btn btn-secondary" type="button" onclick="runAction('check', this)">Check services</button>
+            <span class="step-number">03 · CHECK</span>
+            <h3>Make sure everything is ready.</h3>
+            <p>ToF checks the important parts so you know whether you can begin.</p>
+            <button class="btn btn-secondary" type="button" onclick="runAction('check', this)">Check readiness</button>
           </article>
         </div>
       </section>
 
       <section class="details-grid" aria-label="Advanced controls">
         <details>
-          <summary>Diagnostics & system controls</summary>
+          <summary>Problems & technical details</summary>
           <div class="details-body">
             <div class="advanced-actions">
-              <button class="btn btn-quiet" type="button" onclick="runAction('status', this)">Runtime status</button>
-              <button class="btn btn-quiet" type="button" onclick="runAction('doctor', this)">Run doctor</button>
-              <button class="btn btn-danger" type="button" onclick="runAction('down', this)">Stop stack</button>
+              <button class="btn btn-quiet" type="button" onclick="runAction('status', this)">Show technical status</button>
+              <button class="btn btn-quiet" type="button" onclick="runAction('doctor', this)">Find a problem</button>
+              <button class="btn btn-danger" type="button" onclick="runAction('down', this)">Stop workspace</button>
             </div>
           </div>
         </details>
 
         <details>
-          <summary>Advanced local endpoints</summary>
+          <summary>Connection details</summary>
           <div class="details-body">
             <div class="advanced-actions">
-              <button class="btn btn-quiet" type="button" onclick="openLink('repo_bridge_health', this)">Repo bridge health</button>
-              <button class="btn btn-quiet" type="button" onclick="openLink('ollama', this)">Ollama endpoint</button>
+              <button class="btn btn-quiet" type="button" onclick="openLink('repo_bridge_health', this)">Project connection</button>
+              <button class="btn btn-quiet" type="button" onclick="openLink('ollama', this)">AI model</button>
             </div>
           </div>
         </details>
       </section>
 
       <details style="margin-top:16px;">
-        <summary>Activity log</summary>
+        <summary>Technical activity log</summary>
         <div class="details-body">
-          <div class="log" aria-live="polite"><pre id="log">Local Builder control surface ready.</pre></div>
+          <div class="log" aria-live="polite"><pre id="log">Your local workspace controls are ready.</pre></div>
         </div>
       </details>
     </main>
 
     <footer class="footer">
-      <span>ToF Systems · Local Builder</span>
-      <span>Local-first · bounded source · sandboxed output</span>
+      <span>ToF Systems · Local Workspace</span>
+      <span>Your project stays local · original files stay protected</span>
     </footer>
   </div>
 
@@ -761,8 +761,8 @@ HTML = """<!doctype html>
 
     function friendlyState(state) {
       if (state === 'ready') return 'Ready';
-      if (state === 'not_reachable') return 'Offline';
-      if (String(state).startsWith('http_')) return 'Attention';
+      if (state === 'not_reachable') return 'Not available';
+      if (String(state).startsWith('http_')) return 'Needs attention';
       return String(state).replaceAll('_', ' ');
     }
 
@@ -793,8 +793,8 @@ HTML = """<!doctype html>
         const hint = document.createElement('p');
         hint.className = 'service-hint';
         hint.textContent = item.state === 'ready'
-          ? 'Available on this machine.'
-          : 'Not currently reachable on this machine.';
+          ? 'Ready on this computer.'
+          : 'Not ready yet.';
 
         top.append(name, state);
         card.append(top, hint);
@@ -816,23 +816,23 @@ HTML = """<!doctype html>
       const primary = document.getElementById('primary-action');
 
       state.className = 'system-state ' + (allReady ? 'ready' : (someReady ? 'attention' : 'offline'));
-      state.textContent = allReady ? 'System ready' : (someReady ? 'Partially ready' : 'Not running');
+      state.textContent = allReady ? 'Everything ready' : (someReady ? 'Still getting ready' : 'Not started');
 
       document.getElementById('next-step').textContent = data.next_step;
       renderCards(data.readiness || { items: [] });
 
       if (webui && webui.state === 'ready') {
-        focusTitle.textContent = 'The builder workspace is ready.';
-        primary.textContent = 'Open builder workspace';
+        focusTitle.textContent = 'Everything is ready.';
+        primary.textContent = 'Open workspace';
         primary.dataset.mode = 'open';
       } else {
-        focusTitle.textContent = 'Bring the local builder online.';
-        primary.textContent = 'Start builder system';
+        focusTitle.textContent = 'Start your workspace when you are ready.';
+        primary.textContent = 'Start workspace system';
         primary.dataset.mode = 'start';
       }
 
       if (bridge && bridge.state !== 'ready' && ollama && ollama.state === 'ready') {
-        focusTitle.textContent = 'The model layer is up; the builder bridge still needs attention.';
+        focusTitle.textContent = 'The AI model is ready, but access to your project still needs attention.';
       }
     }
 
@@ -844,9 +844,9 @@ HTML = """<!doctype html>
       } catch (error) {
         const state = document.getElementById('system-state');
         state.className = 'system-state attention';
-        state.textContent = 'Status unavailable';
-        document.getElementById('focus-title').textContent = 'The control surface could not read local readiness.';
-        document.getElementById('next-step').textContent = 'Try refresh again. If the problem persists, open Diagnostics & system controls and run Doctor.';
+        state.textContent = 'Could not check status';
+        document.getElementById('focus-title').textContent = 'ToF could not check what is ready.';
+        document.getElementById('next-step').textContent = 'Try checking again. If the problem remains, open “Problems & technical details” and choose “Find a problem”.';
         appendLog('Summary refresh failed: ' + error);
       }
     }
@@ -960,9 +960,9 @@ def _summary_payload() -> dict[str, object]:
     readiness = _readiness_payload()
     webui_ready = any(item['name'] == 'webui' and item['state'] == 'ready' for item in readiness['items'])
     next_step = (
-        'WebUI is reachable. Open WebUI and continue the real builder work there.'
+        'Everything is ready. Open your workspace and continue working with your project.'
         if webui_ready
-        else 'Recommended order: prepare local setup, start the builder stack, check services, then wait until WebUI becomes reachable.'
+        else 'Choose your project first, then start the workspace. ToF will check the important parts and tell you when everything is ready.'
     )
     return {
         'next_step': next_step,
