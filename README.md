@@ -4,33 +4,15 @@
   <img src="https://raw.githubusercontent.com/IMaugrenI/IMaugrenI/main/assets/banner/tof_local_builder_banner_v4_fixed.png" alt="tof_local_builder banner" width="100%" />
 </p>
 
-**A controlled local AI builder with read-only source and sandboxed output**
+**Build with local AI while keeping source and output under control.**
 
-A local build workspace for AI-assisted implementation under human architectural control — with explicit source boundaries and isolated output paths.
+Local Builder provides a workspace for AI-assisted implementation with **read-only mounted source material** and **separate sandboxed output**. The aim is useful generation with reviewable boundaries, not uncontrolled changes to an existing project.
 
-> English is the primary text in this repository. A German mirror is available in `README_DE.md`.
+**Get started:** [First run](START_HERE.md) · [German README](README_DE.md) · [ToF Systems overview](https://github.com/IMaugrenI/tof-showcase)
 
-> **New here?** Start with [START_HERE.md](START_HERE.md). It gives you the shortest first-run path, explains what opens, and shows how to stop or troubleshoot the stack.
+**Who it serves:** builders, self-hosters, and small local teams that want a local model-backed workflow and a clear place to review generated work. The repo is the independent **Generate** tool, not a full knowledge-management system or an automatically connected multi-tool suite.
 
-Local AI builder for controlled work on one machine or in a small local team.
-
-## What this repo is
-
-This repository is the public Generate repo in the product line.
-
-## Who it is for
-
-This repo is for builders, self-hosters, and small local teams who want controlled AI-assisted implementation with clear source boundaries and reviewable output.
-
-## What it is not
-
-This repo is not a general knowledge system, not a hidden cloud service, and not a merged super-tool.
-
-## Where to go next
-
-- `tof-showcase` — public architecture and product-line overview
-- `tof_local_knowledge` — evidence-grounded input before generation
-- `local_case_organizer` — structure reviewed output after builder work
+**Workflow:** choose the local model and workspace → inspect the read-only source → work in Open WebUI → review output in the sandbox. Setup and control interfaces have separate responsibilities, as documented below.
 
 ## What this repo does
 
