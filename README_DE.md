@@ -4,33 +4,15 @@
   <img src="https://raw.githubusercontent.com/IMaugrenI/IMaugrenI/main/assets/banner/tof_local_builder_banner_v4_fixed.png" alt="tof_local_builder banner" width="100%" />
 </p>
 
-> Die englische Hauptfassung liegt in `README.md`.
+**Mit lokaler KI entwickeln und Quellmaterial sowie Ergebnisse kontrolliert getrennt halten.**
 
-> **Neu hier?** Starte mit [START_HERE_DE.md](START_HERE_DE.md). Dort stehen der kürzeste Erststart, was sich öffnet, wie du den Stack stoppst und was du bei Problemen prüfst.
+Local Builder bietet einen Arbeitsbereich für KI-gestützte Implementierung mit **schreibgeschützt eingebundenen Quellen** und **separater Sandbox-Ausgabe**. Ziel sind nutzbare, überprüfbare Ergebnisse statt unkontrollierter Änderungen an bestehenden Projekten.
 
-**Lokaler KI-Builder mit klaren Grenzen: read-only Quelle, Sandbox-Ausgabe**
+**Einstieg:** [Schnellstart](START_HERE_DE.md) · [English README](README.md) · [ToF Systems Übersicht](https://github.com/IMaugrenI/tof-showcase)
 
-Ein lokaler Bauarbeitsraum für KI-gestützte Umsetzung unter menschlicher Architekturführung — mit expliziten Quellgrenzen und isolierten Ausgabepfaden.
+**Für wen:** Entwickler, Self-Hoster und kleine lokale Teams, die lokal unterstützte KI-Arbeit mit klaren Prüfgrenzen möchten. Das Repository ist das eigenständige **Generate**-Werkzeug, kein vollständiges Wissensmanagement und keine automatisch verbundene Tool-Suite.
 
-Lokaler KI-Builder für kontrollierte Arbeit auf einer Maschine oder in einem kleinen lokalen Team.
-
-## Was dieses Repo ist
-
-Dieses Repository ist das öffentliche **Generate**-Repo in der Produktlinie.
-
-## Für wen es gedacht ist
-
-Dieses Repo ist für Builder, Self-Hoster und kleine lokale Teams, die kontrollierte KI-gestützte Umsetzung mit klaren Quellgrenzen und prüfbarer Ausgabe wollen.
-
-## Was es nicht ist
-
-Dieses Repo ist kein allgemeines Wissenssystem, kein versteckter Cloud-Dienst und kein verschmolzenes Super-Tool.
-
-## Wohin du als Nächstes gehen kannst
-
-- `tof-showcase` — öffentlicher Architektur- und Produktlinien-Überblick
-- `tof_local_knowledge` — evidenzgebundene Eingaben vor der Generierung
-- `local_case_organizer` — geprüfte Ausgaben nach dem Builder strukturieren
+**Ablauf:** lokales Modell und Arbeitsraum wählen → schreibgeschützte Quelle sichten → in Open WebUI arbeiten → Ergebnisse in der Sandbox prüfen. Setup-, Steuer- und Arbeitsoberfläche besitzen dabei getrennte Rollen, die unten erläutert werden.
 
 ## Was dieses Repo macht
 
