@@ -20,7 +20,7 @@ The normal start does **not** write back into the selected source repository.
 
 Before the first start, have:
 
-- Python 3.11+
+- Python 3.11+ (`py` or `python` on Windows)
 - Docker with Docker Compose
 - enough local disk space for the selected Ollama model
 
@@ -52,7 +52,7 @@ cd tof_local_builder
 ./scripts/start_here.command
 ```
 
-The start-here path runs setup, starts the stack, and checks health.
+The start-here path runs setup, opens the first-run wizard when configuration is incomplete, starts the stack, opens Open WebUI when `BUILDER_OPEN_BROWSER=1`, and checks health.
 
 ## What opens
 

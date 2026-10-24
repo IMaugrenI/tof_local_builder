@@ -61,7 +61,7 @@ bash scripts/down.sh
 
 ## Notes
 
-- `up.sh` wraps the existing `start.sh`
+- `up.sh` wraps the canonical `python run.py up` path
 - `check.sh` remains the main health entry point
 - `down.sh` is non-destructive by default
 - `reset.sh` is the destructive path and should be used deliberately

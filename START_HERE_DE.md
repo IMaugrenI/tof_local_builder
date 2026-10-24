@@ -20,7 +20,7 @@ Der normale Start schreibt **nicht** in dein ausgewähltes Quell-Repository zur�
 
 Vor dem ersten Start brauchst du:
 
-- Python 3.11+
+- Python 3.11+ (unter Windows über `py` oder `python` erreichbar)
 - Docker mit Docker Compose
 - genügend lokalen Speicherplatz für das gewählte Ollama-Modell
 
@@ -52,7 +52,7 @@ cd tof_local_builder
 ./scripts/start_here.command
 ```
 
-Der Start-hier-Pfad führt Setup, Start und Health-Check aus.
+Der Start-hier-Pfad führt Setup aus, öffnet bei unvollständiger Konfiguration den First-Run-Wizard, startet den Stack, öffnet bei `BUILDER_OPEN_BROWSER=1` Open WebUI und führt anschließend den Health-Check aus.
 
 ## Was sich öffnet
 
