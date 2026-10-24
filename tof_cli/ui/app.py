@@ -12,6 +12,9 @@ from typing import Callable
 from urllib.parse import urlparse
 
 from tof_cli.commands import check, doctor, down, setup, status, up
+from tof_cli.builder.model_ops import ollama_tags
+from tof_cli.builder.repo_bridge_ops import sandbox_report, source_repo_report
+from tof_cli.core.env_ops import read_env
 
 
 @dataclass(frozen=True)
@@ -821,9 +824,9 @@ HTML = """<!doctype html>
 
         const hint = document.createElement('p');
         hint.className = 'service-hint';
-        hint.textContent = item.state === 'ready'
+        hint.textContent = item.detail || (item.state === 'ready'
           ? 'Ready on this computer.'
-          : 'Not ready yet.';
+          : 'Not ready yet.');
 
         top.append(name, state);
         card.append(top, hint);
@@ -851,7 +854,7 @@ HTML = """<!doctype html>
       renderCards(data.readiness || { items: [] });
 
       if (webui && webui.state === 'ready') {
-        focusTitle.textContent = 'Everything is ready.';
+        focusTitle.textContent = allReady ? 'Everything is ready.' : 'Workspace available — check remaining requirements.';
         primary.textContent = 'Open workspace';
         primary.dataset.mode = 'open';
       } else {
@@ -986,21 +989,43 @@ def _probe_url(url: str) -> str:
 
 
 def _readiness_payload() -> dict[str, object]:
+    env = read_env()
+    urls = {
+        'webui': f"http://127.0.0.1:{env.get('OPENWEBUI_PORT', '3000')}",
+        'repo_bridge': f"http://127.0.0.1:{env.get('REPO_BRIDGE_PORT', '8099')}/health",
+        'ollama': f"http://127.0.0.1:{env.get('OLLAMA_PORT', '11434')}/api/tags",
+    }
     items = []
     for key, target in READINESS_TARGETS.items():
-        state = _probe_url(target['url'])
-        items.append({'name': key, 'label': target['label'], 'url': target['url'], 'state': state})
-    return {'items': items}
+        url = urls[key]
+        items.append({'name': key, 'label': target['label'], 'url': url, 'state': _probe_url(url)})
 
+    for key, label, report in (
+        ('source', 'Read-only project', source_repo_report(env)),
+        ('sandbox', 'Writable workspace', sandbox_report(env)),
+    ):
+        state = 'ready' if report['state'] == 'ok' else 'not_reachable'
+        items.append({'name': key, 'label': label, 'state': state,
+                      'detail': report['path'] if state == 'ready' else f"Path needs attention: {report['state']}"})
+
+    model = env.get('DEFAULT_OLLAMA_MODEL', 'qwen2.5:0.5b')
+    try:
+        found = model in ollama_tags(env.get('OLLAMA_PORT', '11434'))
+    except Exception:
+        found = False
+    items.append({'name': 'default_model', 'label': 'Selected AI model',
+                  'state': 'ready' if found else 'not_reachable',
+                  'detail': model if found else f"Selected model not available: {model}"})
+    return {'items': items}
 
 
 def _summary_payload() -> dict[str, object]:
     readiness = _readiness_payload()
-    webui_ready = any(item['name'] == 'webui' and item['state'] == 'ready' for item in readiness['items'])
+    all_ready = bool(readiness['items']) and all(item['state'] == 'ready' for item in readiness['items'])
     next_step = (
         'Everything is ready. Open your workspace and continue working with your project.'
-        if webui_ready
-        else 'Choose your project first, then start the workspace. ToF will check the important parts and tell you when everything is ready.'
+        if all_ready
+        else 'Some parts are not ready yet. Check the status cards, then use Find problems for guided repair.'
     )
     return {
         'next_step': next_step,
@@ -1011,7 +1036,6 @@ def _summary_payload() -> dict[str, object]:
         'links': LINKS,
         'readiness': readiness,
     }
-
 
 
 def _json_bytes(payload: dict[str, object]) -> bytes:
