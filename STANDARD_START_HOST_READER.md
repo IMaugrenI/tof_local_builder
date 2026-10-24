@@ -1,11 +1,11 @@
-# Standard start: host reader
+# Optional advanced mode: host reader
 
-This is the recommended default start path for the local builder when the reader should use a pasted absolute local path from the host machine.
+This is an optional advanced path for cases where the reader must use a pasted absolute local path from the host machine. The normal beginner/default start remains `scripts/start_here.*`, which uses the containerized repo bridge and its selected read-only source root.
 
-## Why this is the default
+## Why this mode exists
 
 The containerized repo bridge keeps the read side tied to container roots.
-The host reader path removes that friction:
+The host reader path removes that friction, but it is intentionally more powerful because it can read any absolute path that the local user running the bridge can access:
 
 - copy one absolute local path from the file manager
 - paste that path into the reader request
@@ -51,6 +51,8 @@ http://127.0.0.1:8099
 Pass one absolute local path directly.
 No container root translation.
 No `source/workspace/output` read model.
+
+**Security note:** this mode is not constrained to the source path selected by the normal builder wizard. Use it only on a trusted local machine, keep the bridge bound to `127.0.0.1`, and do not expose it to a LAN or the internet.
 
 ## Writer endpoints
 

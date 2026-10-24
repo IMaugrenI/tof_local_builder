@@ -41,10 +41,11 @@ The product has two official runtime modes:
 1. Light mode
    - local builder workflow
    - low hardware pressure
-   - direct host reader
+   - containerized repo bridge with the selected source mounted read-only
    - sandbox writer
    - local models through Ollama
    - Open WebUI as the chat surface
+   - optional advanced host-reader path for trusted local use
 
 2. Grounded mode
    - everything from light mode

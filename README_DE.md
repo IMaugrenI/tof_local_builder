@@ -6,6 +6,8 @@
 
 > Die englische Hauptfassung liegt in `README.md`.
 
+> **Neu hier?** Starte mit [START_HERE_DE.md](START_HERE_DE.md). Dort stehen der kürzeste Erststart, was sich öffnet, wie du den Stack stoppst und was du bei Problemen prüfst.
+
 **Lokaler KI-Builder mit klaren Grenzen: read-only Quelle, Sandbox-Ausgabe**
 
 Ein lokaler Bauarbeitsraum für KI-gestützte Umsetzung unter menschlicher Architekturführung — mit expliziten Quellgrenzen und isolierten Ausgabepfaden.

@@ -10,6 +10,8 @@ A local build workspace for AI-assisted implementation under human architectural
 
 > English is the primary text in this repository. A German mirror is available in `README_DE.md`.
 
+> **New here?** Start with [START_HERE.md](START_HERE.md). It gives you the shortest first-run path, explains what opens, and shows how to stop or troubleshoot the stack.
+
 Local AI builder for controlled work on one machine or in a small local team.
 
 ## What this repo is
