@@ -41,9 +41,9 @@ def handle(args: argparse.Namespace) -> int:
         print("FAIL: docker is installed but not reachable.")
         return 1
 
-    down_args = compose_file_args(compose_profile.files) + ["down", "--remove-orphans"]
-    run_docker_compose(down_args, capture_output=False, check=False)
-
+    # Compose up is repeatable and recreates only services whose configuration
+    # or image changed. Do not tear down an already-running workspace first.
+    # Stopping the workspace remains an explicit "down" operator action.
     up_args = compose_file_args(compose_profile.files) + ["up", "-d", "--build"]
     result = run_docker_compose(up_args, capture_output=False, check=False)
     if result.returncode != 0:
