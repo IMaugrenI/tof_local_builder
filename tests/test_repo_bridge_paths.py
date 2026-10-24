@@ -1,9 +1,17 @@
+from __future__ import annotations
+
+import importlib.util
 from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
 
-from services.repo_bridge.app import main as bridge
+
+MODULE_PATH = Path(__file__).resolve().parents[1] / "services" / "repo_bridge" / "app" / "main.py"
+SPEC = importlib.util.spec_from_file_location("tof_local_builder_repo_bridge_main", MODULE_PATH)
+assert SPEC is not None and SPEC.loader is not None
+bridge = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(bridge)
 
 
 @pytest.fixture()
@@ -13,8 +21,8 @@ def sandbox_roots(tmp_path, monkeypatch):
     workspace = sandbox / "workspace"
     output = sandbox / "output"
     outside = tmp_path / "outside"
-    for path in (source, workspace, output, outside):
-        path.mkdir(parents=True, exist_ok=True)
+    for item in (source, workspace, output, outside):
+        item.mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setattr(bridge, "SOURCE_ROOT", source.resolve())
     monkeypatch.setattr(bridge, "SANDBOX_ROOT", sandbox.resolve())
