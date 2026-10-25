@@ -28,6 +28,12 @@ The existing local control UI now offers **Compare to source** alongside sandbox
 
 Comparison is **read-only**. There is no automatic application, commit, or push to the original repository. Oversized, binary, unsafe, or out-of-root paths are rejected.
 
+## B3 — Guided task and model choice
+
+The existing local control UI now includes a **task-first planning panel**. Task types and model suggestions come from the existing `model_catalog/builder_catalog.json`. Only models detected as locally installed through Ollama are available for selection.
+
+The panel produces a **copyable prompt** to use in Open WebUI. Users select the model in Open WebUI and decide whether to adopt generated files after read-only review. This planning step does not download models, execute tasks, or write into the selected source project.
+
 ## What this repo does
 
 1. runs local models through Ollama
