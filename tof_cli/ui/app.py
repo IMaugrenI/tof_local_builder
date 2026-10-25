@@ -14,6 +14,7 @@ from urllib.parse import parse_qs, urlparse
 from tof_cli.commands import check, doctor, down, setup, status, up
 from tof_cli.builder.artifact_ops import artifact_diff, artifact_inventory, artifact_preview
 from tof_cli.builder.model_ops import ollama_tags
+from tof_cli.builder.task_ops import task_guide
 from tof_cli.builder.repo_bridge_ops import sandbox_report, source_repo_report
 from tof_cli.core.env_ops import read_env
 
@@ -741,6 +742,30 @@ HTML = """<!doctype html>
         </div>
       </section>
 
+      <section class="workflow" aria-labelledby="task-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">GUIDED WORK</p>
+            <h2 id="task-title">Prepare an AI task.</h2>
+            <p class="service-hint">Use your installed models and the existing read-only project. No model installs or automatic source changes.</p>
+          </div>
+        </div>
+        <div class="service-card">
+          <label for="task-type">Type of task</label>
+          <select id="task-type" style="width:100%;padding:10px;margin:8px 0 14px" onchange="refreshTaskModels()"></select>
+          <label for="task-model">Installed local model</label>
+          <select id="task-model" style="width:100%;padding:10px;margin:8px 0 14px"></select>
+          <p class="service-hint" id="task-hint">Check readiness to find installed models.</p>
+          <label for="task-goal">What should the AI help with?</label>
+          <textarea id="task-goal" maxlength="2000" rows="4" style="width:100%;padding:12px;margin:8px 0 14px" placeholder="Describe your development task or question."></textarea>
+          <button class="btn btn-secondary" type="button" onclick="draftTask()">Prepare prompt</button>
+          <button class="btn btn-quiet" type="button" onclick="copyTask()">Copy prompt</button>
+          <button class="btn btn-quiet" type="button" onclick="openLink('openwebui')">Open WebUI</button>
+          <p class="service-hint" id="task-message" aria-live="polite">Prompt preparation makes no changes to project files.</p>
+          <pre class="log" id="task-prompt" style="min-height:70px"></pre>
+        </div>
+      </section>
+
       <section class="workflow" aria-labelledby="artifact-title">
         <div class="section-head">
           <div>
@@ -851,8 +876,83 @@ HTML = """<!doctype html>
       }
     }
 
+    function renderTaskGuide(guide) {
+      const select = document.getElementById('task-type');
+      const previous = select.value || 'code';
+      select.replaceChildren();
+      (guide.tasks || []).forEach(task => {
+        const option = document.createElement('option');
+        option.value = task.key;
+        option.textContent = task.label;
+        select.appendChild(option);
+      });
+      if ((guide.tasks || []).some(task => task.key === previous)) select.value = previous;
+      refreshTaskModels();
+    }
+
+    function refreshTaskModels() {
+      const guide = (currentSummary || {}).task_guide || {};
+      const task = document.getElementById('task-type').value;
+      const models = document.getElementById('task-model');
+      const previous = models.value;
+      models.replaceChildren();
+      const installed = new Set(guide.installed_models || []);
+      const recommended = new Set((guide.recommendations || {})[task]?.map(item => item.tag) || []);
+      (guide.installed_models || []).forEach(tag => {
+        const option = document.createElement('option');
+        option.value = tag;
+        option.textContent = tag + (recommended.has(tag) ? ' · task suggested' : '');
+        models.appendChild(option);
+      });
+      if (installed.has(previous)) models.value = previous;
+      else if (installed.has(guide.configured_default)) models.value = guide.configured_default;
+      const hint = document.getElementById('task-hint');
+      hint.textContent = guide.model_service_reachable
+        ? installed.size + ' installed model(s). Select the same model in Open WebUI.'
+        : 'Ollama unavailable. Start the workspace and check again.';
+    }
+
+    function draftTask() {
+      const summary = currentSummary || {};
+      const guide = summary.task_guide || {};
+      const goal = document.getElementById('task-goal').value.trim();
+      const task = document.getElementById('task-type').value;
+      const model = document.getElementById('task-model').value;
+      const output = document.getElementById('task-prompt');
+      const message = document.getElementById('task-message');
+      const readiness = (summary.readiness || {}).items || [];
+      const ready = name => readiness.some(item => item.name === name && item.state === 'ready');
+      if (!goal || goal.length > 2000 || !model
+          || !(guide.installed_models || []).includes(model)
+          || !ready('source') || !ready('sandbox')) {
+        output.textContent = '';
+        message.textContent = 'Choose a task, an installed model and a short goal. Source and sandbox must be configured.';
+        return;
+      }
+      const taskLabel = (guide.tasks || []).find(item => item.key === task)?.label || task;
+      output.textContent = 'Task: ' + taskLabel + '\\nGoal:\\n' + goal
+        + '\\n\\nWork only with the selected read-only source project.'
+        + ' Write generated files only under sandbox/workspace or sandbox/output.'
+        + ' Do not edit, delete, commit or push the source project.'
+        + ' Mention uncertainties and list produced files for manual review.';
+      message.textContent = 'Prompt prepared. Copy it and select ' + model + ' in Open WebUI.';
+    }
+
+    async function copyTask() {
+      const content = document.getElementById('task-prompt').textContent;
+      const message = document.getElementById('task-message');
+      if (!content) { message.textContent = 'Prepare a prompt first.'; return; }
+      try {
+        await navigator.clipboard.writeText(content);
+        message.textContent = 'Copied. Paste into Open WebUI and select the suggested model.';
+      } catch (error) {
+        message.textContent = 'Clipboard unavailable. Select and copy the prompt manually.';
+      }
+    }
+
     function applySummary(data) {
       currentSummary = data;
+      renderTaskGuide(data.task_guide || {});
       const items = (data.readiness || {}).items || [];
       const webui = items.find(item => item.name === 'webui');
       const bridge = items.find(item => item.name === 'repo_bridge');
@@ -1145,6 +1245,7 @@ def _summary_payload() -> dict[str, object]:
         ],
         'links': LINKS,
         'readiness': readiness,
+        'task_guide': task_guide(),
     }
 
 
