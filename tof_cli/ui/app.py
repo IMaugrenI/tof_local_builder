@@ -12,7 +12,7 @@ from typing import Callable
 from urllib.parse import parse_qs, urlparse
 
 from tof_cli.commands import check, doctor, down, setup, status, up
-from tof_cli.builder.artifact_ops import artifact_diff, artifact_inventory, artifact_preview
+from tof_cli.builder.artifact_ops import artifact_diff, artifact_handoff, artifact_inventory, artifact_preview
 from tof_cli.builder.model_ops import ollama_tags
 from tof_cli.builder.task_ops import task_guide
 from tof_cli.ui.guidance import explain_readiness
@@ -1175,6 +1175,15 @@ HTML = """<!doctype html>
             flag.title = done ? 'Remove browser review mark' : 'Preview or compare this exact file first';
             flag.addEventListener('click', () => changeReview(item.review_token, !done));
             row.appendChild(flag);
+            if (done) {
+              const exportButton = document.createElement('button');
+              exportButton.className = 'btn btn-secondary';
+              exportButton.type = 'button';
+              exportButton.textContent = 'Copy reviewed handoff';
+              exportButton.addEventListener('click', () =>
+                copyReviewedHandoff(item.area, item.path, item.review_token));
+              row.appendChild(exportButton);
+            }
             const status = document.createElement('p');
             status.className = 'service-hint';
             status.textContent = done ? 'Reviewed in this browser; no source changes applied'
@@ -1185,6 +1194,34 @@ HTML = """<!doctype html>
         }
       } catch (error) {
         root.textContent = 'Could not list sandbox files. Check the local control UI.';
+      }
+    }
+
+    async function copyReviewedHandoff(area, path, token) {
+      const output = document.getElementById('artifact-preview');
+      const current = reviewToken(area, path);
+      if (!reviewedTokens.has(token) || current !== token) {
+        output.textContent = 'The review is stale. Refresh and inspect this file again.';
+        return;
+      }
+      try {
+        const query = new URLSearchParams({area, path, token});
+        const response = await fetch('/api/artifact-handoff?' + query.toString());
+        const data = await response.json();
+        if (!response.ok || data.status !== 'ready') {
+          throw Error(data.error || 'File changed or cannot be safely handed off');
+        }
+        if (data.kind === 'no_changes') {
+          output.textContent = 'Identical to the original: nothing to transfer.';
+          return;
+        }
+        await navigator.clipboard.writeText(data.content);
+        output.closest('details').open = true;
+        output.textContent = 'Copied ' + data.kind + ' for ' + data.path
+          + '. Review and apply manually in your own editor. Original source unchanged.';
+      } catch (error) {
+        output.closest('details').open = true;
+        output.textContent = 'Handoff not copied: ' + String(error);
       }
     }
 
@@ -1457,6 +1494,19 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 return
             if parsed.path == '/api/artifacts':
                 self._send(200, 'application/json; charset=utf-8', _json_bytes(artifact_inventory(read_env())))
+                return
+            if parsed.path == '/api/artifact-handoff':
+                values = parse_qs(parsed.query)
+                area = values.get('area', [''])[0]
+                relative = values.get('path', [''])[0]
+                token = values.get('token', [''])[0]
+                try:
+                    result = artifact_handoff(read_env(), area, relative, token)
+                except (ValueError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8',
+                               _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(result))
                 return
             if parsed.path == '/api/artifact-diff':
                 values = parse_qs(parsed.query)
