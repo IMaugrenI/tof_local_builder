@@ -226,6 +226,9 @@ def artifact_handoff(
         kind = "no_changes"
     else:
         raise ValueError("The source cannot be safely compared for handoff")
+    if _review_token(source, sandbox, area, relative_path,
+                     generated["content"].encode("utf-8")) != expected_token:
+        raise ValueError("Source changed during comparison; review again")
     return {
         "status": "ready", "kind": kind, "area": area, "path": relative_path,
         "content": transfer, "review_token": expected_token,
