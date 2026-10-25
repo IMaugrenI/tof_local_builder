@@ -776,6 +776,9 @@ HTML = """<!doctype html>
           </div>
           <button class="btn btn-secondary" type="button" onclick="refreshArtifacts()">Refresh files</button>
         </div>
+        <p class="service-hint" id="review-progress">Review generated text before adopting changes.</p>
+        <label class="service-hint"><input id="review-pending-only" type="checkbox" onchange="refreshArtifacts()"> Only files needing review</label>
+        <p class="service-hint">Marks stay in this browser; no files are applied or committed automatically.</p>
         <div class="service-card" id="artifact-list" aria-live="polite">Select “Refresh files” to inspect the generated sandbox files.</div>
         <details style="margin-top:16px;">
           <summary>Read-only text preview</summary>
@@ -822,6 +825,38 @@ HTML = """<!doctype html>
 
   <script>
     let currentSummary = null;
+    const REVIEW_STORAGE_KEY = 'tof_builder_reviewed_v1';
+    let reviewedTokens = new Set();
+    const inspectedTokens = new Set();
+    let visibleArtifacts = [];
+    try {
+      const saved = JSON.parse(localStorage.getItem(REVIEW_STORAGE_KEY) || '[]');
+      if (Array.isArray(saved)) reviewedTokens = new Set(
+        saved.filter(item => typeof item === 'string' && /^[a-f0-9]{64}$/.test(item)).slice(-5000)
+      );
+    } catch (error) { reviewedTokens = new Set(); }
+
+    function saveReviews() {
+      try {
+        localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify([...reviewedTokens].slice(-5000)));
+      } catch (error) {
+        document.getElementById('review-progress').textContent =
+          'Browser storage is unavailable. Review marks last only for this page.';
+      }
+    }
+
+    function reviewToken(area, path) {
+      const item = visibleArtifacts.find(entry => entry.area === area && entry.path === path);
+      return item ? item.review_token : null;
+    }
+
+    function changeReview(token, reviewed) {
+      if (!token || (reviewed && !inspectedTokens.has(token))) return;
+      if (reviewed) reviewedTokens.add(token);
+      else reviewedTokens.delete(token);
+      saveReviews();
+      refreshArtifacts();
+    }
 
     function appendLog(text) {
       const log = document.getElementById('log');
@@ -1004,6 +1039,12 @@ HTML = """<!doctype html>
           root.textContent = 'Sandbox is not available. Choose project and check the workspace paths first.';
           return;
         }
+        visibleArtifacts = data.items;
+        const markable = data.items.filter(item => item.review_token);
+        const reviewed = markable.filter(item => reviewedTokens.has(item.review_token)).length;
+        document.getElementById('review-progress').textContent =
+          reviewed + ' of ' + markable.length + ' visible text files marked reviewed. '
+          + (data.truncated ? 'More files exist beyond this view.' : 'No original files were changed.');
         root.replaceChildren();
         if (!data.items.length) {
           root.textContent = 'No generated files yet. Finish a task in Open WebUI, then refresh here.';
@@ -1015,7 +1056,9 @@ HTML = """<!doctype html>
           + (data.truncated ? 'Showing a limited set. ' : '')
           + 'Preview is read-only; manually review changes before moving them to a source project.';
         root.appendChild(heading);
+        const pendingOnly = document.getElementById('review-pending-only').checked;
         for (const item of data.items) {
+          if (pendingOnly && item.review_token && reviewedTokens.has(item.review_token)) continue;
           const row = document.createElement('div');
           row.className = 'service-card';
           row.style.marginTop = '10px';
@@ -1039,6 +1082,22 @@ HTML = """<!doctype html>
             button.addEventListener('click', () => previewArtifact(item.area, item.path));
             row.appendChild(button);
           }
+          if (item.review_token) {
+            const done = reviewedTokens.has(item.review_token);
+            const flag = document.createElement('button');
+            flag.type = 'button';
+            flag.className = 'btn btn-quiet';
+            flag.textContent = done ? 'Undo reviewed' : 'Mark reviewed';
+            flag.disabled = !done && !inspectedTokens.has(item.review_token);
+            flag.title = done ? 'Remove browser review mark' : 'Preview or compare this exact file first';
+            flag.addEventListener('click', () => changeReview(item.review_token, !done));
+            row.appendChild(flag);
+            const status = document.createElement('p');
+            status.className = 'service-hint';
+            status.textContent = done ? 'Reviewed in this browser; no source changes applied'
+              : 'Needs review';
+            row.appendChild(status);
+          }
           root.appendChild(row);
         }
       } catch (error) {
@@ -1056,6 +1115,12 @@ HTML = """<!doctype html>
         output.textContent = response.ok
           ? data.area + '/' + data.path + '\\n\\n' + data.content
           : 'Preview unavailable: ' + (data.error || 'unknown reason');
+        if (response.ok) {
+          output.closest('details').open = true;
+          const token = reviewToken(area, path);
+          if (token) inspectedTokens.add(token);
+          refreshArtifacts();
+        }
       } catch (error) {
         output.textContent = 'Unable to read this text preview.';
       }
@@ -1080,6 +1145,12 @@ HTML = """<!doctype html>
         } else {
           output.textContent = 'Read-only diff (minus = source, plus = generated)\\n\\n'
             + data.diff + (data.truncated ? '\\n[Diff truncated — inspect files directly]' : '');
+        }
+        if (response.ok && (data.status === 'changed' || data.status === 'identical')
+            && !data.truncated) {
+          const token = reviewToken(area, path);
+          if (token) inspectedTokens.add(token);
+          refreshArtifacts();
         }
       } catch (error) {
         output.textContent = 'Could not compare this artifact.';

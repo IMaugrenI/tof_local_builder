@@ -119,3 +119,42 @@ def test_diff_rejects_traversal_and_large_source(configured_paths):
     assert artifact_ops.artifact_diff(env, "output", "notes.md")["status"] == "source_too_large"
     with pytest.raises(ValueError):
         artifact_ops.artifact_diff(env, "output", "../notes.md")
+
+
+def test_review_token_tracks_exact_artifact_content_and_source(configured_paths, tmp_path):
+    source, sandbox, env = configured_paths
+    file = sandbox / "output" / "result.md"
+    file.write_text("before", encoding="utf-8")
+    first = artifact_ops.artifact_inventory(env)["items"][0]
+    assert len(first["review_token"]) == 64
+    assert first["previewable"] is True
+    assert artifact_ops.artifact_inventory(env)["items"][0]["review_token"] == first["review_token"]
+
+    file.write_text("after!", encoding="utf-8")
+    after = artifact_ops.artifact_inventory(env)["items"][0]
+    assert after["review_token"] != first["review_token"]
+
+    alternate_source = tmp_path / "other-source"
+    alternate_source.mkdir()
+    env["SOURCE_REPO_PATH"] = str(alternate_source)
+    alternative = artifact_ops.artifact_inventory(env)["items"][0]
+    assert alternative["review_token"] != after["review_token"]
+
+
+def test_large_artifacts_not_reviewable_without_full_inspection(configured_paths):
+    _, sandbox, env = configured_paths
+    (sandbox / "output" / "large.md").write_text(
+        "X" * (artifact_ops.MAX_PREVIEW_BYTES + 1), encoding="utf-8"
+    )
+    entry = artifact_ops.artifact_inventory(env)["items"][0]
+    assert entry["previewable"] is False
+    assert entry["review_token"] is None
+
+
+def test_browser_checklist_requires_inspection_and_does_not_apply_changes():
+    from tof_cli.ui import app
+
+    assert "Mark reviewed" in app.HTML
+    assert "Preview or compare this exact file first" in app.HTML
+    assert "localStorage.setItem(REVIEW_STORAGE_KEY" in app.HTML
+    assert "No original files" in app.HTML or "no files are applied" in app.HTML
