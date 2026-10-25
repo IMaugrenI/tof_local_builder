@@ -14,6 +14,14 @@ Local Builder bietet einen Arbeitsbereich für KI-gestützte Implementierung mit
 
 **Ablauf:** lokales Modell und Arbeitsraum wählen → schreibgeschützte Quelle sichten → in Open WebUI arbeiten → Ergebnisse in der Sandbox prüfen. Setup-, Steuer- und Arbeitsoberfläche besitzen dabei getrennte Rollen, die unten erläutert werden.
 
+## Neu im B1-Entwicklungsbranch
+
+Die vorhandene Browser-Steuerung hat jetzt eine **schreibgeschützte Ergebnisübersicht** für `sandbox/workspace` und `sandbox/output`. Sie zeigt relative Dateipfade, Größen und Änderungszeiten; kleine UTF-8-Textdateien können begrenzt angesehen werden. Symlinks, Pfade außerhalb der Sandbox und überlappende Quell-/Sandbox-Wurzeln werden abgewiesen. Dateien werden nicht automatisch ins Quellprojekt übernommen, committed oder gepusht.
+
+Der normale Befehl `up` führt nicht mehr zunächst pauschal `docker compose down --remove-orphans` aus. Die Statusanzeige berücksichtigt nun auch den Quellpfad, die Sandbox und das gewählte Modell neben den lokalen Dienstendpunkten.
+
+Diese Änderungen befinden sich im [B1-Entwicklungs-PR](https://github.com/IMaugrenI/tof_local_builder/pull/34). Grüne GitHub-CI-Prüfungen sind nur Codetests, keine Aussage über einen geprüften Zielrechner.
+
 ## Was dieses Repo macht
 
 1. führt lokale Modelle über Ollama aus
