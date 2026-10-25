@@ -58,6 +58,12 @@ A **read-only project summary** displays the selected source and sandbox state p
 
 The existing control page now prioritizes missing prerequisites: source project, separate sandbox, Ollama, selected model, repository bridge and WebUI. Each non-ready component receives a human-readable next step and a button for a relevant existing command (`setup`, `up`, or `doctor`). Nothing is repaired automatically. Original project files, API contracts and the current Compose startup path are unchanged.
 
+## B9 – Reviewed manual source handoff
+
+The existing generated-file review flow can now **copy complete changes for intentional manual adoption** after a file was inspected and marked reviewed. For small modified text files it provides a full unified diff, for new files it provides the complete text; identical files have nothing to transfer. The review token tracks both the source and generated file contents, so a stale review is rejected. Truncated or oversized files cannot use this shortcut.
+
+**The original source stays read-only.** This function never applies, commits, stages or pushes output. The operator reviews and applies any change in their own editor.
+
 ## What this repo does
 
 1. runs local models through Ollama
