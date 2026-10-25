@@ -4,6 +4,7 @@ This module does not alter, import, stage or commit project files.
 """
 from __future__ import annotations
 
+import difflib
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
@@ -102,3 +103,53 @@ def artifact_preview(env: dict[str, str], area: str, relative_path: str) -> dict
     except UnicodeError as exc:
         raise ValueError("Artifact is not a UTF-8 text file") from exc
     return {"area": area, "path": relative_path, "content": text, "read_only": True}
+
+
+MAX_DIFF_LINES = 350
+
+
+def artifact_diff(env: dict[str, str], area: str, relative_path: str) -> dict[str, object]:
+    """Compare generated text with the *same relative path* in the read-only source.
+
+    The preview constraints also apply to diffs. There are no file writes,
+    commits, automatic applies, or arbitrary host paths in this operation.
+    """
+    # Enforce all output-path, extension, size, encoding and symlink guards.
+    candidate = artifact_preview(env, area, relative_path)
+    source = source_repo_report(env)
+    if source["state"] != "ok":
+        return {"status": "source_unavailable", "area": area, "path": relative_path}
+
+    root = Path(source["path"]).resolve()
+    # PurePosixPath normalizes '..' and '.', but artifact_preview has already
+    # rejected them in the original input before we form this source path.
+    parts = PurePosixPath(relative_path).parts
+    original = root.joinpath(*parts)
+    if original.is_symlink() or not original.resolve().is_relative_to(root):
+        raise ValueError("Source file is outside the selected project")
+    if not original.exists():
+        return {"status": "new_file", "area": area, "path": relative_path}
+    if not original.is_file():
+        raise ValueError("Original path is not a regular file")
+    if original.stat().st_size > MAX_PREVIEW_BYTES:
+        return {"status": "source_too_large", "area": area, "path": relative_path}
+    try:
+        source_text = original.read_text(encoding="utf-8")
+    except (UnicodeError, OSError) as exc:
+        raise ValueError("Source is not a readable UTF-8 text file") from exc
+    if "\\x00" in source_text or "\\x00" in candidate["content"]:
+        raise ValueError("Binary text is not eligible for comparison")
+    diff_lines = list(difflib.unified_diff(
+        source_text.splitlines(keepends=True),
+        candidate["content"].splitlines(keepends=True),
+        fromfile=f"source/{relative_path}",
+        tofile=f"{area}/{relative_path}",
+    ))
+    return {
+        "status": "identical" if not diff_lines else "changed",
+        "area": area,
+        "path": relative_path,
+        "diff": "".join(diff_lines[:MAX_DIFF_LINES]),
+        "truncated": len(diff_lines) > MAX_DIFF_LINES,
+        "read_only": True,
+    }

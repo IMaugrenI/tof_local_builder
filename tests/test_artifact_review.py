@@ -76,3 +76,46 @@ def test_preview_rejects_large_file(configured_paths):
     assert listing["items"][0]["previewable"] is False
     with pytest.raises(ValueError):
         artifact_ops.artifact_preview(env, "output", "large.md")
+
+
+def test_diff_shows_changes_without_touching_source(configured_paths):
+    source, sandbox, env = configured_paths
+    (source / "app.py").write_text("old\\n", encoding="utf-8")
+    (sandbox / "workspace" / "app.py").write_text("new\\n", encoding="utf-8")
+    report = artifact_ops.artifact_diff(env, "workspace", "app.py")
+    assert report["status"] == "changed"
+    assert "-old" in report["diff"] and "+new" in report["diff"]
+    assert (source / "app.py").read_text(encoding="utf-8") == "old\\n"
+
+
+def test_diff_distinguishes_new_and_identical_files(configured_paths):
+    source, sandbox, env = configured_paths
+    output = sandbox / "output" / "notes.md"
+    output.write_text("same", encoding="utf-8")
+    assert artifact_ops.artifact_diff(env, "output", "notes.md")["status"] == "new_file"
+    (source / "notes.md").write_text("same", encoding="utf-8")
+    assert artifact_ops.artifact_diff(env, "output", "notes.md")["status"] == "identical"
+
+
+def test_diff_rejects_source_symlink_escape(configured_paths, tmp_path):
+    source, sandbox, env = configured_paths
+    (sandbox / "output" / "notes.md").write_text("generated", encoding="utf-8")
+    outside = tmp_path / "secret.txt"
+    outside.write_text("secret", encoding="utf-8")
+    try:
+        (source / "notes.md").symlink_to(outside)
+    except OSError:
+        pytest.skip("Symlinks unavailable")
+    with pytest.raises(ValueError):
+        artifact_ops.artifact_diff(env, "output", "notes.md")
+
+
+def test_diff_rejects_traversal_and_large_source(configured_paths):
+    source, sandbox, env = configured_paths
+    (sandbox / "output" / "notes.md").write_text("generated", encoding="utf-8")
+    (source / "notes.md").write_text(
+        "x" * (artifact_ops.MAX_PREVIEW_BYTES + 1), encoding="utf-8"
+    )
+    assert artifact_ops.artifact_diff(env, "output", "notes.md")["status"] == "source_too_large"
+    with pytest.raises(ValueError):
+        artifact_ops.artifact_diff(env, "output", "../notes.md")
