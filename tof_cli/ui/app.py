@@ -876,6 +876,80 @@ HTML = """<!doctype html>
       }
     }
 
+    function renderTaskGuide(guide) {
+      const select = document.getElementById('task-type');
+      const previous = select.value || 'code';
+      select.replaceChildren();
+      (guide.tasks || []).forEach(task => {
+        const option = document.createElement('option');
+        option.value = task.key;
+        option.textContent = task.label;
+        select.appendChild(option);
+      });
+      if ((guide.tasks || []).some(task => task.key === previous)) select.value = previous;
+      refreshTaskModels();
+    }
+
+    function refreshTaskModels() {
+      const guide = (currentSummary || {}).task_guide || {};
+      const task = document.getElementById('task-type').value;
+      const models = document.getElementById('task-model');
+      const previous = models.value;
+      models.replaceChildren();
+      const installed = new Set(guide.installed_models || []);
+      const recommended = new Set((guide.recommendations || {})[task]?.map(item => item.tag) || []);
+      (guide.installed_models || []).forEach(tag => {
+        const option = document.createElement('option');
+        option.value = tag;
+        option.textContent = tag + (recommended.has(tag) ? ' · task suggested' : '');
+        models.appendChild(option);
+      });
+      if (installed.has(previous)) models.value = previous;
+      else if (installed.has(guide.configured_default)) models.value = guide.configured_default;
+      const hint = document.getElementById('task-hint');
+      hint.textContent = guide.model_service_reachable
+        ? installed.size + ' installed model(s). Select the same model in Open WebUI.'
+        : 'Ollama unavailable. Start the workspace and check again.';
+    }
+
+    function draftTask() {
+      const summary = currentSummary || {};
+      const guide = summary.task_guide || {};
+      const goal = document.getElementById('task-goal').value.trim();
+      const task = document.getElementById('task-type').value;
+      const model = document.getElementById('task-model').value;
+      const output = document.getElementById('task-prompt');
+      const message = document.getElementById('task-message');
+      const readiness = (summary.readiness || {}).items || [];
+      const ready = name => readiness.some(item => item.name === name && item.state === 'ready');
+      if (!goal || goal.length > 2000 || !model
+          || !(guide.installed_models || []).includes(model)
+          || !ready('source') || !ready('sandbox')) {
+        output.textContent = '';
+        message.textContent = 'Choose a task, an installed model and a short goal. Source and sandbox must be configured.';
+        return;
+      }
+      const taskLabel = (guide.tasks || []).find(item => item.key === task)?.label || task;
+      output.textContent = 'Task: ' + taskLabel + '\\nGoal:\\n' + goal
+        + '\\n\\nWork only with the selected read-only source project.'
+        + ' Write generated files only under sandbox/workspace or sandbox/output.'
+        + ' Do not edit, delete, commit or push the source project.'
+        + ' Mention uncertainties and list produced files for manual review.';
+      message.textContent = 'Prompt prepared. Copy it and select ' + model + ' in Open WebUI.';
+    }
+
+    async function copyTask() {
+      const content = document.getElementById('task-prompt').textContent;
+      const message = document.getElementById('task-message');
+      if (!content) { message.textContent = 'Prepare a prompt first.'; return; }
+      try {
+        await navigator.clipboard.writeText(content);
+        message.textContent = 'Copied. Paste into Open WebUI and select the suggested model.';
+      } catch (error) {
+        message.textContent = 'Clipboard unavailable. Select and copy the prompt manually.';
+      }
+    }
+
     function applySummary(data) {
       currentSummary = data;
       renderTaskGuide(data.task_guide || {});
