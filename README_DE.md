@@ -40,6 +40,12 @@ Die vorhandene Aufgabenoberfläche bietet **„Copy & open workspace“**. Damit
 
 Die Links zu Open WebUI, Projekt-Bridge und Ollama berücksichtigen jetzt die vorhandenen `.env`-Ports statt fest vorgegebener Adressen. Ungültige Portwerte werden nicht stillschweigend umgedeutet.
 
+## Ausbau B5 — Erzeugte Dateien nachvollziehbar sichten
+
+In der vorhandenen Sandbox-Ansicht gibt es jetzt einen **Prüfstatus je Textdatei**, eine Filterung offener Prüfungen und einen Fortschrittszähler. Eine Datei kann erst nach erfolgreicher Vorschau oder vollständigem Vergleich als geprüft markiert werden. Diese Markierung wird ausschließlich im lokalen Browser gespeichert und an den konkreten Dateiinhalt sowie die gewählten Quell-/Sandbox-Pfade gebunden. Ändert sich der Inhalt, gilt die frühere Markierung nicht mehr. Große oder binäre Dateien können nicht über die begrenzte Textansicht abgehakt werden.
+
+Die Markierung ist eine **Sichtungshilfe, keine Freigabe zur automatischen Übernahme**. Dateien des Originalprojekts werden nicht verändert, committed oder gepusht.
+
 ## Was dieses Repo macht
 
 1. führt lokale Modelle über Ollama aus
