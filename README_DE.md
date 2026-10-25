@@ -22,6 +22,12 @@ Der normale Befehl `up` führt nicht mehr zunächst pauschal `docker compose dow
 
 Diese Änderungen befinden sich im [B1-Entwicklungs-PR](https://github.com/IMaugrenI/tof_local_builder/pull/34). Grüne GitHub-CI-Prüfungen sind nur Codetests, keine Aussage über einen geprüften Zielrechner.
 
+## Ausbau B2: Änderungen vor der Übernahme vergleichen
+
+Die bestehende lokale Steueroberfläche bietet neben der Sandbox-Dateiübersicht nun **„Compare to source“**. Dabei werden ausschließlich kleine UTF-8-Textdateien aus `sandbox/workspace` oder `sandbox/output` mit einer Datei **unter demselben relativen Pfad** im gewählten, schreibgeschützten Quellprojekt verglichen. Angezeigt werden hinzugefügte und entfernte Zeilen sowie die Zustände „neu“, „identisch“, „geändert“ oder „Quelle zu groß/nicht verfügbar“.
+
+Die Vorschau ist begrenzt und ausschließlich lesend; es gibt **keine automatische Übernahme, keinen Commit und keinen Push** in das Quellprojekt. Bei großen, binären oder über Pfadgrenzen hinausführenden Dateien verweigert das System den Vergleich.
+
 ## Was dieses Repo macht
 
 1. führt lokale Modelle über Ollama aus
