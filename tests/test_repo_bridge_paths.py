@@ -58,3 +58,35 @@ def test_symlink_escape_is_rejected(sandbox_roots):
 def test_source_root_is_not_writable(sandbox_roots):
     with pytest.raises(HTTPException):
         bridge.resolve_write_path("source", "should-not-write.txt")
+
+
+@pytest.mark.parametrize(
+    "relative_path",
+    ["/tmp/absolute.txt", "C:/Windows/system.ini", "C:relative.txt", "../escape", r"..\\escape"],
+)
+def test_ambiguous_or_absolute_write_paths_are_rejected(sandbox_roots, relative_path):
+    with pytest.raises(HTTPException) as exc:
+        bridge.resolve_write_path("output", relative_path)
+    assert exc.value.status_code == 400
+
+
+@pytest.mark.parametrize("relative_path", ["/etc/passwd", "C:/Windows", "../outside"])
+def test_tree_paths_reject_absolute_and_parent_segments(sandbox_roots, relative_path):
+    with pytest.raises(HTTPException) as exc:
+        bridge.resolve_tree_path("source", relative_path)
+    assert exc.value.status_code == 400
+
+
+def test_tree_root_remains_browsable(sandbox_roots):
+    source, _, _, _ = sandbox_roots
+    path, relative = bridge.resolve_tree_path("source", "")
+    assert path == source.resolve()
+    assert relative == ""
+
+
+def test_source_and_sandbox_must_not_overlap(sandbox_roots, monkeypatch):
+    source, _, _, _ = sandbox_roots
+    monkeypatch.setattr(bridge, "SANDBOX_ROOT", (source / "sandbox").resolve())
+    with pytest.raises(HTTPException) as exc:
+        bridge.resolve_write_path("output", "note.md")
+    assert exc.value.status_code == 503

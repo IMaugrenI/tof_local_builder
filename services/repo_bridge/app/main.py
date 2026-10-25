@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
@@ -154,14 +154,24 @@ def resolve_root(root_name: ROOT_NAME | str) -> Path:
     return root
 
 
-def clean_relative_path(value: str) -> str:
-    candidate = (value or "").strip()
-    if not candidate:
-        raise HTTPException(status_code=400, detail="relative_path must not be empty")
-    candidate = candidate.replace("\\", "/")
-    if candidate in {".", "/"}:
-        raise HTTPException(status_code=400, detail="relative_path must point to a file or directory below the root")
-    return candidate.lstrip("/")
+def clean_relative_path(value: str, *, allow_root: bool = False) -> str:
+    """Keep file API paths relative; do not silently reinterpret host paths."""
+    candidate = (value or "").strip().replace("\\", "/")
+    if not candidate or candidate == ".":
+        if allow_root:
+            return ""
+        raise HTTPException(status_code=400, detail="relative_path must point below the selected root")
+    if candidate.startswith("/") or PureWindowsPath(candidate).is_absolute() or PureWindowsPath(candidate).drive:
+        raise HTTPException(status_code=400, detail="Absolute paths and drive paths are not allowed")
+    if ".." in candidate.split("/"):
+        raise HTTPException(status_code=400, detail="Parent path traversal is not allowed")
+    return candidate
+
+
+def ensure_distinct_spaces() -> None:
+    """A writable root must never overlap the selected read-only source."""
+    if within(SOURCE_ROOT, SANDBOX_ROOT) or within(SANDBOX_ROOT, SOURCE_ROOT):
+        raise HTTPException(status_code=503, detail="Source and sandbox roots overlap")
 
 
 def resolve_read_path(root_name: ROOT_NAME | str, rel_path: str) -> Path:
@@ -174,7 +184,7 @@ def resolve_read_path(root_name: ROOT_NAME | str, rel_path: str) -> Path:
 
 def resolve_tree_path(root_name: ROOT_NAME | str, rel_path: str = "") -> tuple[Path, str]:
     base = resolve_root(root_name)
-    normalized = (rel_path or "").strip().lstrip("/")
+    normalized = clean_relative_path(rel_path, allow_root=True)
     candidate = (base / normalized).resolve() if normalized else base
     if not within(base, candidate):
         raise HTTPException(status_code=400, detail="Path escapes selected root")
@@ -182,6 +192,7 @@ def resolve_tree_path(root_name: ROOT_NAME | str, rel_path: str = "") -> tuple[P
 
 
 def resolve_write_path(root_name: WRITE_ROOT_NAME | str, rel_path: str) -> tuple[Path, Path]:
+    ensure_distinct_spaces()
     base = resolve_root(root_name)
     if base == SOURCE_ROOT:
         raise HTTPException(status_code=400, detail="Writes into source are not allowed")

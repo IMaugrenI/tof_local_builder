@@ -14,6 +14,14 @@ Local Builder provides a workspace for AI-assisted implementation with **read-on
 
 **Workflow:** choose the local model and workspace → inspect the read-only source → work in Open WebUI → review output in the sandbox. Setup and control interfaces have separate responsibilities, as documented below.
 
+## New in the B1 development branch
+
+The existing browser control surface now includes a **read-only review panel** for generated files in `sandbox/workspace` and `sandbox/output`. It lists relative paths, file sizes and timestamps and permits bounded previews of small UTF-8 text files. Symlinks, paths outside the sandbox, and overlapping source/sandbox roots are rejected. Nothing is automatically copied, committed or pushed to the original project.
+
+The normal `up` command no longer runs a blanket `docker compose down --remove-orphans` first. Readiness now checks the configured source path, sandbox, and selected model as well as local service endpoints.
+
+These features are on the [B1 development pull request](https://github.com/IMaugrenI/tof_local_builder/pull/34). Passing GitHub CI checks prove code-level checks only; they are not a statement that a target machine was tested.
+
 ## What this repo does
 
 1. runs local models through Ollama

@@ -37,4 +37,4 @@ jobs:
           SOURCE_REPO_PATH=. docker compose -f compose.yml config > /dev/null
 
       - name: Run tests
-        run: pytest -q
+        run: python -m pytest -q

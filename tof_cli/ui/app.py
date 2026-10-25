@@ -9,9 +9,13 @@ from contextlib import redirect_stdout
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Callable
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from tof_cli.commands import check, doctor, down, setup, status, up
+from tof_cli.builder.artifact_ops import artifact_inventory, artifact_preview
+from tof_cli.builder.model_ops import ollama_tags
+from tof_cli.builder.repo_bridge_ops import sandbox_report, source_repo_report
+from tof_cli.core.env_ops import read_env
 
 
 @dataclass(frozen=True)
@@ -737,6 +741,22 @@ HTML = """<!doctype html>
         </div>
       </section>
 
+      <section class="workflow" aria-labelledby="artifact-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">REVIEW YOUR WORK</p>
+            <h2 id="artifact-title">Generated files — review before keeping.</h2>
+            <p class="service-hint">Only sandbox/workspace and sandbox/output are listed. Your original project stays read-only. No files are copied back automatically.</p>
+          </div>
+          <button class="btn btn-secondary" type="button" onclick="refreshArtifacts()">Refresh files</button>
+        </div>
+        <div class="service-card" id="artifact-list" aria-live="polite">Select “Refresh files” to inspect the generated sandbox files.</div>
+        <details style="margin-top:16px;">
+          <summary>Read-only text preview</summary>
+          <div class="details-body"><pre class="log" id="artifact-preview">Choose a small text file using its Preview button.</pre></div>
+        </details>
+      </section>
+
       <section class="details-grid" aria-label="Advanced controls">
         <details>
           <summary>Problems & technical details</summary>
@@ -821,9 +841,9 @@ HTML = """<!doctype html>
 
         const hint = document.createElement('p');
         hint.className = 'service-hint';
-        hint.textContent = item.state === 'ready'
+        hint.textContent = item.detail || (item.state === 'ready'
           ? 'Ready on this computer.'
-          : 'Not ready yet.';
+          : 'Not ready yet.');
 
         top.append(name, state);
         card.append(top, hint);
@@ -851,7 +871,7 @@ HTML = """<!doctype html>
       renderCards(data.readiness || { items: [] });
 
       if (webui && webui.state === 'ready') {
-        focusTitle.textContent = 'Everything is ready.';
+        focusTitle.textContent = allReady ? 'Everything is ready.' : 'Workspace available — check remaining requirements.';
         primary.textContent = 'Open workspace';
         primary.dataset.mode = 'open';
       } else {
@@ -862,6 +882,67 @@ HTML = """<!doctype html>
 
       if (bridge && bridge.state !== 'ready' && ollama && ollama.state === 'ready') {
         focusTitle.textContent = 'The AI model is ready, but access to your project still needs attention.';
+      }
+    }
+
+    async function refreshArtifacts() {
+      const root = document.getElementById('artifact-list');
+      root.textContent = 'Checking sandbox files…';
+      try {
+        const response = await fetch('/api/artifacts');
+        const data = await response.json();
+        if (!response.ok || data.status !== 'ok') {
+          root.textContent = 'Sandbox is not available. Choose project and check the workspace paths first.';
+          return;
+        }
+        root.replaceChildren();
+        if (!data.items.length) {
+          root.textContent = 'No generated files yet. Finish a task in Open WebUI, then refresh here.';
+          return;
+        }
+        const heading = document.createElement('p');
+        heading.className = 'service-hint';
+        heading.textContent = data.total + ' file(s) found. '
+          + (data.truncated ? 'Showing a limited set. ' : '')
+          + 'Preview is read-only; manually review changes before moving them to a source project.';
+        root.appendChild(heading);
+        for (const item of data.items) {
+          const row = document.createElement('div');
+          row.className = 'service-card';
+          row.style.marginTop = '10px';
+          const label = document.createElement('strong');
+          label.textContent = item.area + '/' + item.path;
+          const detail = document.createElement('p');
+          detail.className = 'service-hint';
+          detail.textContent = item.size_bytes + ' bytes · ' + item.modified_at;
+          row.append(label, detail);
+          if (item.previewable) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-quiet';
+            button.textContent = 'Preview';
+            button.addEventListener('click', () => previewArtifact(item.area, item.path));
+            row.appendChild(button);
+          }
+          root.appendChild(row);
+        }
+      } catch (error) {
+        root.textContent = 'Could not list sandbox files. Check the local control UI.';
+      }
+    }
+
+    async function previewArtifact(area, path) {
+      const output = document.getElementById('artifact-preview');
+      output.textContent = 'Loading text preview…';
+      try {
+        const query = new URLSearchParams({area, path});
+        const response = await fetch('/api/artifact-preview?' + query.toString());
+        const data = await response.json();
+        output.textContent = response.ok
+          ? data.area + '/' + data.path + '\\n\\n' + data.content
+          : 'Preview unavailable: ' + (data.error || 'unknown reason');
+      } catch (error) {
+        output.textContent = 'Unable to read this text preview.';
       }
     }
 
@@ -943,6 +1024,7 @@ HTML = """<!doctype html>
     }
 
     refreshSummary();
+    refreshArtifacts();
   </script>
 </body>
 </html>
@@ -986,21 +1068,43 @@ def _probe_url(url: str) -> str:
 
 
 def _readiness_payload() -> dict[str, object]:
+    env = read_env()
+    urls = {
+        'webui': f"http://127.0.0.1:{env.get('OPENWEBUI_PORT', '3000')}",
+        'repo_bridge': f"http://127.0.0.1:{env.get('REPO_BRIDGE_PORT', '8099')}/health",
+        'ollama': f"http://127.0.0.1:{env.get('OLLAMA_PORT', '11434')}/api/tags",
+    }
     items = []
     for key, target in READINESS_TARGETS.items():
-        state = _probe_url(target['url'])
-        items.append({'name': key, 'label': target['label'], 'url': target['url'], 'state': state})
-    return {'items': items}
+        url = urls[key]
+        items.append({'name': key, 'label': target['label'], 'url': url, 'state': _probe_url(url)})
 
+    for key, label, report in (
+        ('source', 'Read-only project', source_repo_report(env)),
+        ('sandbox', 'Writable workspace', sandbox_report(env)),
+    ):
+        state = 'ready' if report['state'] == 'ok' else 'not_reachable'
+        items.append({'name': key, 'label': label, 'state': state,
+                      'detail': report['path'] if state == 'ready' else f"Path needs attention: {report['state']}"})
+
+    model = env.get('DEFAULT_OLLAMA_MODEL', 'qwen2.5:0.5b')
+    try:
+        found = model in ollama_tags(env.get('OLLAMA_PORT', '11434'))
+    except Exception:
+        found = False
+    items.append({'name': 'default_model', 'label': 'Selected AI model',
+                  'state': 'ready' if found else 'not_reachable',
+                  'detail': model if found else f"Selected model not available: {model}"})
+    return {'items': items}
 
 
 def _summary_payload() -> dict[str, object]:
     readiness = _readiness_payload()
-    webui_ready = any(item['name'] == 'webui' and item['state'] == 'ready' for item in readiness['items'])
+    all_ready = bool(readiness['items']) and all(item['state'] == 'ready' for item in readiness['items'])
     next_step = (
         'Everything is ready. Open your workspace and continue working with your project.'
-        if webui_ready
-        else 'Choose your project first, then start the workspace. ToF will check the important parts and tell you when everything is ready.'
+        if all_ready
+        else 'Some parts are not ready yet. Check the status cards, then use Find problems for guided repair.'
     )
     return {
         'next_step': next_step,
@@ -1011,7 +1115,6 @@ def _summary_payload() -> dict[str, object]:
         'links': LINKS,
         'readiness': readiness,
     }
-
 
 
 def _json_bytes(payload: dict[str, object]) -> bytes:
@@ -1035,6 +1138,20 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 return
             if parsed.path == '/api/summary':
                 self._send(200, 'application/json; charset=utf-8', _json_bytes(_summary_payload()))
+                return
+            if parsed.path == '/api/artifacts':
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(artifact_inventory(read_env())))
+                return
+            if parsed.path == '/api/artifact-preview':
+                values = parse_qs(parsed.query)
+                area = values.get('area', [''])[0]
+                relative_path = values.get('path', [''])[0]
+                try:
+                    preview = artifact_preview(read_env(), area, relative_path)
+                except (ValueError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(preview))
                 return
             self._send(404, 'application/json; charset=utf-8', _json_bytes({'error': 'not found'}))
 
