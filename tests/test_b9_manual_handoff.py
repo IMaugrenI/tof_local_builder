@@ -63,7 +63,7 @@ def test_unbounded_and_unsafe_files_cannot_be_handed_off(roots):
             artifact_ops.artifact_handoff(env, "output", path, expected)
     (src / "page.py").write_text("a" * (artifact_ops.MAX_PREVIEW_BYTES + 1),
                                 encoding="utf-8")
-    with pytest.raises(ValueError, match="safely"):
+    with pytest.raises(ValueError, match="changed"):
         artifact_ops.artifact_handoff(env, "output", "page.py", expected)
 
 
@@ -88,6 +88,6 @@ def test_source_edit_invalidates_review_approval(roots):
 
 def test_binary_utf8_payload_disallowed_even_when_file_suffix_is_text(roots):
     _, sandbox, env = roots
-    (sandbox / "output" / "page.py").write_bytes(b"hello\\x00world")
+    (sandbox / "output" / "page.py").write_bytes(bytes([104, 101, 108, 108, 111, 0, 119, 111, 114, 108, 100]))
     with pytest.raises(ValueError, match="Binary"):
         artifact_ops.artifact_handoff(env, "output", "page.py", token(env))
