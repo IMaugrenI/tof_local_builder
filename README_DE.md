@@ -10,11 +10,13 @@ Local Builder bietet einen Arbeitsbereich für KI-gestützte Implementierung mit
 
 **Einstieg:** [Schnellstart](START_HERE_DE.md) · [English README](README.md) · [ToF Systems Übersicht](https://github.com/IMaugrenI/tof-showcase)
 
+**Quellpaket-Kandidat (B8/K8):** Die vorhandenen Windows-/Linux-/macOS-Starter lassen sich über den manuellen GitHub-Workflow **Source distribution candidate** oder `python scripts/build_source_candidate.py --output-dir dist` aus einem Git-Commit bündeln. Enthalten sind eine [Offline-Anleitung](docs/RELEASE_PACKAGE_DE.md) und eine SHA-256-Prüfsumme. **Noch kein freigegebenes Produkt-Release und kein nativer Installer; die Abnahme erfolgt erst nach dem Ausbau.**
+
 **Für wen:** Entwickler, Self-Hoster und kleine lokale Teams, die lokal unterstützte KI-Arbeit mit klaren Prüfgrenzen möchten. Das Repository ist das eigenständige **Generate**-Werkzeug, kein vollständiges Wissensmanagement und keine automatisch verbundene Tool-Suite.
 
 **Ablauf:** lokales Modell und Arbeitsraum wählen → schreibgeschützte Quelle sichten → in Open WebUI arbeiten → Ergebnisse in der Sandbox prüfen. Setup-, Steuer- und Arbeitsoberfläche besitzen dabei getrennte Rollen, die unten erläutert werden.
 
-## Neu im B1-Entwicklungsbranch
+## B1-Grundlage (in main integriert)
 
 Die vorhandene Browser-Steuerung hat jetzt eine **schreibgeschützte Ergebnisübersicht** für `sandbox/workspace` und `sandbox/output`. Sie zeigt relative Dateipfade, Größen und Änderungszeiten; kleine UTF-8-Textdateien können begrenzt angesehen werden. Symlinks, Pfade außerhalb der Sandbox und überlappende Quell-/Sandbox-Wurzeln werden abgewiesen. Dateien werden nicht automatisch ins Quellprojekt übernommen, committed oder gepusht.
 
