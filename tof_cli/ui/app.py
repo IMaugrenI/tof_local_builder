@@ -878,6 +878,7 @@ HTML = """<!doctype html>
 
     function applySummary(data) {
       currentSummary = data;
+      renderTaskGuide(data.task_guide || {});
       const items = (data.readiness || {}).items || [];
       const webui = items.find(item => item.name === 'webui');
       const bridge = items.find(item => item.name === 'repo_bridge');
