@@ -42,13 +42,35 @@ def _get_area(sandbox: Path, area: str) -> Path:
     return base
 
 
+def _review_token(
+    source: dict[str, str], sandbox: Path, area: str, relative: str,
+    generated: bytes,
+) -> str | None:
+    """Bind the mark to BOTH generated content and the current original."""
+    source_identity = source["path"] if source["state"] == "ok" else "unconfigured"
+    source_hash = "unconfigured"
+    if source["state"] == "ok":
+        root = Path(source["path"]).resolve()
+        candidate = root.joinpath(*PurePosixPath(relative).parts)
+        if candidate.is_symlink() or not candidate.resolve().is_relative_to(root):
+            return None
+        if candidate.exists():
+            if not candidate.is_file() or candidate.stat().st_size > MAX_PREVIEW_BYTES:
+                return None
+            source_hash = hashlib.sha256(candidate.read_bytes()).hexdigest()
+        else:
+            source_hash = "new_file"
+    fingerprint = hashlib.sha256(generated).hexdigest()
+    identity = f"{source_identity}|{sandbox}|{area}|{relative}|{fingerprint}|{source_hash}"
+    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
+
+
 def artifact_inventory(env: dict[str, str], *, limit: int = MAX_ITEMS) -> dict[str, object]:
     sandbox = _resolve_sandbox(env)
     if sandbox is None:
         return {"status": "unavailable", "items": [], "reason": "Missing or overlapping sandbox/source paths"}
     items: list[dict[str, object]] = []
     source = source_repo_report(env)
-    source_identity = source['path'] if source['state'] == 'ok' else 'unconfigured'
     total = 0
     for area in ALLOWED_AREAS:
         try:
@@ -72,9 +94,7 @@ def artifact_inventory(env: dict[str, str], *, limit: int = MAX_ITEMS) -> dict[s
             previewable = path.suffix.lower() in PREVIEW_SUFFIXES and stat.st_size <= MAX_PREVIEW_BYTES
             review_token = None
             if previewable:
-                content_hash = hashlib.sha256(path.read_bytes()).hexdigest()
-                context = f"{source_identity}|{sandbox}|{area}|{relative}|{content_hash}"
-                review_token = hashlib.sha256(context.encode("utf-8")).hexdigest()
+                review_token = _review_token(source, sandbox, area, relative, path.read_bytes())
             items.append({
                 "area": area,
                 "path": relative,
@@ -147,7 +167,7 @@ def artifact_diff(env: dict[str, str], area: str, relative_path: str) -> dict[st
         source_text = original.read_text(encoding="utf-8")
     except (UnicodeError, OSError) as exc:
         raise ValueError("Source is not a readable UTF-8 text file") from exc
-    if "\\x00" in source_text or "\\x00" in candidate["content"]:
+    if chr(0) in source_text or chr(0) in candidate["content"]:
         raise ValueError("Binary text is not eligible for comparison")
     diff_lines = list(difflib.unified_diff(
         source_text.splitlines(keepends=True),
@@ -183,12 +203,12 @@ def artifact_handoff(
     source = source_repo_report(env)
     if sandbox is None or source["state"] != "ok":
         raise ValueError("Source and separate sandbox must be configured")
-    if "\x00" in generated["content"]:
+    if chr(0) in generated["content"]:
         raise ValueError("Binary text cannot be handed off")
     source_path = Path(source["path"]).resolve()
-    content_hash = hashlib.sha256(generated["content"].encode("utf-8")).hexdigest()
-    identity = f"{source['path']}|{sandbox}|{area}|{relative_path}|{content_hash}"
-    current_token = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+    current_token = _review_token(
+        source, sandbox, area, relative_path, generated["content"].encode("utf-8")
+    )
     if current_token != expected_token:
         raise ValueError("Generated file changed; repeat preview and review")
     comparison = artifact_diff(env, area, relative_path)
