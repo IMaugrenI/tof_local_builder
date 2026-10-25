@@ -15,6 +15,7 @@ from tof_cli.commands import check, doctor, down, setup, status, up
 from tof_cli.builder.artifact_ops import artifact_diff, artifact_inventory, artifact_preview
 from tof_cli.builder.model_ops import ollama_tags
 from tof_cli.builder.task_ops import task_guide
+from tof_cli.ui.guidance import explain_readiness
 from tof_cli.builder.repo_bridge_ops import sandbox_report, source_repo_report
 from tof_cli.core.env_ops import read_env
 
@@ -700,6 +701,7 @@ HTML = """<!doctype html>
           <p class="focus-label">Next step</p>
           <h3 id="focus-title">Checking your workspace…</h3>
           <p class="next-step" id="next-step" aria-live="polite">Finding the best next step…</p>
+          <div class="service-card" id="guidance-panel" aria-live="polite">Checking recommended next steps…</div>
           <div class="focus-actions">
             <button class="btn btn-primary" id="primary-action" type="button" onclick="runPrimaryAction()">Start workspace</button>
             <button class="btn btn-secondary" type="button" onclick="refreshSummary()">Check again</button>
@@ -915,6 +917,44 @@ HTML = """<!doctype html>
       }
     }
 
+    function renderGuidance(guidance) {
+      const panel = document.getElementById('guidance-panel');
+      panel.replaceChildren();
+      const heading = document.createElement('strong');
+      heading.textContent = guidance.status === 'ready'
+        ? 'Workspace checklist complete' : 'Next steps to get ready';
+      panel.appendChild(heading);
+      const checks = guidance.checks || [];
+      if (!checks.length) {
+        const note = document.createElement('p');
+        note.className = 'service-hint';
+        note.textContent = guidance.status === 'ready'
+          ? 'Source, sandbox, model and services are ready.'
+          : 'Status is incomplete. Choose Find problems to inspect it.';
+        panel.appendChild(note);
+        return;
+      }
+      checks.slice(0, 6).forEach((item, index) => {
+        const row = document.createElement('p');
+        row.className = 'service-hint';
+        row.textContent = (index + 1) + '. ' + item.label + ': ' + item.next_step;
+        panel.appendChild(row);
+      });
+      const suggested = guidance.priority?.suggested_action;
+      if (['setup', 'up', 'check', 'doctor', 'status'].includes(suggested)) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-secondary';
+        button.textContent = 'Next: ' + ({
+          setup: 'Configure paths or model', up: 'Start workspace',
+          check: 'Check status', doctor: 'Find problems',
+          status: 'Show status',
+        }[suggested]);
+        button.addEventListener('click', () => runAction(suggested, button));
+        panel.appendChild(button);
+      }
+    }
+
     function renderProjectContext(project) {
       const box = document.getElementById('project-context');
       box.replaceChildren();
@@ -1054,6 +1094,7 @@ HTML = """<!doctype html>
       state.textContent = allReady ? 'Everything ready' : (someReady ? 'Still getting ready' : 'Not started');
 
       document.getElementById('next-step').textContent = data.next_step;
+      renderGuidance(data.guidance || {});
       renderCards(data.readiness || { items: [] });
 
       if (webui && webui.state === 'ready') {
@@ -1377,11 +1418,8 @@ def _readiness_payload() -> dict[str, object]:
 def _summary_payload() -> dict[str, object]:
     readiness = _readiness_payload()
     all_ready = bool(readiness['items']) and all(item['state'] == 'ready' for item in readiness['items'])
-    next_step = (
-        'Everything is ready. Open your workspace and continue working with your project.'
-        if all_ready
-        else 'Some parts are not ready yet. Check the status cards, then use Find problems for guided repair.'
-    )
+    guidance = explain_readiness(readiness['items'])
+    next_step = guidance['next_step']
     return {
         'next_step': next_step,
         'actions': [
@@ -1390,6 +1428,7 @@ def _summary_payload() -> dict[str, object]:
         ],
         'links': _configured_links(),
         'readiness': readiness,
+        'guidance': guidance,
         'task_guide': task_guide(),
     }
 
