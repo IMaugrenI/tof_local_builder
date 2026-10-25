@@ -163,3 +163,52 @@ def artifact_diff(env: dict[str, str], area: str, relative_path: str) -> dict[st
         "truncated": len(diff_lines) > MAX_DIFF_LINES,
         "read_only": True,
     }
+
+
+def artifact_handoff(
+    env: dict[str, str], area: str, relative_path: str, expected_token: str,
+) -> dict[str, object]:
+    """Provide a complete, review-bound text handoff; NEVER edit the source.
+
+    The token binds the exact candidate bytes, source root and sandbox root.
+    It is a staleness check, *not* an authorization credential. The browser
+    controls the reviewed state, while the operator still applies work manually.
+    """
+    if not isinstance(expected_token, str) or len(expected_token) != 64:
+        raise ValueError("Missing or invalid review token")
+    if any(ch not in "0123456789abcdef" for ch in expected_token):
+        raise ValueError("Invalid review token")
+    generated = artifact_preview(env, area, relative_path)
+    sandbox = _resolve_sandbox(env)
+    source = source_repo_report(env)
+    if sandbox is None or source["state"] != "ok":
+        raise ValueError("Source and separate sandbox must be configured")
+    if "\x00" in generated["content"]:
+        raise ValueError("Binary text cannot be handed off")
+    source_path = Path(source["path"]).resolve()
+    content_hash = hashlib.sha256(generated["content"].encode("utf-8")).hexdigest()
+    identity = f"{source['path']}|{sandbox}|{area}|{relative_path}|{content_hash}"
+    current_token = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+    if current_token != expected_token:
+        raise ValueError("Generated file changed; repeat preview and review")
+    comparison = artifact_diff(env, area, relative_path)
+    if comparison["status"] == "changed":
+        if comparison["truncated"]:
+            raise ValueError("Diff is truncated; inspect the complete file manually")
+        transfer = comparison["diff"]
+        kind = "unified_diff"
+    elif comparison["status"] == "new_file":
+        # No original file exists; the generated content is complete and bounded.
+        transfer = generated["content"]
+        kind = "new_file_text"
+    elif comparison["status"] == "identical":
+        transfer = ""
+        kind = "no_changes"
+    else:
+        raise ValueError("The source cannot be safely compared for handoff")
+    return {
+        "status": "ready", "kind": kind, "area": area, "path": relative_path,
+        "content": transfer, "review_token": expected_token,
+        "source": str(source_path), "read_only": True,
+        "requires_manual_adoption": True,
+    }
