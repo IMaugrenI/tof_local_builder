@@ -47,7 +47,10 @@ def artifact_inventory(env: dict[str, str], *, limit: int = MAX_ITEMS) -> dict[s
     items: list[dict[str, object]] = []
     total = 0
     for area in ALLOWED_AREAS:
-        base = _get_area(sandbox, area)
+        try:
+            base = _get_area(sandbox, area)
+        except ValueError:
+            return {"status": "unavailable", "items": [], "reason": "Unsafe sandbox area"}
         if not base.is_dir():
             continue
         for path in base.rglob("*"):
