@@ -72,3 +72,22 @@ def test_ui_does_not_apply_generated_files():
     assert "reviewedTokens.has(token)" in app.HTML
     assert "navigator.clipboard.writeText(data.content)" in app.HTML
     assert "Original source unchanged." in app.HTML
+
+
+def test_source_edit_invalidates_review_approval(roots):
+    source, sandbox, env = roots
+    original = source / "page.py"
+    original.write_text("old", encoding="utf-8")
+    (sandbox / "output" / "page.py").write_text("generated", encoding="utf-8")
+    previous = token(env)
+    original.write_text("modified after review", encoding="utf-8")
+    assert token(env) != previous
+    with pytest.raises(ValueError, match="changed"):
+        artifact_ops.artifact_handoff(env, "output", "page.py", previous)
+
+
+def test_binary_utf8_payload_disallowed_even_when_file_suffix_is_text(roots):
+    _, sandbox, env = roots
+    (sandbox / "output" / "page.py").write_bytes(b"hello\\x00world")
+    with pytest.raises(ValueError, match="Binary"):
+        artifact_ops.artifact_handoff(env, "output", "page.py", token(env))
