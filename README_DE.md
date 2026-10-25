@@ -28,6 +28,12 @@ Die bestehende lokale Steueroberfläche bietet neben der Sandbox-Dateiübersicht
 
 Die Vorschau ist begrenzt und ausschließlich lesend; es gibt **keine automatische Übernahme, keinen Commit und keinen Push** in das Quellprojekt. Bei großen, binären oder über Pfadgrenzen hinausführenden Dateien verweigert das System den Vergleich.
 
+## Ausbau B3 — Geführte Aufgabenwahl
+
+Die bestehende lokale Browser-Steuerung bietet nun eine **Aufgaben- und Modellwahl**. Aufgabenprofile stammen aus dem vorhandenen `model_catalog/builder_catalog.json`. Als ausführbare Auswahl werden ausschließlich lokal bei Ollama erkannte Modelle angezeigt; geeignete Profile werden kenntlich gemacht.
+
+Aus einer kurzen Aufgabenbeschreibung wird eine **kopierbare Arbeitsanweisung** erstellt. Die eigentliche Arbeit findet weiterhin in Open WebUI statt und das Modell wird dort bewusst gewählt. Die Aufgabenwahl lädt keine Modelle herunter, startet keine Aufträge automatisch und schreibt nicht in das Quellprojekt. Voraussetzung sind die bestehenden, getrennten Quell-/Sandbox-Pfade.
+
 ## Was dieses Repo macht
 
 1. führt lokale Modelle über Ollama aus
