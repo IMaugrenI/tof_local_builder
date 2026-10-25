@@ -14,7 +14,7 @@ from urllib.parse import parse_qs, urlparse
 from tof_cli.commands import check, doctor, down, setup, status, up
 from tof_cli.builder.artifact_ops import artifact_diff, artifact_inventory, artifact_preview
 from tof_cli.builder.model_ops import ollama_tags
-from tof_cli.builder.task_ops import task_options, prepare_task
+from tof_cli.builder.task_ops import task_guide
 from tof_cli.builder.repo_bridge_ops import sandbox_report, source_repo_report
 from tof_cli.core.env_ops import read_env
 
@@ -1146,6 +1146,7 @@ def _summary_payload() -> dict[str, object]:
         ],
         'links': LINKS,
         'readiness': readiness,
+        'task_guide': task_guide(),
     }
 
 
