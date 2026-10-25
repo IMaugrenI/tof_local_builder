@@ -10,11 +10,13 @@ Local Builder provides a workspace for AI-assisted implementation with **read-on
 
 **Get started:** [First run](START_HERE.md) · [German README](README_DE.md) · [ToF Systems overview](https://github.com/IMaugrenI/tof-showcase)
 
+**Source distribution candidate (B8/K8):** Existing Windows/Linux/macOS starters can now be packaged from a committed Git snapshot using the manual **Source distribution candidate** workflow or `python scripts/build_source_candidate.py --output-dir dist`. The ZIP includes [offline instructions](docs/RELEASE_PACKAGE.md) and a SHA-256 checksum. **Not an approved release or native installer; target-system acceptance comes after development.**
+
 **Who it serves:** builders, self-hosters, and small local teams that want a local model-backed workflow and a clear place to review generated work. The repo is the independent **Generate** tool, not a full knowledge-management system or an automatically connected multi-tool suite.
 
 **Workflow:** choose the local model and workspace → inspect the read-only source → work in Open WebUI → review output in the sandbox. Setup and control interfaces have separate responsibilities, as documented below.
 
-## New in the B1 development branch
+## B1 foundation (integrated into main)
 
 The existing browser control surface now includes a **read-only review panel** for generated files in `sandbox/workspace` and `sandbox/output`. It lists relative paths, file sizes and timestamps and permits bounded previews of small UTF-8 text files. Symlinks, paths outside the sandbox, and overlapping source/sandbox roots are rejected. Nothing is automatically copied, committed or pushed to the original project.
 
