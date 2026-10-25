@@ -7,3 +7,5 @@ __pycache__/
 *.swp
 *.swo
 .DS_Store
+# Generated locally by source-candidate packaging
+/dist/

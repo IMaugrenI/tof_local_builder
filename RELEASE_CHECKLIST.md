@@ -2,6 +2,26 @@
 
 Use this before calling a public release good enough for normal users.
 
+## B8/K8: prepare candidate package only (not acceptance)
+
+A source distribution candidate can be built manually without adding a new
+application startup route:
+
+```bash
+python scripts/build_source_candidate.py --output-dir dist
+```
+
+Or use the **Source distribution candidate** GitHub Actions workflow, started
+manually (`workflow_dispatch`). It uploads a ZIP made from the committed Git
+tree plus `CHECKSUMS.sha256`. The candidate includes existing Windows, Linux,
+and macOS start scripts and bilingual offline guides at
+`docs/RELEASE_PACKAGE_DE.md` and `docs/RELEASE_PACKAGE.md`.
+
+**This is packaging, not a public GitHub Release.** Do not tag or publish the
+candidate as a stable release before the agreed joint repository acceptance.
+The existing first-run/runtime, platform and security items below are still
+open acceptance evidence, not satisfied by packaging CI.
+
 ## Basic repo checks
 
 - README still matches the real start path
