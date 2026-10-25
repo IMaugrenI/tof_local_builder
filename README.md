@@ -52,6 +52,10 @@ The existing task panel now **prefers an installed model suitable for the select
 
 A **read-only project summary** displays the selected source and sandbox state plus a bounded list of up to 24 visible, first-level source entries. It never recursively reads project content and excludes hidden entries from this summary. The original repository and Compose workflows stay unchanged.
 
+## B7 – Guided status and next steps
+
+The existing control page now prioritizes missing prerequisites: source project, separate sandbox, Ollama, selected model, repository bridge and WebUI. Each non-ready component receives a human-readable next step and a button for a relevant existing command (`setup`, `up`, or `doctor`). Nothing is repaired automatically. Original project files, API contracts and the current Compose startup path are unchanged.
+
 ## What this repo does
 
 1. runs local models through Ollama
