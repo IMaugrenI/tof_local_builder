@@ -759,6 +759,7 @@ HTML = """<!doctype html>
           <label for="task-goal">What should the AI help with?</label>
           <textarea id="task-goal" maxlength="2000" rows="4" style="width:100%;padding:12px;margin:8px 0 14px" placeholder="Describe your development task or question."></textarea>
           <button class="btn btn-secondary" type="button" onclick="draftTask()">Prepare prompt</button>
+          <button class="btn btn-secondary" type="button" onclick="copyAndOpenTask()">Copy &amp; open workspace</button>
           <button class="btn btn-quiet" type="button" onclick="copyTask()">Copy prompt</button>
           <button class="btn btn-quiet" type="button" onclick="openLink('openwebui')">Open WebUI</button>
           <p class="service-hint" id="task-message" aria-live="polite">Prompt preparation makes no changes to project files.</p>
@@ -941,12 +942,20 @@ HTML = """<!doctype html>
     async function copyTask() {
       const content = document.getElementById('task-prompt').textContent;
       const message = document.getElementById('task-message');
-      if (!content) { message.textContent = 'Prepare a prompt first.'; return; }
+      if (!content) { message.textContent = 'Prepare a prompt first.'; return false; }
       try {
         await navigator.clipboard.writeText(content);
         message.textContent = 'Copied. Paste into Open WebUI and select the suggested model.';
+        return true;
       } catch (error) {
         message.textContent = 'Clipboard unavailable. Select and copy the prompt manually.';
+        return false;
+      }
+    }
+
+    async function copyAndOpenTask() {
+      if (await copyTask()) {
+        await openLink('openwebui');
       }
     }
 
