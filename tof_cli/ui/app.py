@@ -1146,6 +1146,12 @@ HTML = """<!doctype html>
           output.textContent = 'Read-only diff (minus = source, plus = generated)\\n\\n'
             + data.diff + (data.truncated ? '\\n[Diff truncated — inspect files directly]' : '');
         }
+        if (response.ok && (data.status === 'changed' || data.status === 'identical')
+            && !data.truncated) {
+          const token = reviewToken(area, path);
+          if (token) inspectedTokens.add(token);
+          refreshArtifacts();
+        }
       } catch (error) {
         output.textContent = 'Could not compare this artifact.';
       }
