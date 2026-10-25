@@ -963,17 +963,29 @@ HTML = """<!doctype html>
       models.replaceChildren();
       const installed = new Set(guide.installed_models || []);
       const recommended = new Set((guide.recommendations || {})[task]?.map(item => item.tag) || []);
+      const preferred = (guide.preferred_models || {})[task] || [];
       (guide.installed_models || []).forEach(tag => {
         const option = document.createElement('option');
         option.value = tag;
         option.textContent = tag + (recommended.has(tag) ? ' · task suggested' : '');
         models.appendChild(option);
       });
-      if (installed.has(previous)) models.value = previous;
-      else if (installed.has(guide.configured_default)) models.value = guide.configured_default;
+      if (installed.has(previous) && (recommended.has(previous) || !preferred.length)) {
+        models.value = previous;
+      } else if (preferred.length && installed.has(preferred[0])) {
+        models.value = preferred[0];
+      } else if (installed.has(previous)) {
+        models.value = previous;
+      } else if (installed.has(guide.configured_default)) {
+        models.value = guide.configured_default;
+      }
       const hint = document.getElementById('task-hint');
       hint.textContent = guide.model_service_reachable
-        ? installed.size + ' installed model(s). Select the same model in Open WebUI.'
+        ? installed.size + ' installed model(s). '
+          + (preferred.length
+            ? 'Suggested for this task: ' + preferred[0] + '. '
+            : 'No matching model profile installed; any installed model may be selected. ')
+          + 'Select the same model in Open WebUI.'
         : 'Ollama unavailable. Start the workspace and check again.';
     }
 
