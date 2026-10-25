@@ -1039,6 +1039,12 @@ HTML = """<!doctype html>
           root.textContent = 'Sandbox is not available. Choose project and check the workspace paths first.';
           return;
         }
+        visibleArtifacts = data.items;
+        const markable = data.items.filter(item => item.review_token);
+        const reviewed = markable.filter(item => reviewedTokens.has(item.review_token)).length;
+        document.getElementById('review-progress').textContent =
+          reviewed + ' of ' + markable.length + ' visible text files marked reviewed. '
+          + (data.truncated ? 'More files exist beyond this view.' : 'No original files were changed.');
         root.replaceChildren();
         if (!data.items.length) {
           root.textContent = 'No generated files yet. Finish a task in Open WebUI, then refresh here.';
@@ -1050,7 +1056,9 @@ HTML = """<!doctype html>
           + (data.truncated ? 'Showing a limited set. ' : '')
           + 'Preview is read-only; manually review changes before moving them to a source project.';
         root.appendChild(heading);
+        const pendingOnly = document.getElementById('review-pending-only').checked;
         for (const item of data.items) {
+          if (pendingOnly && item.review_token && reviewedTokens.has(item.review_token)) continue;
           const row = document.createElement('div');
           row.className = 'service-card';
           row.style.marginTop = '10px';
