@@ -1188,8 +1188,31 @@ def _run_action(name: str) -> dict[str, object]:
 
 
 
+def _configured_links(env: dict[str, str] | None = None) -> dict[str, dict[str, str]]:
+    """Resolve browser links from the same existing configuration as Compose."""
+    values = env if env is not None else read_env()
+    config = {
+        "openwebui": ("OPENWEBUI_PORT", "3000", ""),
+        "repo_bridge_health": ("REPO_BRIDGE_PORT", "8099", "/health"),
+        "ollama": ("OLLAMA_PORT", "11434", ""),
+    }
+    result = {}
+    for name, (key, default, suffix) in config.items():
+        try:
+            port = int(values.get(key, default))
+            if not (1 <= port <= 65535):
+                raise ValueError("invalid port")
+            url = f"http://127.0.0.1:{port}{suffix}"
+        except (ValueError, TypeError):
+            url = ""
+        result[name] = {"label": LINKS[name]["label"], "url": url}
+    return result
+
+
 def _open_link(name: str) -> dict[str, object]:
-    link = LINKS[name]
+    link = _configured_links()[name]
+    if not link["url"]:
+        return {"opened": None, "label": link["label"], "error": "invalid_local_port"}
     webbrowser.open(link["url"])
     return {"opened": link["url"], "label": link["label"]}
 
@@ -1252,7 +1275,7 @@ def _summary_payload() -> dict[str, object]:
             {'name': key, 'label': spec.label, 'safe_level': spec.safe_level}
             for key, spec in ACTIONS.items()
         ],
-        'links': LINKS,
+        'links': _configured_links(),
         'readiness': readiness,
         'task_guide': task_guide(),
     }
