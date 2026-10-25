@@ -776,6 +776,9 @@ HTML = """<!doctype html>
           </div>
           <button class="btn btn-secondary" type="button" onclick="refreshArtifacts()">Refresh files</button>
         </div>
+        <p class="service-hint" id="review-progress">Review generated text before adopting changes.</p>
+        <label class="service-hint"><input id="review-pending-only" type="checkbox" onchange="refreshArtifacts()"> Only files needing review</label>
+        <p class="service-hint">Marks stay in this browser; no files are applied or committed automatically.</p>
         <div class="service-card" id="artifact-list" aria-live="polite">Select “Refresh files” to inspect the generated sandbox files.</div>
         <details style="margin-top:16px;">
           <summary>Read-only text preview</summary>
