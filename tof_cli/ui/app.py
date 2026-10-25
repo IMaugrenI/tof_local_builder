@@ -1115,6 +1115,12 @@ HTML = """<!doctype html>
         output.textContent = response.ok
           ? data.area + '/' + data.path + '\\n\\n' + data.content
           : 'Preview unavailable: ' + (data.error || 'unknown reason');
+        if (response.ok) {
+          output.closest('details').open = true;
+          const token = reviewToken(area, path);
+          if (token) inspectedTokens.add(token);
+          refreshArtifacts();
+        }
       } catch (error) {
         output.textContent = 'Unable to read this text preview.';
       }
