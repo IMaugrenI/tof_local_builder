@@ -58,6 +58,14 @@ Daneben zeigt die Oberfläche eine **schreibgeschützte Projektübersicht**: den
 
 Die bestehende Steueroberfläche ordnet fehlende Voraussetzungen jetzt nach Priorität: Quellprojekt, getrennte Sandbox, Ollama, gewähltes Modell, Projekt-Bridge und Open WebUI. Sie erläutert konkrete nächste Schritte und bietet einen bewusst auszulösenden passenden vorhandenen Befehl (`setup`, `up` oder `doctor`). Bestehende Statusfelder, Arbeitsabläufe und Quellenrechte bleiben erhalten. Es werden keine Reparaturen automatisch ausgeführt.
 
+## B9 – geprüfte Ergebnisse manuell übernehmen
+
+Die vorhandene Sandbox-Prüfung kann jetzt für zuvor als geprüft markierte **kleine Textdateien** einen vollständigen Übergabeinhalt kopieren. Bei geänderten Dateien ist das ein Unified-Diff, bei neuen Dateien der vollständige Text. Ein identischer Stand erzeugt keinen Übergabeinhalt.
+
+Die Markierung ist an **Quell- und Ausgabestand** gebunden. Wenn die Originaldatei oder das generierte Ergebnis zwischen Prüfung und Kopieren verändert wurde, verweigert die Funktion die Übergabe und verlangt erneute Sichtung. Binäre und zu große Dateien oder abgeschnittene Diffs werden nicht automatisch übernommen.
+
+**Sicherheitsgrenze:** Die Originalquelle bleibt weiterhin schreibgeschützt; es gibt keine automatische Dateiübernahme, kein automatisches Commit und keinen Push. Der Benutzer entscheidet in seinem Editor bewusst über die Anwendung.
+
 ## Was dieses Repo macht
 
 1. führt lokale Modelle über Ollama aus
