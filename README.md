@@ -40,6 +40,12 @@ The existing task panel now offers **Copy & open workspace**. It copies the prep
 
 Browser links for Open WebUI, the project bridge and Ollama now follow the repository's existing `.env` port settings instead of assuming fixed ports. Invalid port settings are rejected rather than redirecting to an arbitrary address.
 
+## B5 — Track reviewed generated files
+
+The existing sandbox review screen now includes a **per-file reviewed/not reviewed checklist**, a pending-only filter, and a visible reviewed count. A text file can be marked reviewed only after its preview or complete source comparison was opened. The review mark is stored locally in the browser and bound to that exact file content and the selected source/sandbox paths: changing a generated file invalidates the old mark. Oversized/binary files cannot be marked reviewed using the short-text viewer.
+
+This is a **manual review aid, not an approval to apply a patch**. No original project files are modified, and the UI does not commit, copy or push generated results.
+
 ## What this repo does
 
 1. runs local models through Ollama
