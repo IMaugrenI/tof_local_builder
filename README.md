@@ -22,6 +22,12 @@ The normal `up` command no longer runs a blanket `docker compose down --remove-o
 
 These features are on the [B1 development pull request](https://github.com/IMaugrenI/tof_local_builder/pull/34). Passing GitHub CI checks prove code-level checks only; they are not a statement that a target machine was tested.
 
+## B2: compare generated changes before adopting them
+
+The existing local control UI now offers **Compare to source** alongside sandbox file previews. Small UTF-8 text files under `sandbox/workspace` or `sandbox/output` are compared with the file at the **same relative path** in the selected read-only project. The panel distinguishes new, identical, modified, unavailable, and too-large source files and shows a bounded unified diff.
+
+Comparison is **read-only**. There is no automatic application, commit, or push to the original repository. Oversized, binary, unsafe, or out-of-root paths are rejected.
+
 ## What this repo does
 
 1. runs local models through Ollama
