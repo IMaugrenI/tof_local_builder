@@ -46,6 +46,12 @@ The existing sandbox review screen now includes a **per-file reviewed/not review
 
 This is a **manual review aid, not an approval to apply a patch**. No original project files are modified, and the UI does not commit, copy or push generated results.
 
+## B6 — Task-oriented local model suggestions and project overview
+
+The existing task panel now **prefers an installed model suitable for the selected task**, according to the existing model catalog and its profile order. Users retain manual choice; no model installation or configuration change is triggered.
+
+A **read-only project summary** displays the selected source and sandbox state plus a bounded list of up to 24 visible, first-level source entries. It never recursively reads project content and excludes hidden entries from this summary. The original repository and Compose workflows stay unchanged.
+
 ## What this repo does
 
 1. runs local models through Ollama

@@ -750,6 +750,9 @@ HTML = """<!doctype html>
             <p class="service-hint">Use your installed models and the existing read-only project. No model installs or automatic source changes.</p>
           </div>
         </div>
+        <div class="service-card" id="project-context" aria-live="polite">
+          Select a source project to view its read-only overview.
+        </div>
         <div class="service-card">
           <label for="task-type">Type of task</label>
           <select id="task-type" style="width:100%;padding:10px;margin:8px 0 14px" onchange="refreshTaskModels()"></select>
@@ -912,6 +915,32 @@ HTML = """<!doctype html>
       }
     }
 
+    function renderProjectContext(project) {
+      const box = document.getElementById('project-context');
+      box.replaceChildren();
+      const label = document.createElement('strong');
+      label.textContent = project.source_name
+        ? 'Project: ' + project.source_name
+        : 'No readable source project selected';
+      const state = document.createElement('p');
+      state.className = 'service-hint';
+      state.textContent = 'Original project (read-only): ' + (project.source_state || 'unavailable')
+        + ' · Sandbox: ' + (project.sandbox_state || 'unavailable');
+      const paths = document.createElement('p');
+      paths.className = 'service-hint';
+      paths.textContent = 'Source: ' + (project.source_path || 'not set')
+        + ' · Sandbox: ' + (project.sandbox_path || 'not set');
+      box.append(label, state, paths);
+      if ((project.top_level || []).length) {
+        const files = document.createElement('p');
+        files.className = 'service-hint';
+        files.textContent = 'Top level (read-only): '
+          + project.top_level.map(entry => entry.name + (entry.kind === 'directory' ? '/' : '')).join(', ')
+          + (project.truncated ? ' · more items not shown' : '');
+        box.appendChild(files);
+      }
+    }
+
     function renderTaskGuide(guide) {
       const select = document.getElementById('task-type');
       const previous = select.value || 'code';
@@ -934,17 +963,29 @@ HTML = """<!doctype html>
       models.replaceChildren();
       const installed = new Set(guide.installed_models || []);
       const recommended = new Set((guide.recommendations || {})[task]?.map(item => item.tag) || []);
+      const preferred = (guide.preferred_models || {})[task] || [];
       (guide.installed_models || []).forEach(tag => {
         const option = document.createElement('option');
         option.value = tag;
         option.textContent = tag + (recommended.has(tag) ? ' · task suggested' : '');
         models.appendChild(option);
       });
-      if (installed.has(previous)) models.value = previous;
-      else if (installed.has(guide.configured_default)) models.value = guide.configured_default;
+      if (installed.has(previous) && (recommended.has(previous) || !preferred.length)) {
+        models.value = previous;
+      } else if (preferred.length && installed.has(preferred[0])) {
+        models.value = preferred[0];
+      } else if (installed.has(previous)) {
+        models.value = previous;
+      } else if (installed.has(guide.configured_default)) {
+        models.value = guide.configured_default;
+      }
       const hint = document.getElementById('task-hint');
       hint.textContent = guide.model_service_reachable
-        ? installed.size + ' installed model(s). Select the same model in Open WebUI.'
+        ? installed.size + ' installed model(s). '
+          + (preferred.length
+            ? 'Suggested for this task: ' + preferred[0] + '. '
+            : 'No matching model profile installed; any installed model may be selected. ')
+          + 'Select the same model in Open WebUI.'
         : 'Ollama unavailable. Start the workspace and check again.';
     }
 
@@ -997,6 +1038,7 @@ HTML = """<!doctype html>
     function applySummary(data) {
       currentSummary = data;
       renderTaskGuide(data.task_guide || {});
+      renderProjectContext((data.task_guide || {}).project || {});
       const items = (data.readiness || {}).items || [];
       const webui = items.find(item => item.name === 'webui');
       const bridge = items.find(item => item.name === 'repo_bridge');

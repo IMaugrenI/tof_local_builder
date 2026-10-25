@@ -46,6 +46,12 @@ In der vorhandenen Sandbox-Ansicht gibt es jetzt einen **Prüfstatus je Textdate
 
 Die Markierung ist eine **Sichtungshilfe, keine Freigabe zur automatischen Übernahme**. Dateien des Originalprojekts werden nicht verändert, committed oder gepusht.
 
+## Ausbau B6 — Passendere KI-Modelle und Projektüberblick
+
+Die vorhandene Aufgabenoberfläche schlägt für den gewählten Aufgabentyp jetzt **bevorzugt ein bereits installiertes, im bestehenden Modellkatalog passendes Modell** vor. Die Auswahl kann weiterhin manuell geändert werden; es gibt keine automatische Modellinstallation oder Änderung der Ollama-Konfiguration.
+
+Daneben zeigt die Oberfläche eine **schreibgeschützte Projektübersicht**: den gewählten Quellordner, die Sandbox, ihre Zustände und höchstens 24 sichtbare Einträge der ersten Verzeichnisebene. Es erfolgt kein rekursives Einlesen von Projektdateien und kein Zugriff auf versteckte Einträge in dieser Übersicht. Bestehende Repository- und Compose-Strukturen bleiben unverändert.
+
 ## Was dieses Repo macht
 
 1. führt lokale Modelle über Ollama aus
