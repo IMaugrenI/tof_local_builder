@@ -34,6 +34,12 @@ The existing local control UI now includes a **task-first planning panel**. Task
 
 The panel produces a **copyable prompt** to use in Open WebUI. Users select the model in Open WebUI and decide whether to adopt generated files after read-only review. This planning step does not download models, execute tasks, or write into the selected source project.
 
+## B4 — One-step task handoff
+
+The existing task panel now offers **Copy & open workspace**. It copies the prepared task prompt and opens the configured local Open WebUI only after the copy succeeds. You select the model and submit the prompt yourself in Open WebUI. No task is executed automatically, and no changes are copied back to source.
+
+Browser links for Open WebUI, the project bridge and Ollama now follow the repository's existing `.env` port settings instead of assuming fixed ports. Invalid port settings are rejected rather than redirecting to an arbitrary address.
+
 ## What this repo does
 
 1. runs local models through Ollama
