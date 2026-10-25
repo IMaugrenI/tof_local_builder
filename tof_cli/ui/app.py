@@ -742,6 +742,30 @@ HTML = """<!doctype html>
         </div>
       </section>
 
+      <section class="workflow" aria-labelledby="task-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">GUIDED WORK</p>
+            <h2 id="task-title">Prepare an AI task.</h2>
+            <p class="service-hint">Use your installed models and the existing read-only project. No model installs or automatic source changes.</p>
+          </div>
+        </div>
+        <div class="service-card">
+          <label for="task-type">Type of task</label>
+          <select id="task-type" style="width:100%;padding:10px;margin:8px 0 14px" onchange="refreshTaskModels()"></select>
+          <label for="task-model">Installed local model</label>
+          <select id="task-model" style="width:100%;padding:10px;margin:8px 0 14px"></select>
+          <p class="service-hint" id="task-hint">Check readiness to find installed models.</p>
+          <label for="task-goal">What should the AI help with?</label>
+          <textarea id="task-goal" maxlength="2000" rows="4" style="width:100%;padding:12px;margin:8px 0 14px" placeholder="Describe your development task or question."></textarea>
+          <button class="btn btn-secondary" type="button" onclick="draftTask()">Prepare prompt</button>
+          <button class="btn btn-quiet" type="button" onclick="copyTask()">Copy prompt</button>
+          <button class="btn btn-quiet" type="button" onclick="openLink('openwebui')">Open WebUI</button>
+          <p class="service-hint" id="task-message" aria-live="polite">Prompt preparation makes no changes to project files.</p>
+          <pre class="log" id="task-prompt" style="min-height:70px"></pre>
+        </div>
+      </section>
+
       <section class="workflow" aria-labelledby="artifact-title">
         <div class="section-head">
           <div>
