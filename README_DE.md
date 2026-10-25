@@ -34,6 +34,12 @@ Die bestehende lokale Browser-Steuerung bietet nun eine **Aufgaben- und Modellwa
 
 Aus einer kurzen Aufgabenbeschreibung wird eine **kopierbare Arbeitsanweisung** erstellt. Die eigentliche Arbeit findet weiterhin in Open WebUI statt und das Modell wird dort bewusst gewählt. Die Aufgabenwahl lädt keine Modelle herunter, startet keine Aufträge automatisch und schreibt nicht in das Quellprojekt. Voraussetzung sind die bestehenden, getrennten Quell-/Sandbox-Pfade.
 
+## Ausbau B4 — Aufgabenübergabe mit einem Klick
+
+Die vorhandene Aufgabenoberfläche bietet **„Copy & open workspace“**. Damit wird eine bereits vorbereitete Arbeitsanweisung kopiert und die konfigurierte lokale Open WebUI geöffnet — ausschließlich, wenn das Kopieren erfolgreich war. Modellwahl und Auftragsstart erfolgen weiterhin bewusst in Open WebUI. Es gibt keine automatische Ausführung und keine Rückschreibungen in das Quellprojekt.
+
+Die Links zu Open WebUI, Projekt-Bridge und Ollama berücksichtigen jetzt die vorhandenen `.env`-Ports statt fest vorgegebener Adressen. Ungültige Portwerte werden nicht stillschweigend umgedeutet.
+
 ## Was dieses Repo macht
 
 1. führt lokale Modelle über Ollama aus

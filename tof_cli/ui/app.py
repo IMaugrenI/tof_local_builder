@@ -759,6 +759,7 @@ HTML = """<!doctype html>
           <label for="task-goal">What should the AI help with?</label>
           <textarea id="task-goal" maxlength="2000" rows="4" style="width:100%;padding:12px;margin:8px 0 14px" placeholder="Describe your development task or question."></textarea>
           <button class="btn btn-secondary" type="button" onclick="draftTask()">Prepare prompt</button>
+          <button class="btn btn-secondary" type="button" onclick="copyAndOpenTask()">Copy &amp; open workspace</button>
           <button class="btn btn-quiet" type="button" onclick="copyTask()">Copy prompt</button>
           <button class="btn btn-quiet" type="button" onclick="openLink('openwebui')">Open WebUI</button>
           <p class="service-hint" id="task-message" aria-live="polite">Prompt preparation makes no changes to project files.</p>
@@ -941,12 +942,20 @@ HTML = """<!doctype html>
     async function copyTask() {
       const content = document.getElementById('task-prompt').textContent;
       const message = document.getElementById('task-message');
-      if (!content) { message.textContent = 'Prepare a prompt first.'; return; }
+      if (!content) { message.textContent = 'Prepare a prompt first.'; return false; }
       try {
         await navigator.clipboard.writeText(content);
         message.textContent = 'Copied. Paste into Open WebUI and select the suggested model.';
+        return true;
       } catch (error) {
         message.textContent = 'Clipboard unavailable. Select and copy the prompt manually.';
+        return false;
+      }
+    }
+
+    async function copyAndOpenTask() {
+      if (await copyTask()) {
+        await openLink('openwebui');
       }
     }
 
@@ -1179,8 +1188,31 @@ def _run_action(name: str) -> dict[str, object]:
 
 
 
+def _configured_links(env: dict[str, str] | None = None) -> dict[str, dict[str, str]]:
+    """Resolve browser links from the same existing configuration as Compose."""
+    values = env if env is not None else read_env()
+    config = {
+        "openwebui": ("OPENWEBUI_PORT", "3000", ""),
+        "repo_bridge_health": ("REPO_BRIDGE_PORT", "8099", "/health"),
+        "ollama": ("OLLAMA_PORT", "11434", ""),
+    }
+    result = {}
+    for name, (key, default, suffix) in config.items():
+        try:
+            port = int(values.get(key, default))
+            if not (1 <= port <= 65535):
+                raise ValueError("invalid port")
+            url = f"http://127.0.0.1:{port}{suffix}"
+        except (ValueError, TypeError):
+            url = ""
+        result[name] = {"label": LINKS[name]["label"], "url": url}
+    return result
+
+
 def _open_link(name: str) -> dict[str, object]:
-    link = LINKS[name]
+    link = _configured_links()[name]
+    if not link["url"]:
+        return {"opened": None, "label": link["label"], "error": "invalid_local_port"}
     webbrowser.open(link["url"])
     return {"opened": link["url"], "label": link["label"]}
 
@@ -1243,7 +1275,7 @@ def _summary_payload() -> dict[str, object]:
             {'name': key, 'label': spec.label, 'safe_level': spec.safe_level}
             for key, spec in ACTIONS.items()
         ],
-        'links': LINKS,
+        'links': _configured_links(),
         'readiness': readiness,
         'task_guide': task_guide(),
     }
