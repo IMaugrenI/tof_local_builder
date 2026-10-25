@@ -825,6 +825,38 @@ HTML = """<!doctype html>
 
   <script>
     let currentSummary = null;
+    const REVIEW_STORAGE_KEY = 'tof_builder_reviewed_v1';
+    let reviewedTokens = new Set();
+    const inspectedTokens = new Set();
+    let visibleArtifacts = [];
+    try {
+      const saved = JSON.parse(localStorage.getItem(REVIEW_STORAGE_KEY) || '[]');
+      if (Array.isArray(saved)) reviewedTokens = new Set(
+        saved.filter(item => typeof item === 'string' && /^[a-f0-9]{64}$/.test(item)).slice(-5000)
+      );
+    } catch (error) { reviewedTokens = new Set(); }
+
+    function saveReviews() {
+      try {
+        localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify([...reviewedTokens].slice(-5000)));
+      } catch (error) {
+        document.getElementById('review-progress').textContent =
+          'Browser storage is unavailable. Review marks last only for this page.';
+      }
+    }
+
+    function reviewToken(area, path) {
+      const item = visibleArtifacts.find(entry => entry.area === area && entry.path === path);
+      return item ? item.review_token : null;
+    }
+
+    function changeReview(token, reviewed) {
+      if (!token || (reviewed && !inspectedTokens.has(token))) return;
+      if (reviewed) reviewedTokens.add(token);
+      else reviewedTokens.delete(token);
+      saveReviews();
+      refreshArtifacts();
+    }
 
     function appendLog(text) {
       const log = document.getElementById('log');
