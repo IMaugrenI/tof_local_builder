@@ -12,7 +12,7 @@ from typing import Callable
 from urllib.parse import parse_qs, urlparse
 
 from tof_cli.commands import check, doctor, down, setup, status, up
-from tof_cli.builder.artifact_ops import artifact_inventory, artifact_preview
+from tof_cli.builder.artifact_ops import artifact_diff, artifact_inventory, artifact_preview
 from tof_cli.builder.model_ops import ollama_tags
 from tof_cli.builder.repo_bridge_ops import sandbox_report, source_repo_report
 from tof_cli.core.env_ops import read_env
@@ -917,6 +917,12 @@ HTML = """<!doctype html>
           detail.textContent = item.size_bytes + ' bytes · ' + item.modified_at;
           row.append(label, detail);
           if (item.previewable) {
+            const compare = document.createElement('button');
+            compare.type = 'button';
+            compare.className = 'btn btn-quiet';
+            compare.textContent = 'Compare to source';
+            compare.addEventListener('click', () => compareArtifact(item.area, item.path));
+            row.appendChild(compare);
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'btn btn-quiet';
@@ -943,6 +949,31 @@ HTML = """<!doctype html>
           : 'Preview unavailable: ' + (data.error || 'unknown reason');
       } catch (error) {
         output.textContent = 'Unable to read this text preview.';
+      }
+    }
+
+    async function compareArtifact(area, path) {
+      const output = document.getElementById('artifact-preview');
+      output.parentElement.open = true;
+      output.textContent = 'Comparing to read-only source…';
+      try {
+        const query = new URLSearchParams({area, path});
+        const response = await fetch('/api/artifact-diff?' + query.toString());
+        const data = await response.json();
+        if (!response.ok) {
+          output.textContent = 'Comparison unavailable: ' + (data.error || 'unknown reason');
+        } else if (data.status === 'new_file') {
+          output.textContent = 'New file: no matching source path exists. Review the preview before adopting.';
+        } else if (data.status === 'source_unavailable' || data.status === 'source_too_large') {
+          output.textContent = 'Source cannot be compared: ' + data.status;
+        } else if (data.status === 'identical') {
+          output.textContent = 'Generated file is identical to the source.';
+        } else {
+          output.textContent = 'Read-only diff (minus = source, plus = generated)\\n\\n'
+            + data.diff + (data.truncated ? '\\n[Diff truncated — inspect files directly]' : '');
+        }
+      } catch (error) {
+        output.textContent = 'Could not compare this artifact.';
       }
     }
 
@@ -1141,6 +1172,17 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 return
             if parsed.path == '/api/artifacts':
                 self._send(200, 'application/json; charset=utf-8', _json_bytes(artifact_inventory(read_env())))
+                return
+            if parsed.path == '/api/artifact-diff':
+                values = parse_qs(parsed.query)
+                area = values.get('area', [''])[0]
+                relative_path = values.get('path', [''])[0]
+                try:
+                    comparison = artifact_diff(read_env(), area, relative_path)
+                except (ValueError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(comparison))
                 return
             if parsed.path == '/api/artifact-preview':
                 values = parse_qs(parsed.query)
