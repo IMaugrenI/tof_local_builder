@@ -52,6 +52,10 @@ Die vorhandene Aufgabenoberfläche schlägt für den gewählten Aufgabentyp jetz
 
 Daneben zeigt die Oberfläche eine **schreibgeschützte Projektübersicht**: den gewählten Quellordner, die Sandbox, ihre Zustände und höchstens 24 sichtbare Einträge der ersten Verzeichnisebene. Es erfolgt kein rekursives Einlesen von Projektdateien und kein Zugriff auf versteckte Einträge in dieser Übersicht. Bestehende Repository- und Compose-Strukturen bleiben unverändert.
 
+## B7 – Verständliche Status- und Fehlerführung
+
+Die bestehende Steueroberfläche ordnet fehlende Voraussetzungen jetzt nach Priorität: Quellprojekt, getrennte Sandbox, Ollama, gewähltes Modell, Projekt-Bridge und Open WebUI. Sie erläutert konkrete nächste Schritte und bietet einen bewusst auszulösenden passenden vorhandenen Befehl (`setup`, `up` oder `doctor`). Bestehende Statusfelder, Arbeitsabläufe und Quellenrechte bleiben erhalten. Es werden keine Reparaturen automatisch ausgeführt.
+
 ## Was dieses Repo macht
 
 1. führt lokale Modelle über Ollama aus
