@@ -5,6 +5,7 @@ This module does not alter, import, stage or commit project files.
 from __future__ import annotations
 
 import difflib
+import hashlib
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
@@ -46,6 +47,8 @@ def artifact_inventory(env: dict[str, str], *, limit: int = MAX_ITEMS) -> dict[s
     if sandbox is None:
         return {"status": "unavailable", "items": [], "reason": "Missing or overlapping sandbox/source paths"}
     items: list[dict[str, object]] = []
+    source = source_repo_report(env)
+    source_identity = source['path'] if source['state'] == 'ok' else 'unconfigured'
     total = 0
     for area in ALLOWED_AREAS:
         try:
@@ -66,12 +69,19 @@ def artifact_inventory(env: dict[str, str], *, limit: int = MAX_ITEMS) -> dict[s
             if len(items) >= min(MAX_ITEMS, max(1, limit)):
                 continue
             stat = path.stat()
+            previewable = path.suffix.lower() in PREVIEW_SUFFIXES and stat.st_size <= MAX_PREVIEW_BYTES
+            review_token = None
+            if previewable:
+                content_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+                context = f"{source_identity}|{sandbox}|{area}|{relative}|{content_hash}"
+                review_token = hashlib.sha256(context.encode("utf-8")).hexdigest()
             items.append({
                 "area": area,
                 "path": relative,
                 "size_bytes": stat.st_size,
                 "modified_at": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
-                "previewable": path.suffix.lower() in PREVIEW_SUFFIXES and stat.st_size <= MAX_PREVIEW_BYTES,
+                "previewable": previewable,
+                "review_token": review_token,
             })
     items.sort(key=lambda item: (item["modified_at"], item["area"], item["path"]), reverse=True)
     return {
