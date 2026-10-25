@@ -9,9 +9,10 @@ from contextlib import redirect_stdout
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Callable
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from tof_cli.commands import check, doctor, down, setup, status, up
+from tof_cli.builder.artifact_ops import artifact_inventory, artifact_preview
 from tof_cli.builder.model_ops import ollama_tags
 from tof_cli.builder.repo_bridge_ops import sandbox_report, source_repo_report
 from tof_cli.core.env_ops import read_env
@@ -740,6 +741,22 @@ HTML = """<!doctype html>
         </div>
       </section>
 
+      <section class="workflow" aria-labelledby="artifact-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">REVIEW YOUR WORK</p>
+            <h2 id="artifact-title">Generated files — review before keeping.</h2>
+            <p class="service-hint">Only sandbox/workspace and sandbox/output are listed. Your original project stays read-only. No files are copied back automatically.</p>
+          </div>
+          <button class="btn btn-secondary" type="button" onclick="refreshArtifacts()">Refresh files</button>
+        </div>
+        <div class="service-card" id="artifact-list" aria-live="polite">Select “Refresh files” to inspect the generated sandbox files.</div>
+        <details style="margin-top:16px;">
+          <summary>Read-only text preview</summary>
+          <div class="details-body"><pre class="log" id="artifact-preview">Choose a small text file using its Preview button.</pre></div>
+        </details>
+      </section>
+
       <section class="details-grid" aria-label="Advanced controls">
         <details>
           <summary>Problems & technical details</summary>
@@ -868,6 +885,67 @@ HTML = """<!doctype html>
       }
     }
 
+    async function refreshArtifacts() {
+      const root = document.getElementById('artifact-list');
+      root.textContent = 'Checking sandbox files…';
+      try {
+        const response = await fetch('/api/artifacts');
+        const data = await response.json();
+        if (!response.ok || data.status !== 'ok') {
+          root.textContent = 'Sandbox is not available. Choose project and check the workspace paths first.';
+          return;
+        }
+        root.replaceChildren();
+        if (!data.items.length) {
+          root.textContent = 'No generated files yet. Finish a task in Open WebUI, then refresh here.';
+          return;
+        }
+        const heading = document.createElement('p');
+        heading.className = 'service-hint';
+        heading.textContent = data.total + ' file(s) found. '
+          + (data.truncated ? 'Showing a limited set. ' : '')
+          + 'Preview is read-only; manually review changes before moving them to a source project.';
+        root.appendChild(heading);
+        for (const item of data.items) {
+          const row = document.createElement('div');
+          row.className = 'service-card';
+          row.style.marginTop = '10px';
+          const label = document.createElement('strong');
+          label.textContent = item.area + '/' + item.path;
+          const detail = document.createElement('p');
+          detail.className = 'service-hint';
+          detail.textContent = item.size_bytes + ' bytes · ' + item.modified_at;
+          row.append(label, detail);
+          if (item.previewable) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-quiet';
+            button.textContent = 'Preview';
+            button.addEventListener('click', () => previewArtifact(item.area, item.path));
+            row.appendChild(button);
+          }
+          root.appendChild(row);
+        }
+      } catch (error) {
+        root.textContent = 'Could not list sandbox files. Check the local control UI.';
+      }
+    }
+
+    async function previewArtifact(area, path) {
+      const output = document.getElementById('artifact-preview');
+      output.textContent = 'Loading text preview…';
+      try {
+        const query = new URLSearchParams({area, path});
+        const response = await fetch('/api/artifact-preview?' + query.toString());
+        const data = await response.json();
+        output.textContent = response.ok
+          ? data.area + '/' + data.path + '\\n\\n' + data.content
+          : 'Preview unavailable: ' + (data.error || 'unknown reason');
+      } catch (error) {
+        output.textContent = 'Unable to read this text preview.';
+      }
+    }
+
     async function refreshSummary() {
       try {
         const response = await fetch('/api/summary');
@@ -946,6 +1024,7 @@ HTML = """<!doctype html>
     }
 
     refreshSummary();
+    refreshArtifacts();
   </script>
 </body>
 </html>
@@ -1059,6 +1138,20 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 return
             if parsed.path == '/api/summary':
                 self._send(200, 'application/json; charset=utf-8', _json_bytes(_summary_payload()))
+                return
+            if parsed.path == '/api/artifacts':
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(artifact_inventory(read_env())))
+                return
+            if parsed.path == '/api/artifact-preview':
+                values = parse_qs(parsed.query)
+                area = values.get('area', [''])[0]
+                relative_path = values.get('path', [''])[0]
+                try:
+                    preview = artifact_preview(read_env(), area, relative_path)
+                except (ValueError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(preview))
                 return
             self._send(404, 'application/json; charset=utf-8', _json_bytes({'error': 'not found'}))
 
