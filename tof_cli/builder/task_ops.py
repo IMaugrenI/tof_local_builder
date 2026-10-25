@@ -98,3 +98,23 @@ def prepare_task(task: str, model: str, goal: str, env: dict[str, str] | None = 
         "writes_performed": False, "model_changed": False,
         "handoff": "Copy the prompt into Open WebUI and choose the installed model there.",
     }
+
+
+def task_guide(env: dict[str, str] | None = None) -> dict[str, object]:
+    """Collect all task choices and installed-model hints in one local read."""
+    values = env if env is not None else read_env()
+    try:
+        installed = set(ollama_tags(values.get("OLLAMA_PORT", "11434")))
+        reachable = True
+    except (OSError, TimeoutError, ValueError):
+        installed = set()
+        reachable = False
+    return {
+        "tasks": catalog_tasks(),
+        "recommendations": {key: [dict(row, installed=row["tag"] in installed)
+                                 for row in _suggestions(key)] for key in TASK_LABELS},
+        "installed_models": sorted(installed),
+        "configured_default": values.get("DEFAULT_OLLAMA_MODEL", ""),
+        "model_service_reachable": reachable,
+        "handoff": "Select the chosen installed model manually in Open WebUI.",
+    }
