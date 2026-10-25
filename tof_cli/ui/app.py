@@ -1082,6 +1082,22 @@ HTML = """<!doctype html>
             button.addEventListener('click', () => previewArtifact(item.area, item.path));
             row.appendChild(button);
           }
+          if (item.review_token) {
+            const done = reviewedTokens.has(item.review_token);
+            const flag = document.createElement('button');
+            flag.type = 'button';
+            flag.className = 'btn btn-quiet';
+            flag.textContent = done ? 'Undo reviewed' : 'Mark reviewed';
+            flag.disabled = !done && !inspectedTokens.has(item.review_token);
+            flag.title = done ? 'Remove browser review mark' : 'Preview or compare this exact file first';
+            flag.addEventListener('click', () => changeReview(item.review_token, !done));
+            row.appendChild(flag);
+            const status = document.createElement('p');
+            status.className = 'service-hint';
+            status.textContent = done ? 'Reviewed in this browser; no source changes applied'
+              : 'Needs review';
+            row.appendChild(status);
+          }
           root.appendChild(row);
         }
       } catch (error) {
