@@ -6,6 +6,8 @@ The generated prompt is copied manually into the existing Open WebUI.
 from __future__ import annotations
 
 import json
+import os
+from itertools import islice
 from pathlib import Path
 
 from tof_cli.builder.model_ops import ollama_tags
@@ -100,6 +102,64 @@ def prepare_task(task: str, model: str, goal: str, env: dict[str, str] | None = 
     }
 
 
+
+def preferred_installed_models(task: str, installed_tags: set[str]) -> list[str]:
+    """Prefer catalog-recommended installed models, retaining catalog order."""
+    options = _suggestions(task)
+    preferred = [
+        row["tag"] for row in options
+        if row["tag"] in installed_tags and row["recommended"]
+    ]
+    return preferred + [
+        row["tag"] for row in options
+        if row["tag"] in installed_tags and row["tag"] not in preferred
+    ]
+
+
+def project_snapshot(env: dict[str, str]) -> dict[str, object]:
+    """Read only the selected source's first directory level; never recurse."""
+    source = source_repo_report(env)
+    sandbox = sandbox_report(env)
+    result: dict[str, object] = {
+        "source_state": source["state"],
+        "sandbox_state": sandbox["state"],
+        "source_name": None,
+        "source_path": source["path"],
+        "sandbox_path": sandbox["path"],
+        "top_level": [],
+        "truncated": False,
+        "read_only": True,
+    }
+    if source["state"] != "ok":
+        return result
+    base = Path(source["path"]).resolve()
+    if not base.is_dir():
+        result["source_state"] = "not_directory"
+        return result
+    result["source_name"] = base.name
+    if sandbox["state"] == "ok":
+        target = Path(sandbox["path"]).resolve()
+        if base == target or base in target.parents or target in base.parents:
+            result["source_state"] = "overlapping_paths"
+            return result
+    try:
+        # A bounded, single-level listing, not a repository contents scan.
+        with os.scandir(base) as entries:
+            sample = list(islice(entries, 25))
+        visible = [
+            {"name": item.name, "kind": "directory" if item.is_dir() else "file"}
+            for item in sample[:24]
+            if not item.is_symlink() and not item.name.startswith(".")
+        ]
+    except OSError:
+        result["source_state"] = "unreadable"
+        return result
+    result["top_level"] = visible
+    result["truncated"] = len(sample) > 24
+    return result
+
+
+
 def task_guide(env: dict[str, str] | None = None) -> dict[str, object]:
     """Collect all task choices and installed-model hints in one local read."""
     values = env if env is not None else read_env()
@@ -115,6 +175,11 @@ def task_guide(env: dict[str, str] | None = None) -> dict[str, object]:
                                  for row in _suggestions(key)] for key in TASK_LABELS},
         "installed_models": sorted(installed),
         "configured_default": values.get("DEFAULT_OLLAMA_MODEL", ""),
+        "preferred_models": {
+            task: preferred_installed_models(task, installed)
+            for task in TASK_LABELS
+        },
+        "project": project_snapshot(values),
         "model_service_reachable": reachable,
         "handoff": "Select the chosen installed model manually in Open WebUI.",
     }
