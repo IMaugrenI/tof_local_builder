@@ -954,7 +954,7 @@ HTML = """<!doctype html>
 
     async function compareArtifact(area, path) {
       const output = document.getElementById('artifact-preview');
-      output.parentElement.open = true;
+      output.closest('details').open = true;
       output.textContent = 'Comparing to read-only source…';
       try {
         const query = new URLSearchParams({area, path});
