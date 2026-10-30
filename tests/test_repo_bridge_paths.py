@@ -90,3 +90,30 @@ def test_source_and_sandbox_must_not_overlap(sandbox_roots, monkeypatch):
     with pytest.raises(HTTPException) as exc:
         bridge.resolve_write_path("output", "note.md")
     assert exc.value.status_code == 503
+
+
+def test_symlink_alias_inside_workspace_is_rejected(sandbox_roots):
+    _, workspace, _, _ = sandbox_roots
+    target = workspace / "real"
+    target.mkdir()
+    alias = workspace / "alias"
+    try:
+        alias.symlink_to(target, target_is_directory=True)
+    except OSError:
+        pytest.skip("Symlinks are unavailable")
+    with pytest.raises(HTTPException) as exc:
+        bridge.resolve_write_path("workspace", "alias/generated.md")
+    assert exc.value.status_code == 400
+
+
+def test_non_overwriting_bridge_writer_preserves_existing_artifact(sandbox_roots):
+    _, workspace, _, _ = sandbox_roots
+    target = workspace / "draft.md"
+    target.write_text("original", encoding="utf-8")
+    with pytest.raises(HTTPException) as exc:
+        bridge.write_internal(bridge.WriteRequest(
+            target_root="workspace", relative_path="draft.md",
+            content="new", overwrite=False,
+        ))
+    assert exc.value.status_code == 409
+    assert target.read_text(encoding="utf-8") == "original"
