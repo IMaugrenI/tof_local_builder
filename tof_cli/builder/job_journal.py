@@ -110,6 +110,7 @@ class JobJournal:
             "context_hash": "",
             "source_hashes": {},
             "output_hashes": {},
+            "syntax_checks": {},
             "files": [],
             "resume_count": 0,
             "summary": "",
@@ -130,7 +131,7 @@ class JobJournal:
     def update(self, job_id: str, **fields: object) -> dict[str, object]:
         record = self._read(self._path(job_id))
         allowed = {"status", "current_step", "steps", "plan", "context_hash",
-                   "source_hashes", "output_hashes", "files", "summary", "error", "resume_count"}
+                   "source_hashes", "output_hashes", "syntax_checks", "files", "summary", "error", "resume_count"}
         if set(fields) - allowed:
             raise JournalError("Attempt to modify protected journal fields")
         record.update(fields)
