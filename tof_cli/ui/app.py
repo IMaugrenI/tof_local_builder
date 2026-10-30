@@ -1136,7 +1136,7 @@ HTML = """<!doctype html>
         p.textContent = 'Sandbox output: ' + record.files.join(', ');
         details.appendChild(p);
       }
-      const running = ['queued', 'inspecting', 'planning', 'generating', 'cancelling'].includes(record.status);
+      const running = ['queued', 'resuming', 'inspecting', 'planning', 'generating', 'cancelling'].includes(record.status);
       document.getElementById('build-cancel').disabled = !running;
       document.getElementById('build-resume').disabled = !Boolean(record.resumable);
       document.getElementById('build-start').disabled = running;
