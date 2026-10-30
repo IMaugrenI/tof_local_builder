@@ -17,7 +17,8 @@ from tof_cli.builder.artifact_ops import artifact_diff, artifact_handoff, artifa
 from tof_cli.builder.model_ops import ollama_tags
 from tof_cli.builder.ollama_chat import ModelChatError
 from tof_cli.builder.agent_ops import AgentManager, BuildError
-from tof_cli.builder.agent_bridge import BridgeError
+from tof_cli.builder.agent_bridge import AgentBridge, BridgeError
+from tof_cli.builder.project_intelligence import project_context
 from tof_cli.builder.job_journal import JournalError
 from tof_cli.builder.task_runner import run_task_once
 from tof_cli.builder.task_ops import task_guide
@@ -759,6 +760,13 @@ HTML = """<!doctype html>
         <div class="service-card" id="project-context" aria-live="polite">
           Select a source project to view its read-only overview.
         </div>
+        <div class="service-card" style="margin-top:14px;">
+          <strong>Read-only architecture inspection</strong>
+          <p class="service-hint">Examine relevant modules and source matches before a build. This does not run a model or modify files.</p>
+          <button class="btn btn-quiet" type="button" id="architecture-inspect" onclick="inspectArchitecture()">Inspect project for this task</button>
+          <p class="service-hint" id="architecture-status" role="status" aria-live="polite">Enter a task to focus the inspection.</p>
+          <pre class="log" id="architecture-context" style="white-space:pre-wrap;max-height:28rem;overflow:auto;" hidden></pre>
+        </div>
         <div class="service-card" style="margin-top:18px;">
           <label for="task-type">Task type</label>
           <select id="task-type" style="width:100%;padding:10px;margin:8px 0 14px" onchange="refreshTaskModels()"></select>
@@ -1205,6 +1213,39 @@ HTML = """<!doctype html>
       } catch (error) {
         document.getElementById('build-history').textContent = 'Local build history is unavailable.';
       }
+    }
+
+    async function inspectArchitecture() {
+      const goal = document.getElementById('task-goal').value.trim();
+      const message = document.getElementById('architecture-status');
+      const output = document.getElementById('architecture-context');
+      if (!goal || goal.length > 2000) {
+        message.textContent = 'Enter a task of up to 2000 characters first.';
+        return;
+      }
+      const button = document.getElementById('architecture-inspect');
+      await withBusy(button, 'Inspecting…', async () => {
+        message.textContent = 'Reading selected project structure (read-only).';
+        try {
+          const response = await fetch('/api/project/inspect', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Builder-Request': '1'},
+            body: JSON.stringify({goal}),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            message.textContent = data.error || 'Project inspection is unavailable.';
+            output.hidden = true;
+            return;
+          }
+          output.textContent = data.context || '(No relevant files found.)';
+          output.hidden = false;
+          message.textContent = 'Inspection complete. Source excerpts are untrusted reference material; no files were changed.';
+        } catch (error) {
+          message.textContent = 'Could not inspect this project. Check the project connection.';
+          output.hidden = true;
+        }
+      });
     }
 
     async function startSandboxBuild() {
@@ -1791,6 +1832,30 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 self._send(403, 'application/json; charset=utf-8', _json_bytes({'error': 'forbidden'}))
                 return
             parsed = urlparse(self.path)
+            if parsed.path == '/api/project/inspect':
+                if not self.headers.get('Content-Type', '').lower().startswith('application/json'):
+                    self._send(415, 'application/json; charset=utf-8', _json_bytes({'error': 'JSON required'}))
+                    return
+                try:
+                    length = int(self.headers.get('Content-Length', '0'))
+                except ValueError:
+                    length = 0
+                if not 0 < length <= 4096:
+                    self._send(413, 'application/json; charset=utf-8', _json_bytes({'error': 'Invalid request size'}))
+                    return
+                try:
+                    payload = json.loads(self.rfile.read(length))
+                    goal = payload.get('goal') if isinstance(payload, dict) else None
+                    if not isinstance(goal, str) or not 0 < len(goal.strip()) <= 2000:
+                        raise ValueError('Enter a task before inspecting the project')
+                    bridge = AgentBridge(read_env())
+                    result = project_context(bridge, goal.strip())
+                except (ValueError, TypeError, BridgeError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8',
+                           _json_bytes({'context': result, 'read_only': True, 'files_modified': False}))
+                return
             if parsed.path in ('/api/build', '/api/build/cancel', '/api/build/resume'):
                 if not self.headers.get('Content-Type', '').lower().startswith('application/json'):
                     self._send(415, 'application/json; charset=utf-8', _json_bytes({'error': 'JSON required'}))
