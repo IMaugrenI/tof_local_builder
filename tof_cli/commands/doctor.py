@@ -10,7 +10,7 @@ from tof_cli.core.platform_profile import detect_platform
 
 PORT_KEYS = [
     "OLLAMA_PORT",
-    "OPENWEBUI_PORT",
+    "BUILDER_UI_PORT",
     "REPO_BRIDGE_PORT",
 ]
 
