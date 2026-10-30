@@ -1,0 +1,43 @@
+# Product Constitution v2 — Native Builder Experience
+
+Supersedes [v1](PRODUCT_CONSTITUTION_V1.md) for new development. Operator decision: 2026-10-30. Development state, not a certified release.
+
+## Product identity and simplicity
+
+`tof_local_builder` is one standalone local application. Users start it, describe development work, and review consequential results. The interface must hide routine technical work; users are not expected to administer containers, ports, model APIs, or shell commands.
+
+- One supported Python CLI + repository-defined Docker Compose startup path.
+- One existing first-run wizard; one native Builder workspace UI.
+- Open WebUI is **not** part of the product or runtime.
+- Continue reusing the existing `tof_cli/` and `services/repo_bridge/` components.
+- No second backend stack or product repo created to replace the UI.
+
+## Local models and work
+
+Ollama serves installed local LLMs. The Builder UI talks to Ollama via a bounded local adapter. Tool execution must not follow directly from untrusted model output: planning, command selection, capability checks, execution and results must be distinct steps.
+
+Work should evolve from read-only advice to supervised, bounded task execution. Each proposed operation must specify its target, side effects, permissions, and result. The user reviews consequential decisions; routine authorized technical work may be automated.
+
+The current integrated chat endpoint is **planning-only**, not a finished autonomous agent. Never claim source files have been modified or tests run merely because a model produced text.
+
+## Source and sandbox
+
+Selected source is read-only. Generated output may be written only within the separately configured sandbox. Compare/preview/review workflows remain mandatory for manual adoption. No implicit apply, commit, push, delete, or privileged host command.
+
+Existing path traversal, symlink and root separation guarantees remain binding. Unknown or unsafe actions fail closed.
+
+## Runtime and recovery
+
+The Builder shall automatically inspect readiness, start its own allowed services, select suitable installed local models and show understandable next steps. Operations requiring elevated privileges, installations, external connections, changes to running systems or other safety decisions require explicit operator consent.
+
+The current Python `run.py` CLI and Compose stack remain authoritative. Avoid destructive restarts. Existing Open WebUI volumes remain untouched during transition; orphan containers require a separate operator decision.
+
+Persist planned tasks and resume them safely only after implementing idempotency, state validation and cancellation. Do not silently repeat side effects.
+
+## Integration boundaries
+
+Knowledge and Organizer remain independent products. Any future integration requires documented API/permission boundaries and architecture inspection of those repositories. Retrieved knowledge is context, not trusted instructions.
+
+## Release evidence
+
+Code-level tests on GitHub are development evidence only. DOM performs target-system acceptance, including actual runtime, model availability and user workflow, before GO/NO-GO.
