@@ -123,7 +123,7 @@ class JobJournal:
         return record
 
     def update(self, job_id: str, **fields: object) -> dict[str, object]:
-        record = self.get(job_id)
+        record = self._read(self._path(job_id))
         allowed = {"status", "current_step", "steps", "files", "summary", "error"}
         if set(fields) - allowed:
             raise JournalError("Attempt to modify protected journal fields")
@@ -140,6 +140,8 @@ class JobJournal:
                 handle.write(payload)
                 handle.flush()
                 os.fsync(handle.fileno())
+            if path.is_symlink():
+                raise JournalError("Journal entry became a symlink")
             os.replace(temp_name, path)
         finally:
             if os.path.exists(temp_name):
