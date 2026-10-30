@@ -12,6 +12,7 @@ def configure_fake_runtime(monkeypatch, *, returncode=0):
     calls = []
     monkeypatch.setattr(up, "ensure_env_file", lambda: None)
     monkeypatch.setattr(up, "ensure_directories", lambda paths: None)
+    monkeypatch.setattr(up, "builder_ui_running", lambda env: True)
     monkeypatch.setattr(up, "read_env", lambda: {"BUILDER_OPEN_BROWSER": "0"})
     monkeypatch.setattr(up, "detect_platform", lambda: SimpleNamespace())
     monkeypatch.setattr(
