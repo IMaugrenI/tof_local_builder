@@ -7,20 +7,18 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 import threading
 
 from tof_cli.builder.agent_bridge import AgentBridge, BridgeError, safe_relative_file
 from tof_cli.builder.draft_validation import DraftSyntaxError, check_draft
 from tof_cli.builder.job_journal import JobJournal, JournalError, RUNNING
 from tof_cli.builder.ollama_chat import ModelChatError, chat_once
+from tof_cli.builder.project_intelligence import project_context
 from tof_cli.builder.task_ops import MAX_GOAL_LENGTH, prepare_task
 from tof_cli.core.env_ops import read_env
 
 MAX_FILES = 3
 MAX_STEPS = 6
-MAX_CONTEXT_CHARS = 3_600
-MAX_SNAPSHOT_FILES = 3
 MAX_GENERATION_SOURCE_BYTES = 5_000
 
 
@@ -78,56 +76,9 @@ def _plan_from_model(raw: str) -> dict[str, object]:
     return {"summary": summary.strip(), "steps": [step.strip() for step in steps], "files": selected}
 
 
-def _safe_entries(entries: list[dict[str, object]]) -> list[dict[str, str]]:
-    clean: list[dict[str, str]] = []
-    for row in entries:
-        name, path, kind = row.get("name"), row.get("path"), row.get("type")
-        if not isinstance(name, str) or not isinstance(path, str) or kind not in ("file", "dir"):
-            continue
-        if name.startswith(".") or any(part.lower() in ("node_modules", "__pycache__", ".venv", ".git") for part in path.split("/")):
-            continue
-        if len(path) > 140:
-            continue
-        clean.append({"path": path, "type": kind})
-    return clean
-
-
 def _project_snapshot(bridge: AgentBridge, goal: str) -> str:
-    """Read a small, predictable slice of the actual selected project first."""
-    root = _safe_entries(bridge.tree())
-    summary = ["Root entries: " + ", ".join(row["path"] for row in root[:40])]
-    words = {w.lower() for w in re.findall(r"[A-Za-z_]{4,}", goal) if len(w) < 40}
-    directories = [row["path"] for row in root if row["type"] == "dir"]
-    priorities = ("src", "app", "tof_cli", "services", "lib", "backend", "frontend")
-    directories.sort(key=lambda p: (0 if p.lower() in priorities else 1, -sum(w in p.lower() for w in words), p))
-    entries = list(root)
-    for directory in directories[:2]:
-        try:
-            nested = _safe_entries(bridge.tree(directory))
-        except BridgeError:
-            continue
-        summary.append(f"Inside {directory}: " + ", ".join(row["path"] for row in nested[:28]))
-        entries.extend(nested)
-    names = [row["path"] for row in entries if row["type"] == "file"]
-    ranked = sorted(set(names), key=lambda p: (
-        0 if p.lower() in ("readme.md", "readme_de.md") else 1,
-        -sum(w in p.lower() for w in words),
-        p,
-    ))
-    used = 0
-    for path in ranked:
-        if used >= MAX_SNAPSHOT_FILES:
-            break
-        try:
-            safe_relative_file(path)
-            content = bridge.source_text(path, max_bytes=1_800)
-        except BridgeError:
-            continue
-        if not content:
-            continue
-        summary.append(f"Read-only source excerpt from {path}:\n{content[:1_800]}")
-        used += 1
-    return "\n\n".join(summary)[:MAX_CONTEXT_CHARS]
+    """Legacy entry point used by job fingerprinting and isolated tests."""
+    return project_context(bridge, goal)
 
 
 def _digest(content: str | None) -> str:
