@@ -14,6 +14,8 @@ from urllib.parse import parse_qs, urlparse
 from tof_cli.commands import check, doctor, down, setup, status, up
 from tof_cli.builder.artifact_ops import artifact_diff, artifact_handoff, artifact_inventory, artifact_preview
 from tof_cli.builder.model_ops import ollama_tags
+from tof_cli.builder.ollama_chat import ModelChatError
+from tof_cli.builder.task_runner import run_task_once
 from tof_cli.builder.task_ops import task_guide
 from tof_cli.ui.guidance import explain_readiness
 from tof_cli.builder.repo_bridge_ops import sandbox_report, source_repo_report
@@ -38,13 +40,11 @@ ACTIONS = {
 }
 
 LINKS = {
-    "openwebui": {"label": "Open workspace", "url": "http://127.0.0.1:3000"},
     "repo_bridge_health": {"label": "Project connection details", "url": "http://127.0.0.1:8099/health"},
     "ollama": {"label": "AI model details", "url": "http://127.0.0.1:11434"},
 }
 
 READINESS_TARGETS = {
-    "webui": {"label": "Workspace", "url": "http://127.0.0.1:3000"},
     "repo_bridge": {"label": "Project access", "url": "http://127.0.0.1:8099/health"},
     "ollama": {"label": "AI model", "url": "http://127.0.0.1:11434"},
 }
@@ -744,31 +744,31 @@ HTML = """<!doctype html>
         </div>
       </section>
 
-      <section class="workflow" aria-labelledby="task-title">
+      <section class="workflow" id="builder-chat" aria-labelledby="task-title">
         <div class="section-head">
           <div>
-            <p class="eyebrow">GUIDED WORK</p>
-            <h2 id="task-title">Prepare an AI task.</h2>
-            <p class="service-hint">Use your installed models and the existing read-only project. No model installs or automatic source changes.</p>
+            <p class="eyebrow">BUILDER ASSISTANT</p>
+            <h2 id="task-title">Work with your local AI.</h2>
+            <p class="service-hint">Describe a task and receive a direct Ollama reply here. No external chat service is needed. The original project remains read-only.</p>
           </div>
         </div>
         <div class="service-card" id="project-context" aria-live="polite">
           Select a source project to view its read-only overview.
         </div>
-        <div class="service-card">
-          <label for="task-type">Type of task</label>
+        <div class="service-card" style="margin-top:18px;">
+          <label for="task-type">Task type</label>
           <select id="task-type" style="width:100%;padding:10px;margin:8px 0 14px" onchange="refreshTaskModels()"></select>
-          <label for="task-model">Installed local model</label>
+          <label for="task-model">Local model</label>
           <select id="task-model" style="width:100%;padding:10px;margin:8px 0 14px"></select>
-          <p class="service-hint" id="task-hint">Check readiness to find installed models.</p>
-          <label for="task-goal">What should the AI help with?</label>
-          <textarea id="task-goal" maxlength="2000" rows="4" style="width:100%;padding:12px;margin:8px 0 14px" placeholder="Describe your development task or question."></textarea>
-          <button class="btn btn-secondary" type="button" onclick="draftTask()">Prepare prompt</button>
-          <button class="btn btn-secondary" type="button" onclick="copyAndOpenTask()">Copy &amp; open workspace</button>
-          <button class="btn btn-quiet" type="button" onclick="copyTask()">Copy prompt</button>
-          <button class="btn btn-quiet" type="button" onclick="openLink('openwebui')">Open WebUI</button>
-          <p class="service-hint" id="task-message" aria-live="polite">Prompt preparation makes no changes to project files.</p>
-          <pre class="log" id="task-prompt" style="min-height:70px"></pre>
+          <p class="service-hint" id="task-hint">Checking installed models…</p>
+          <label for="task-goal">Your task</label>
+          <textarea id="task-goal" maxlength="2000" rows="5" style="width:100%;padding:12px;margin:8px 0 14px" placeholder="Describe what you want to build, inspect or discuss."></textarea>
+          <button class="btn btn-primary" id="task-send" type="button" onclick="sendTask()">Ask Builder</button>
+          <p class="service-hint" id="task-message" role="status" aria-live="polite">This stage returns a plan or explanation. It does not execute tools or alter source files.</p>
+          <div id="task-conversation" class="service-card" style="margin-top:18px;" aria-live="polite">
+            <strong>Assistant response</strong>
+            <pre class="log" id="task-response" style="margin-top:12px;min-height:100px;white-space:pre-wrap;">No request sent yet.</pre>
+          </div>
         </div>
       </section>
 
@@ -1025,54 +1025,41 @@ HTML = """<!doctype html>
           + (preferred.length
             ? 'Suggested for this task: ' + preferred[0] + '. '
             : 'No matching model profile installed; any installed model may be selected. ')
-          + 'Select the same model in Open WebUI.'
+          + 'The selected model will be used directly here.'
         : 'Ollama unavailable. Start the workspace and check again.';
     }
 
-    function draftTask() {
-      const summary = currentSummary || {};
-      const guide = summary.task_guide || {};
+    async function sendTask() {
+      const guide = (currentSummary || {}).task_guide || {};
       const goal = document.getElementById('task-goal').value.trim();
       const task = document.getElementById('task-type').value;
       const model = document.getElementById('task-model').value;
-      const output = document.getElementById('task-prompt');
       const message = document.getElementById('task-message');
-      const readiness = (summary.readiness || {}).items || [];
-      const ready = name => readiness.some(item => item.name === name && item.state === 'ready');
-      if (!goal || goal.length > 2000 || !model
-          || !(guide.installed_models || []).includes(model)
-          || !ready('source') || !ready('sandbox')) {
-        output.textContent = '';
-        message.textContent = 'Choose a task, an installed model and a short goal. Source and sandbox must be configured.';
+      const output = document.getElementById('task-response');
+      const button = document.getElementById('task-send');
+      if (!goal || goal.length > 2000 || !(guide.installed_models || []).includes(model)) {
+        message.textContent = 'Enter a task and select an installed local model.';
         return;
       }
-      const taskLabel = (guide.tasks || []).find(item => item.key === task)?.label || task;
-      output.textContent = 'Task: ' + taskLabel + '\\nGoal:\\n' + goal
-        + '\\n\\nWork only with the selected read-only source project.'
-        + ' Write generated files only under sandbox/workspace or sandbox/output.'
-        + ' Do not edit, delete, commit or push the source project.'
-        + ' Mention uncertainties and list produced files for manual review.';
-      message.textContent = 'Prompt prepared. Copy it and select ' + model + ' in Open WebUI.';
-    }
-
-    async function copyTask() {
-      const content = document.getElementById('task-prompt').textContent;
-      const message = document.getElementById('task-message');
-      if (!content) { message.textContent = 'Prepare a prompt first.'; return false; }
-      try {
-        await navigator.clipboard.writeText(content);
-        message.textContent = 'Copied. Paste into Open WebUI and select the suggested model.';
-        return true;
-      } catch (error) {
-        message.textContent = 'Clipboard unavailable. Select and copy the prompt manually.';
-        return false;
-      }
-    }
-
-    async function copyAndOpenTask() {
-      if (await copyTask()) {
-        await openLink('openwebui');
-      }
+      await withBusy(button, 'Builder is thinking…', async () => {
+        message.textContent = 'Asking your local model. This can take a moment on CPU systems.';
+        try {
+          const response = await fetch('/api/task', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Builder-Request': '1'},
+            body: JSON.stringify({task, model, goal})
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            message.textContent = data.error || 'The local AI could not process the task.';
+            return;
+          }
+          output.textContent = data.content || '(empty answer)';
+          message.textContent = 'Model: ' + data.model + '. Read-only assistance; no files were changed.';
+        } catch (error) {
+          message.textContent = 'The local model request failed. Check readiness and try again.';
+        }
+      });
     }
 
     function applySummary(data) {
@@ -1080,7 +1067,6 @@ HTML = """<!doctype html>
       renderTaskGuide(data.task_guide || {});
       renderProjectContext((data.task_guide || {}).project || {});
       const items = (data.readiness || {}).items || [];
-      const webui = items.find(item => item.name === 'webui');
       const bridge = items.find(item => item.name === 'repo_bridge');
       const ollama = items.find(item => item.name === 'ollama');
       const allReady = items.length > 0 && items.every(item => item.state === 'ready');
@@ -1097,7 +1083,7 @@ HTML = """<!doctype html>
       renderGuidance(data.guidance || {});
       renderCards(data.readiness || { items: [] });
 
-      if (webui && webui.state === 'ready') {
+      if (ollama && ollama.state === 'ready') {
         focusTitle.textContent = allReady ? 'Everything is ready.' : 'Workspace available — check remaining requirements.';
         primary.textContent = 'Open workspace';
         primary.dataset.mode = 'open';
@@ -1130,7 +1116,7 @@ HTML = """<!doctype html>
           + (data.truncated ? 'More files exist beyond this view.' : 'No original files were changed.');
         root.replaceChildren();
         if (!data.items.length) {
-          root.textContent = 'No generated files yet. Finish a task in Open WebUI, then refresh here.';
+          root.textContent = 'No generated files yet. Files appear here after approved sandbox work.';
           return;
         }
         const heading = document.createElement('p');
@@ -1312,7 +1298,7 @@ HTML = """<!doctype html>
     async function runPrimaryAction() {
       const button = document.getElementById('primary-action');
       if (button.dataset.mode === 'open') {
-        await openLink('openwebui', button);
+        document.getElementById('builder-chat').scrollIntoView({behavior: 'smooth'});
       } else {
         await runAction('up', button);
       }
@@ -1322,7 +1308,7 @@ HTML = """<!doctype html>
       await withBusy(button, 'Working…', async () => {
         appendLog(`Running ${action}…`);
         try {
-          const response = await fetch(`/api/${action}`, { method: 'POST' });
+          const response = await fetch(`/api/${action}`, { method: 'POST', headers: {'X-Builder-Request': '1'} });
           const data = await response.json();
           const summary = data.output ? data.output : JSON.stringify(data, null, 2);
           appendLog(`${data.label || action}: ${summary || 'completed'}`);
@@ -1343,7 +1329,7 @@ HTML = """<!doctype html>
       await withBusy(button, 'Opening…', async () => {
         appendLog(`Opening ${name}…`);
         try {
-          const response = await fetch(`/api/open/${name}`, { method: 'POST' });
+          const response = await fetch(`/api/open/${name}`, { method: 'POST', headers: {'X-Builder-Request': '1'} });
           const data = await response.json();
           appendLog(data.opened ? `Opened ${data.opened}` : JSON.stringify(data, null, 2));
           showFeedback(data.opened ? 'Opened on this computer.' : 'The page could not be opened automatically. Use the technical details below if you need the address.', data.opened ? 'ok' : 'attention');
@@ -1383,7 +1369,6 @@ def _configured_links(env: dict[str, str] | None = None) -> dict[str, dict[str, 
     """Resolve browser links from the same existing configuration as Compose."""
     values = env if env is not None else read_env()
     config = {
-        "openwebui": ("OPENWEBUI_PORT", "3000", ""),
         "repo_bridge_health": ("REPO_BRIDGE_PORT", "8099", "/health"),
         "ollama": ("OLLAMA_PORT", "11434", ""),
     }
@@ -1424,7 +1409,6 @@ def _probe_url(url: str) -> str:
 def _readiness_payload() -> dict[str, object]:
     env = read_env()
     urls = {
-        'webui': f"http://127.0.0.1:{env.get('OPENWEBUI_PORT', '3000')}",
         'repo_bridge': f"http://127.0.0.1:{env.get('REPO_BRIDGE_PORT', '8099')}/health",
         'ollama': f"http://127.0.0.1:{env.get('OLLAMA_PORT', '11434')}/api/tags",
     }
@@ -1476,16 +1460,43 @@ def _json_bytes(payload: dict[str, object]) -> bytes:
 
 
 def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True) -> int:
+    if host not in ('127.0.0.1', 'localhost'):
+        raise ValueError("Builder control UI must bind to loopback")
+    if not 1 <= port <= 65535:
+        raise ValueError("Invalid Builder control UI port")
+
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code: int, content_type: str, body: bytes) -> None:
             self.send_response(code)
             self.send_header('Content-Type', content_type)
             self.send_header('Content-Length', str(len(body)))
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('X-Content-Type-Options', 'nosniff')
             self.end_headers()
             self.wfile.write(body)
 
+        def _valid_request(self, *, mutation: bool = False) -> bool:
+            host = self.headers.get('Host', '')
+            if host not in (f'127.0.0.1:{port}', f'localhost:{port}'):
+                return False
+            origin = self.headers.get('Origin')
+            if origin and origin != 'http://' + host:
+                return False
+            if self.headers.get('Sec-Fetch-Site') == 'cross-site':
+                return False
+            if mutation and self.headers.get('X-Builder-Request') != '1':
+                return False
+            return True
+
         def do_GET(self) -> None:  # noqa: N802
+            if not self._valid_request():
+                self._send(403, 'application/json; charset=utf-8', _json_bytes({'error': 'forbidden'}))
+                return
             parsed = urlparse(self.path)
+            if parsed.path == '/api/identity':
+                self._send(200, 'application/json; charset=utf-8',
+                           _json_bytes({'app': 'tof_local_builder', 'ui': 'control'}))
+                return
             if parsed.path == '/':
                 self._send(200, 'text/html; charset=utf-8', HTML.encode('utf-8'))
                 return
@@ -1533,7 +1544,34 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
             self._send(404, 'application/json; charset=utf-8', _json_bytes({'error': 'not found'}))
 
         def do_POST(self) -> None:  # noqa: N802
+            if not self._valid_request(mutation=True):
+                self._send(403, 'application/json; charset=utf-8', _json_bytes({'error': 'forbidden'}))
+                return
             parsed = urlparse(self.path)
+            if parsed.path == '/api/task':
+                if not self.headers.get('Content-Type', '').lower().startswith('application/json'):
+                    self._send(415, 'application/json; charset=utf-8', _json_bytes({'error': 'JSON required'}))
+                    return
+                try:
+                    length = int(self.headers.get('Content-Length', '0'))
+                except ValueError:
+                    length = 0
+                if not 0 < length <= 16_384:
+                    self._send(413, 'application/json; charset=utf-8', _json_bytes({'error': 'Request too large or empty'}))
+                    return
+                try:
+                    payload = json.loads(self.rfile.read(length))
+                    if not isinstance(payload, dict):
+                        raise ValueError('Expected an object')
+                    result = run_task_once(
+                        task=payload.get('task'), model=payload.get('model'),
+                        goal=payload.get('goal'),
+                    )
+                except (ValueError, TypeError, ModelChatError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(result))
+                return
             action = parsed.path.removeprefix('/api/')
             if action in ACTIONS:
                 self._send(200, 'application/json; charset=utf-8', _json_bytes(_run_action(action)))
