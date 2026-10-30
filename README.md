@@ -23,6 +23,8 @@ Local Builder provides a workspace for AI-assisted implementation with **read-on
 
 **Start:** `python run.py setup` (first run), `python run.py up`, `python run.py check`. `up` starts or reuses the native Builder UI at `http://127.0.0.1:8795` (configurable via `BUILDER_UI_PORT`).
 
+The native Builder chat also offers explicit **Save locally**, **Restore saved** and **Delete saved** controls. Conversations are not persisted automatically, and snapshots are scoped to the selected project in the existing sandbox metadata area.
+
 An optional, consent-gated local Knowledge search is available for users who separately run ToF Local Knowledge. It shows up to five indexed excerpt references in the Builder UI. Retrieved document text is **never automatically injected into an LLM or build plan**. The Case Organizer remains isolated until an explicit safe data contract exists.
 
 The historical Open-WebUI feature notes below are **not** the current workflow. Previous Open WebUI data is not deleted automatically; an already running old container is not stopped without an operator decision.

@@ -33,6 +33,10 @@ def test_native_ui_contains_task_and_sandbox_build_controls():
     assert "async function resumeSandboxBuild()" in app.HTML
     assert "async function inspectArchitecture()" in app.HTML
     assert "async function searchLocalKnowledge()" in app.HTML
+    assert "async function saveLocalConversation()" in app.HTML
+    assert "async function restoreLocalConversation()" in app.HTML
+    assert "async function deleteLocalConversation()" in app.HTML
+    assert "/api/conversation/save" in app.HTML
     assert "/api/knowledge/search" in app.HTML
     assert "/api/project/inspect" in app.HTML
     assert "Static syntax checks (not a test run)" in app.HTML

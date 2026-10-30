@@ -85,6 +85,7 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - [x] Entwicklungsbranch erstellt.
 - [x] P1 Direkter, begrenzter Ollama-Modelladapter und gezielte Tests im Repository (noch nicht runtime-geprüft).
 - [x] P2 Erste integrierte KI-Aufgabenoberfläche und lokaler API-Endpunkt (read-only, noch keine Toolausführung).
+- [x] P2 (Teilpaket): Projektgebundene Konversations-Snapshots über die bereits vorhandene Sandbox-Metadatenstruktur; Speichern/Wiederherstellen/Löschen nur durch ausdrückliche Bedienaktion, kein implizites Langzeitgedächtnis.
 - [x] P3 Open-WebUI-Service aus Compose/Startpfad entfernt; eigene UI wird über bestehende CLI gestartet.
 - [x] P4 (Teilpaket): Architekturübersicht, streng begrenzte JSON-Baupläne und höchstens 3 nicht-überschreibende Sandbox-Textentwürfe über die vorhandene Repo Bridge.
 - [x] P4 (Teilpaket): Aufgabenjournal, Fortschritt, Verlauf, Benutzerabbruch und sichere Unterbrechungsanzeige (keine automatische Wiederholung nach Neustart).
@@ -93,6 +94,7 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - [ ] P4 offen: sichere isolierte Testausführung und umfassendere Entwicklungsautonomie.
 - [x] P5 (Teilpaket): Eigene Builder-Oberfläche wird bereits vor Docker-/Modellprüfung geöffnet, damit Fehler über die Oberfläche sichtbar bleiben.
 - [x] Ressourcenbegrenzung: höchstens ein aktiver Bauauftrag und kein paralleler Chat während einer Bauausführung.
+- [x] P4 (Teilpaket): Zielabhängige Architekturinspektion über Read-only-Datei-, Namens- und begrenzte Codesuche; passende Quellen vor jedem Bauauftrag berücksichtigen und auf Wunsch in der eigenen UI anzeigen.
 - [x] P6 (Teilpaket): Optionaler, vom Benutzer ausdrücklich bestätigter Read-only-Adapter zur bestehenden lokalen Knowledge-Such-API (`127.0.0.1`, konfigurierbarer Port). Bis zu fünf ungeprüfte Belegstellen; keine automatische Modell- oder Agentenweitergabe.
 - [ ] P5 offen: weitergehende sichere Selbstreparatur und besserer Erststart.
 - [ ] P6 offen: Organizer-Anbindung; zuerst einen konkreten, datenschutzgerechten Austauschvertrag mit expliziter Einwilligung definieren.

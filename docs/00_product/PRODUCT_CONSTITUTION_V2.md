@@ -16,6 +16,8 @@ Supersedes [v1](PRODUCT_CONSTITUTION_V1.md) for new development. Operator decisi
 
 Ollama serves installed local LLMs. The Builder UI talks to Ollama via a bounded local adapter. Tool execution must not follow directly from untrusted model output: planning, command selection, capability checks, execution and results must be distinct steps.
 
+Chat conversations may be saved as bounded, project-scoped local snapshots **only through an explicit UI action**. Reading and deleting the snapshot is likewise explicit. No automatic recording of all visible signals or implicit memory promotion.
+
 Work should evolve from read-only advice to supervised, bounded task execution. Each proposed operation must specify its target, side effects, permissions, and result. The user reviews consequential decisions; routine authorized technical work may be automated.
 
 The integrated chat endpoint is planning-only. The separate user-triggered sandbox build runs a finite inspect → plan → generate workflow with explicit limits and a job journal. It writes reviewable text drafts only under sandbox/output using the existing Repo Bridge. It is **not** unrestricted autonomous development; shell tests, Git commits and source application are not automated. Never claim source files have been modified or tests run merely because a model produced text.
