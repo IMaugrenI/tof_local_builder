@@ -93,7 +93,9 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - [ ] P4 offen: sichere isolierte Testausführung und umfassendere Entwicklungsautonomie.
 - [x] P5 (Teilpaket): Eigene Builder-Oberfläche wird bereits vor Docker-/Modellprüfung geöffnet, damit Fehler über die Oberfläche sichtbar bleiben.
 - [x] Ressourcenbegrenzung: höchstens ein aktiver Bauauftrag und kein paralleler Chat während einer Bauausführung.
-- [ ] P5–P6 offen: weitergehende sichere Selbstreparatur, optionale Knowledge-/Organizer-Schnittstellen.
+- [x] P6 (Teilpaket): Optionaler, vom Benutzer ausdrücklich bestätigter Read-only-Adapter zur bestehenden lokalen Knowledge-Such-API (`127.0.0.1`, konfigurierbarer Port). Bis zu fünf ungeprüfte Belegstellen; keine automatische Modell- oder Agentenweitergabe.
+- [ ] P5 offen: weitergehende sichere Selbstreparatur und besserer Erststart.
+- [ ] P6 offen: Organizer-Anbindung; zuerst einen konkreten, datenschutzgerechten Austauschvertrag mit expliziter Einwilligung definieren.
 - [x] Gezielte Testdateien für Agent-Pfade, Journal, Abbruch, WebUI-freie Oberfläche und Repo-Bridge-Schreibschutz hinzugefügt.
 - [x] P4 (Teilpaket): Vor dem Speichern automatische, **nicht-ausführende Syntaxprüfung** für Python, JSON und TOML; bei Parserfehlern genau ein begrenzter Korrekturversuch über das vorhandene lokale LLM. Andere Dateitypen erscheinen ausdrücklich als *nicht geprüft*.
 - [x] CI-Testursache aus älterem Lauf eingegrenzt: dynamischer Import des Repo-Bridge-Moduls löste bei direkter Konstruktion von `WriteRequest` einen Pydantic-Typauflösungsfehler aus. Der Schreibschutztest verwendet jetzt ein schlichtes Request-Testobjekt, ohne das Produktionsmodell zu verändern.

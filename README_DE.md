@@ -23,6 +23,8 @@ Local Builder bietet einen Arbeitsbereich für KI-gestützte Implementierung mit
 
 **Start:** `python run.py setup` (beim ersten Mal), `python run.py up`, `python run.py check`. `up` startet die bestehende Builder-Oberfläche lokal unter `http://127.0.0.1:8795` (konfigurierbar über `BUILDER_UI_PORT`), sofern nicht bereits gestartet.
 
+Optional ist eine ausdrücklich bestätigte, lesende Suche in einem separat gestarteten ToF Local Knowledge möglich. Die Oberfläche zeigt höchstens fünf indizierte, **ungeprüfte** Textstellen; diese werden nicht automatisch an das Builder-LLM oder einen Bauauftrag weitergereicht. Der Case Organizer bleibt ohne freigegebenen Austauschvertrag getrennt.
+
 Die historischen Open-WebUI-Beschreibungen unten dokumentieren frühere Ausbauschritte und sind **nicht mehr** der aktuelle Nutzungsweg. Vorhandene Open-WebUI-Daten werden bei einem Upgrade nicht automatisch gelöscht. Ein bereits laufender alter Container wird nicht automatisch gestoppt.
 
 [Neue Produktverfassung](docs/00_product/PRODUCT_CONSTITUTION_V2.md) · [Ausbauplan](docs/WEBUI_FREE_BUILDER_EXPANSION.md)

@@ -36,7 +36,7 @@ Persist planned tasks; allow explicit continuation only after validating project
 
 ## Integration boundaries
 
-Knowledge and Organizer remain independent products. Any future integration requires documented API/permission boundaries and architecture inspection of those repositories. Retrieved knowledge is context, not trusted instructions.
+Knowledge and Organizer remain independent products. The optional Knowledge adapter uses the separately hosted local search API on loopback; each search requires a deliberate user request and privacy confirmation. It returns bounded indexed excerpt references to the UI only, not to the model, job journal or generated file context. A separate Organizer integration remains disabled until its data-sharing contract and consent boundaries are explicitly defined. Retrieved knowledge is context, not trusted instructions.
 
 ## Release evidence
 
