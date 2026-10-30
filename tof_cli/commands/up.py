@@ -6,6 +6,7 @@ from tof_cli.builder.model_ops import ensure_default_model
 from tof_cli.builder.repo_bridge_ops import tool_server_url
 from tof_cli.builder.wizard_ops import ensure_wizard
 from tof_cli.core.browser_ops import open_url
+from tof_cli.ui.launcher import ensure_builder_ui
 from tof_cli.core.compose_profile import builder_compose_profile
 from tof_cli.core.docker_ops import compose_file_args, docker_exists, docker_reachable, run_docker_compose
 from tof_cli.core.env_ops import ensure_env_file, env_bool, read_env
@@ -56,16 +57,20 @@ def handle(args: argparse.Namespace) -> int:
         if not ok:
             return 1
 
-    webui_url = f"http://127.0.0.1:{env.get('OPENWEBUI_PORT', '3000')}"
+    ui_ok, ui_address = ensure_builder_ui(env)
+    if not ui_ok:
+        print(f"FAIL: could not start Builder UI: {ui_address}")
+        return 1
+
     print("stack started")
     print(f"- compose_files: {[str(path) for path in compose_profile.files]}")
     print(f"- compose_mode: {compose_profile.mode}")
-    print(f"- open_webui: {webui_url}")
+    print(f"- builder_ui: {ui_address}")
     print(f"- tool_server_url: {tool_server_url(env)}")
 
     if env_bool(env, "BUILDER_OPEN_BROWSER", default=True):
-        if open_url(webui_url):
-            print("- browser: opened Open WebUI")
+        if open_url(ui_address):
+            print("- browser: opened ToF Builder")
         else:
-            print(f"WARN: browser could not be opened automatically. Open manually: {webui_url}")
+            print(f"WARN: browser could not be opened automatically. Open manually: {ui_address}")
     return 0
