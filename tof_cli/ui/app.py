@@ -776,9 +776,10 @@ HTML = """<!doctype html>
           </div>
           <div class="service-card" style="margin-top:18px;">
             <strong>Build draft files in the sandbox</strong>
-            <p class="service-hint">One click starts a bounded architecture scan, plan and up to three draft files in sandbox/output. Existing draft files are never overwritten. The original project stays read-only.</p>
+            <p class="service-hint">One click starts a bounded architecture scan, plan and up to three draft files in sandbox/output. After a restart, interrupted jobs can be continued only when the saved files and source still match. No draft is overwritten and the original project stays read-only.</p>
             <button class="btn btn-secondary" type="button" id="build-start" onclick="startSandboxBuild()">Generate sandbox draft</button>
             <button class="btn btn-quiet" type="button" id="build-cancel" onclick="cancelSandboxBuild()" disabled>Cancel build</button>
+            <button class="btn btn-secondary" type="button" id="build-resume" onclick="resumeSandboxBuild()" disabled>Continue safely</button>
             <p id="build-status" class="service-hint" role="status" aria-live="polite">No build is running.</p>
             <div id="build-details" class="service-hint"></div>
             <strong style="display:block;margin-top:18px;">Recent local builds</strong>
@@ -1137,11 +1138,13 @@ HTML = """<!doctype html>
       }
       const running = ['queued', 'inspecting', 'planning', 'generating', 'cancelling'].includes(record.status);
       document.getElementById('build-cancel').disabled = !running;
+      document.getElementById('build-resume').disabled = !Boolean(record.resumable);
       document.getElementById('build-start').disabled = running;
       if (pollBuildTimer) { clearTimeout(pollBuildTimer); pollBuildTimer = null; }
       if (running) {
         pollBuildTimer = setTimeout(refreshActiveBuild, 2000);
-      } else if (record.status === 'completed' || record.status === 'failed' || record.status === 'cancelled') {
+      } else if (record.status === 'completed' || record.status === 'failed' ||
+                 record.status === 'cancelled' || record.status === 'interrupted') {
         refreshArtifacts();
         refreshBuildHistory();
       }
@@ -1219,6 +1222,30 @@ HTML = """<!doctype html>
           refreshBuildHistory();
         } catch (error) {
           state.textContent = 'Could not start the build. Check readiness and retry.';
+        }
+      });
+    }
+
+    async function resumeSandboxBuild() {
+      if (!currentBuildId) return;
+      const button = document.getElementById('build-resume');
+      await withBusy(button, 'Verifying saved files…', async () => {
+        try {
+          const response = await fetch('/api/build/resume', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Builder-Request': '1'},
+            body: JSON.stringify({id: currentBuildId}),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            document.getElementById('build-status').textContent =
+              data.error || 'Saved task cannot be resumed safely; review drafts first.';
+            return;
+          }
+          showBuild(data);
+        } catch (error) {
+          document.getElementById('build-status').textContent =
+            'Could not resume this job. No existing draft was overwritten.';
         }
       });
     }
@@ -1755,7 +1782,7 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 self._send(403, 'application/json; charset=utf-8', _json_bytes({'error': 'forbidden'}))
                 return
             parsed = urlparse(self.path)
-            if parsed.path in ('/api/build', '/api/build/cancel'):
+            if parsed.path in ('/api/build', '/api/build/cancel', '/api/build/resume'):
                 if not self.headers.get('Content-Type', '').lower().startswith('application/json'):
                     self._send(415, 'application/json; charset=utf-8', _json_bytes({'error': 'JSON required'}))
                     return
@@ -1772,6 +1799,8 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                         raise ValueError('Expected a JSON object')
                     if parsed.path.endswith('/cancel'):
                         result = agent_manager.cancel(payload.get('id'))
+                    elif parsed.path.endswith('/resume'):
+                        result = agent_manager.resume(payload.get('id'))
                     else:
                         result = agent_manager.start(
                             payload.get('task'), payload.get('model'), payload.get('goal'),
