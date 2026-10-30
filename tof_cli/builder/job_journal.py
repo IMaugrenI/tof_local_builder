@@ -20,7 +20,7 @@ from tof_cli.builder.repo_bridge_ops import source_repo_report
 MAX_RECORD_BYTES = 64_000
 MAX_JOBS = 200
 JOB_ID = re.compile(r"^[0-9a-f]{32}$")
-RUNNING = frozenset({"queued", "inspecting", "planning", "generating", "cancelling"})
+RUNNING = frozenset({"queued", "inspecting", "planning", "generating", "cancelling", "resuming"})
 
 
 class JournalError(ValueError):
@@ -106,7 +106,12 @@ class JobJournal:
             "status": "queued",
             "current_step": "Preparing your request",
             "steps": [],
+            "plan": None,
+            "context_hash": "",
+            "source_hashes": {},
+            "output_hashes": {},
             "files": [],
+            "resume_count": 0,
             "summary": "",
             "error": "",
             "created_at": stamp,
@@ -124,7 +129,8 @@ class JobJournal:
 
     def update(self, job_id: str, **fields: object) -> dict[str, object]:
         record = self._read(self._path(job_id))
-        allowed = {"status", "current_step", "steps", "files", "summary", "error"}
+        allowed = {"status", "current_step", "steps", "plan", "context_hash",
+                   "source_hashes", "output_hashes", "files", "summary", "error", "resume_count"}
         if set(fields) - allowed:
             raise JournalError("Attempt to modify protected journal fields")
         record.update(fields)
