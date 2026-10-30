@@ -284,9 +284,13 @@ class AgentManager:
         record = journal.get(job_id)
         with self._lock:
             active = job_id == self._active_id
+            cancelling = active and self._cancel is not None and self._cancel.is_set()
         if record.get("status") in RUNNING and not active:
             record["status"] = "interrupted"
             record["current_step"] = "Previous process stopped. Existing drafts were not re-run automatically."
+        elif record.get("status") in RUNNING and cancelling:
+            record["status"] = "cancelling"
+            record["current_step"] = "Cancellation requested — the current model call must finish before stopping."
         record.pop("scope", None)
         record.pop("resume_policy", None)
         return record
