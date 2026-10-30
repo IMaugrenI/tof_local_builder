@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 import urllib.request
 
 from tof_cli.core.docker_ops import run_docker
@@ -23,10 +24,17 @@ def ollama_tags(ollama_port: str) -> list[str]:
 def ensure_default_model(model_name: str, ollama_port: str) -> tuple[bool, str]:
     if not model_name:
         return True, "DEFAULT_OLLAMA_MODEL is empty; skipped."
-    try:
-        tags = ollama_tags(ollama_port)
-    except Exception as exc:
-        return True, f"Ollama not ready yet; skipped default model pull ({exc})."
+    tags = None
+    last_error = "not yet reachable"
+    for _ in range(20):
+        try:
+            tags = ollama_tags(ollama_port)
+            break
+        except (OSError, ValueError, TimeoutError) as exc:
+            last_error = str(exc)
+            time.sleep(0.75)
+    if tags is None:
+        return False, f"Ollama did not become ready; cannot ensure default model ({last_error})."
     if model_name in tags:
         return True, f"Default model already present: {model_name}"
     result = run_docker(["exec", "-i", "tof_local_builder_ollama", "ollama", "pull", model_name], capture_output=True, check=False)
