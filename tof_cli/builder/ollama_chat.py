@@ -64,6 +64,7 @@ def chat_once(
     installed_models: set[str] | None = None,
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
     history: list[dict[str, str]] | None = None,
+    response_format: str | None = None,
 ) -> ChatReply:
     """Call the local Ollama chat API once, without executing its output.
 
@@ -97,12 +98,17 @@ def chat_once(
             prior.append({"role": entry["role"], "content": content})
         if total > MAX_HISTORY_CHARS:
             raise ModelChatError("Conversation history exceeded the size limit")
+    if response_format not in (None, "json"):
+        raise ModelChatError("Unsupported response format")
     endpoint = f"http://127.0.0.1:{_local_port(ollama_port)}/api/chat"
-    body = json.dumps({
+    request_body = {
         "model": model,
         "messages": prior + [{"role": "user", "content": prompt.strip()}],
         "stream": False,
-    }).encode("utf-8")
+    }
+    if response_format == "json":
+        request_body["format"] = "json"
+    body = json.dumps(request_body).encode("utf-8")
     request = urllib.request.Request(
         endpoint, data=body, headers={"Content-Type": "application/json"}, method="POST"
     )
