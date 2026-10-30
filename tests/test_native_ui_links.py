@@ -31,6 +31,7 @@ def test_native_ui_contains_task_and_sandbox_build_controls():
     assert "async function startSandboxBuild()" in app.HTML
     assert "async function cancelSandboxBuild()" in app.HTML
     assert "async function resumeSandboxBuild()" in app.HTML
+    assert "Static syntax checks (not a test run)" in app.HTML
     assert "/api/build/resume" in app.HTML
     assert "/api/build" in app.HTML
     assert "Open WebUI" not in app.HTML

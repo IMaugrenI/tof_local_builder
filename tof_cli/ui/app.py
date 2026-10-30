@@ -1136,6 +1136,15 @@ HTML = """<!doctype html>
         p.textContent = 'Sandbox output: ' + record.files.join(', ');
         details.appendChild(p);
       }
+      if (record.syntax_checks && typeof record.syntax_checks === 'object') {
+        const checks = Object.entries(record.syntax_checks).slice(0, 3);
+        if (checks.length) {
+          const p = document.createElement('p');
+          p.textContent = 'Static syntax checks (not a test run): ' +
+            checks.map(([path, result]) => path + ': ' + String(result).replaceAll('_', ' ')).join(' · ');
+          details.appendChild(p);
+        }
+      }
       const running = ['queued', 'resuming', 'inspecting', 'planning', 'generating', 'cancelling'].includes(record.status);
       document.getElementById('build-cancel').disabled = !running;
       document.getElementById('build-resume').disabled = !Boolean(record.resumable);
