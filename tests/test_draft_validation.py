@@ -33,7 +33,7 @@ def test_static_check_does_not_claim_unsupported_languages(path, content, expect
     ("src/bad.py", "def broken(:\n"),
     ("data/bad.json", '{"missing": }'),
     ("config/bad.toml", "answer = ["),
-    ("src/bad.py", "x = '\\x00'"),
+    ("src/bad.py", "x = '\x00'"),
 ])
 def test_invalid_code_never_passes_a_static_check(path, content):
     with pytest.raises(DraftSyntaxError):
