@@ -4,7 +4,7 @@ import argparse
 
 from tof_cli.builder.model_ops import ollama_tags
 from tof_cli.builder.repo_bridge_ops import tool_server_url
-from tof_cli.ui.launcher import ui_url
+from tof_cli.ui.launcher import ui_url, _is_builder_ui
 from tof_cli.core.env_ops import ensure_env_file, read_env
 from tof_cli.core.health_ops import check_url, print_health_result
 
@@ -30,6 +30,16 @@ def handle(_args: argparse.Namespace) -> int:
         print_health_result(label, ok, detail)
         if not ok:
             failures += 1
+
+    try:
+        interface_url = ui_url(env)
+        ui_ok = _is_builder_ui(interface_url)
+    except ValueError:
+        ui_ok = False
+        interface_url = "invalid port"
+    print_health_result("builder_ui", ui_ok, interface_url)
+    if not ui_ok:
+        failures += 1
 
     default_model = env.get("DEFAULT_OLLAMA_MODEL", "qwen2.5:0.5b")
     try:
