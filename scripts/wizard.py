@@ -294,13 +294,13 @@ def _default_model_for_selection(current_model: str, allowed_tags: list[str], re
     return MODEL_OPTIONS[0] if MODEL_OPTIONS else ""
 
 
-def open_webui_browser() -> int:
+def open_builder_browser() -> int:
     env_path = get_default_env_path()
     env, _ = parse_env_file(env_path)
     env = merge_env(env)
     if env.get("BUILDER_OPEN_BROWSER", "1") != "1":
         return 0
-    url = f"http://localhost:{env.get('OPENWEBUI_PORT', '3000')}"
+    url = f"http://localhost:{env.get('BUILDER_UI_PORT', '3000')}"
     try:
         webbrowser.open(url, new=2)
     except Exception:
@@ -598,13 +598,13 @@ class RedirectBridgeHandler(BaseHTTPRequestHandler):
     <h1><span class=\"pulse\"></span>Setup gespeichert / Setup saved</h1>
     <p>
       Der Builder startet jetzt die Hauptoberfläche. Diese Seite prüft lokal weiter und leitet automatisch um,
-      sobald Open WebUI erreichbar ist.
+      sobald ToF Builder UI erreichbar ist.
     </p>
     <p>
       The builder is now starting the main interface. This page keeps checking locally and redirects automatically
-      as soon as Open WebUI becomes reachable.
+      as soon as ToF Builder UI becomes reachable.
     </p>
-    <div id=\"status\" class=\"status\">Warte auf Open WebUI… / Waiting for Open WebUI…</div>
+    <div id=\"status\" class=\"status\">Warte auf ToF Builder UI… / Waiting for ToF Builder UI…</div>
     <p>
       Ziel / Target: <a href=\"{target_label}\">{target_label}</a>
     </p>
@@ -616,7 +616,7 @@ class RedirectBridgeHandler(BaseHTTPRequestHandler):
         const response = await fetch(\"/status\", {{ cache: \"no-store\" }});
         const data = await response.json();
         if (data.ready) {{
-          statusNode.textContent = \"Open WebUI ist bereit. Weiterleitung… / Open WebUI is ready. Redirecting…\";
+          statusNode.textContent = \"ToF Builder UI ist bereit. Weiterleitung… / ToF Builder UI is ready. Redirecting…\";
           window.location.replace(data.target_url);
           return;
         }}
@@ -852,7 +852,7 @@ class WizardHandler(BaseHTTPRequestHandler):
         )
         write_env_file(state.env_path, merged, state.order)
 
-        target_url = f"http://localhost:{merged.get('OPENWEBUI_PORT', '3000')}"
+        target_url = f"http://localhost:{merged.get('BUILDER_UI_PORT', '3000')}"
         wait_url = spawn_redirect_bridge(target_url) if open_browser else None
 
         if wait_url:
@@ -866,7 +866,7 @@ class WizardHandler(BaseHTTPRequestHandler):
 <h1>Setup gespeichert / Setup saved</h1>
 <p>Die Einrichtung wurde gespeichert. Der normale Builder-Start läuft jetzt weiter.</p>
 <p>The setup was saved. The normal builder startup now continues.</p>
-<p>Open WebUI wird nicht automatisch geöffnet. Ziel / Target:
+<p>ToF Builder UI wird nicht automatisch geöffnet. Ziel / Target:
 <a href=\"{html.escape(target_url)}\">{html.escape(target_url)}</a></p>
 </body>
 </html>"""
@@ -1189,7 +1189,7 @@ class WizardHandler(BaseHTTPRequestHandler):
               <li>Aufgabe wählen / Choose a task</li>
               <li>Profil wählen / Choose a profile</li>
               <li>Empfehlung prüfen / Review recommendation</li>
-              <li>Danach Übergabe an Open WebUI / Then handoff to Open WebUI</li>
+              <li>Danach Übergabe an ToF Builder UI / Then handoff to ToF Builder UI</li>
             </ul>
           </article>
         </div>
@@ -1417,7 +1417,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="ToF Local Builder setup wizard")
     parser.add_argument("--ensure", action="store_true", help="run the wizard only when setup is incomplete")
     parser.add_argument("--force", action="store_true", help="force the wizard to run")
-    parser.add_argument("--open-webui", action="store_true", help="open the local WebUI in the default browser")
+    parser.add_argument("--open-builder", action="store_true", help="open the local Builder UI in the default browser")
     parser.add_argument("--redirect-bridge", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--port", type=int, default=0, help=argparse.SUPPRESS)
     parser.add_argument("--target-url", default="", help=argparse.SUPPRESS)
@@ -1427,8 +1427,8 @@ def main() -> int:
         if not args.port or not args.target_url:
             return 2
         return run_redirect_bridge(args.port, args.target_url)
-    if args.open_webui:
-        return open_webui_browser()
+    if args.open_builder:
+        return open_builder_browser()
     if args.force:
         return ensure_wizard(force=True)
     if args.ensure:
