@@ -19,7 +19,7 @@ Local Builder provides a workspace for AI-assisted implementation with **read-on
 
 ## Current main development state (2026-10-30)
 
-**Open WebUI is no longer a Compose runtime service.** The existing Builder control UI now hosts a bounded assistant connected directly to Ollama. At this stage the chat provides **read-only planning and answers**, not autonomous file/tool execution. Original source stays read-only, sandbox review remains in place. Target-system acceptance is pending.
+**Open WebUI is no longer a Compose runtime service.** The existing Builder control UI now hosts a bounded assistant connected directly to Ollama. The native UI supports **read-only dialogue** and a separate **Generate sandbox draft** workflow. That workflow inspects bounded source context, makes a plan and drafts up to three text files under sandbox/output; it never runs shell commands or changes the selected source. Original source stays read-only, sandbox review remains in place. Target-system acceptance is pending.
 
 **Start:** `python run.py setup` (first run), `python run.py up`, `python run.py check`. `up` starts or reuses the native Builder UI at `http://127.0.0.1:8795` (configurable via `BUILDER_UI_PORT`).
 
@@ -88,7 +88,7 @@ python run.py up
 python run.py check
 ```
 
-The user now works in the **native Builder UI**. The current local AI task reads at most a bounded README excerpt for orientation and returns an answer; it does not write project files. Existing sandbox preview, compare and review are available for independently created artifacts.
+The user now works in the **native Builder UI**. The chat reads a bounded README excerpt for orientation and returns an answer. A separate, user-initiated sandbox build can draft up to three reviewable text files using the existing Repo Bridge. Existing sandbox preview, compare and review remain mandatory before manually adopting any generated artifact.
 
 **Boundary:** no automatic source commit, push or adoption. Not an approved public release; target-system validation remains pending.
 
