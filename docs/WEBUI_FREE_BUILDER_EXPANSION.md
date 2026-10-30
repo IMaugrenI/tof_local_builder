@@ -75,7 +75,7 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 
 - Während des Ausbaus nur gezielte notwendige Tests; P0/P1 vor abhängigen Arbeiten beheben.
 - DEV-Prüfungen und Zielsystem-Abnahme ausdrücklich trennen.
-- Kein Merge nach `main` vor Betreiberentscheidung und Runtime-Nachweis.
+- DOM hat den direkten Ausbau auf `main` ausdrücklich genehmigt. Diese Entwicklungscommits sind **keine Release-Freigabe**; die Zielsystem-Abnahme und GO/NO-GO bleiben erforderlich.
 - Keine automatischen Repository-Commits, Pushes oder Quelländerungen durch generierte Modellantworten.
 - Bei Konflikten zur älteren Produktdokumentation gilt diese explizite neue Betreiberentscheidung; betroffene Dokumente werden bei der Umstellung konsistent aktualisiert.
 
@@ -89,7 +89,21 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - [x] P4 (Teilpaket): Architekturübersicht, streng begrenzte JSON-Baupläne und höchstens 3 nicht-überschreibende Sandbox-Textentwürfe über die vorhandene Repo Bridge.
 - [x] P4 (Teilpaket): Aufgabenjournal, Fortschritt, Verlauf, Benutzerabbruch und sichere Unterbrechungsanzeige (keine automatische Wiederholung nach Neustart).
 - [ ] P4 offen: sichere Wiederaufnahme nach Unterbrechung, vertiefte Entwicklungswerkzeuge, gezielte Testausführung unter eigener Freigabe- und Sicherheitslogik.
-- [ ] P5–P6 offen: nutzerfreundliche Selbstreparatur, optionale Knowledge-/Organizer-Schnittstellen.
+- [x] P5 (Teilpaket): Eigene Builder-Oberfläche wird bereits vor Docker-/Modellprüfung geöffnet, damit Fehler über die Oberfläche sichtbar bleiben.
+- [x] Ressourcenbegrenzung: höchstens ein aktiver Bauauftrag und kein paralleler Chat während einer Bauausführung.
+- [ ] P5–P6 offen: weitergehende sichere Selbstreparatur, optionale Knowledge-/Organizer-Schnittstellen.
 - [x] Gezielte Testdateien für Agent-Pfade, Journal, Abbruch, WebUI-freie Oberfläche und Repo-Bridge-Schreibschutz hinzugefügt.
 - [ ] GitHub-CI für den letzten Stand auswerten; DEV-/Runtime-Nachweise getrennt halten.
 - [ ] Zielsystem-Test / GO-NO-GO.
+
+## Begrenzte autonome Bauausführung (aktuelle Schnittstelle)
+
+- **Start:** `POST /api/build` mit Task, installiertem Modell und Benutzerziel; ausdrücklich ausgelöste Aktion in der bestehenden Builder-Oberfläche.
+- **Fortschritt:** `GET /api/build?id=<id>` und `GET /api/builds`.
+- **Abbruch:** `POST /api/build/cancel`; laufende Modellantworten können nicht hart unterbrochen werden, vor dem nächsten Dateischritt wird der Abbruch berücksichtigt.
+- **Ablauf:** Read-only Repo-Bridge-Überblick → validierter JSON-Bauplan → höchstens drei vollständige Textdateientwürfe → ausschließliche nicht-überschreibende Repo-Bridge-Schreibvorgänge in `sandbox/output`.
+- **Journal:** `sandbox/workspace/.builder_runs/` enthält projektgebundene Status-Metadaten. Diese werden nicht als erzeugte Quellartefakte inventarisiert.
+- **Nach Neustart:** unterbrochener Auftrag wird angezeigt, niemals unkontrolliert fortgesetzt; sichere Wiederaufnahme ist noch offen.
+- **Freigabe:** Vor einer manuellen Übernahme in das Originalprojekt gelten unverändert Vorschau, Vergleich und Review.
+
+Die automatische Ausführung von Shell-Befehlen, Build-Skripten, Tests, Git-Operationen und die Änderung der Quelle sind weiterhin **nicht Bestandteil** dieser Ausbaustufe.
