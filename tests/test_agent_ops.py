@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from tof_cli.builder.agent_bridge import AgentBridge, BridgeError, safe_relative_file
-from tof_cli.builder.agent_ops import BuildCancelled, BuildError, _plan_from_model, build_in_sandbox
+from tof_cli.builder.agent_ops import AgentManager, BuildCancelled, BuildError, _plan_from_model, build_in_sandbox
 from tof_cli.builder.job_journal import JobJournal, JournalError
 
 
@@ -132,6 +132,17 @@ class AgentTests(unittest.TestCase):
                 build_in_sandbox(FakeJournal(), bridge, "job", {}, cancel)
             model.assert_not_called()
         self.assertEqual(bridge.writes, [])
+
+
+    def test_build_uses_shared_local_model_gate(self) -> None:
+        gate = threading.BoundedSemaphore(1)
+        gate.acquire()
+        try:
+            manager = AgentManager(model_gate=gate)
+            with self.assertRaises(BuildError):
+                manager.start(task="code", model="local", goal="Build something")
+        finally:
+            gate.release()
 
 
 if __name__ == "__main__":
