@@ -34,7 +34,7 @@ def _project_context(source_path: str) -> str:
     return "No project README excerpt is available; do not pretend that files were inspected."
 
 
-def run_task_once(*, task: str, model: str, goal: str) -> dict[str, object]:
+def run_task_once(*, task: str, model: str, goal: str, history: list[dict[str, str]] | None = None) -> dict[str, object]:
     """Validate user intent and local model, then return text only."""
     if not isinstance(task, str) or not isinstance(model, str) or not isinstance(goal, str):
         raise ValueError("Invalid task fields")
@@ -58,6 +58,7 @@ def run_task_once(*, task: str, model: str, goal: str) -> dict[str, object]:
         prompt=prompt,
         installed_models={model},  # prepare_task already checked Ollama tags
         ollama_port=env.get("OLLAMA_PORT", "11434"),
+        history=history,
     )
     return {
         "task": task,
