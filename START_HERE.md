@@ -84,8 +84,9 @@ Later, return with:
 
 ```bash
 python run.py up
-python run.py ui
 ```
+
+The native Builder UI opens from `up` at `http://127.0.0.1:8795` unless browser auto-open is disabled. No Open WebUI is required. The current assistant gives planning/analysis responses; autonomous file edits are not yet available.
 
 Your selected project and local settings remain in the local configuration.
 
@@ -114,4 +115,4 @@ See [docs/USER_JOURNEY.md](docs/USER_JOURNEY.md) for one complete first-time jou
 - [Beginner quickstart](docs/00_beginner_quickstart.md)
 - [Commands](docs/commands.md)
 - [Technical project connection](docs/repo_bridge.md)
-- [Product constitution](docs/00_product/PRODUCT_CONSTITUTION_V1.md)
+- [Product constitution](docs/00_product/PRODUCT_CONSTITUTION_V2.md)
