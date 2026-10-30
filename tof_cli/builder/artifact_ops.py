@@ -80,6 +80,9 @@ def artifact_inventory(env: dict[str, str], *, limit: int = MAX_ITEMS) -> dict[s
         if not base.is_dir():
             continue
         for path in base.rglob("*"):
+            # Journal entries are Builder control metadata, not generated files.
+            if area == "workspace" and ".builder_runs" in path.relative_to(base).parts:
+                continue
             if path.is_symlink() or not path.is_file():
                 continue
             # Resolved containment additionally protects against symlinked ancestors.
