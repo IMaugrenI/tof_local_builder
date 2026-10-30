@@ -18,7 +18,7 @@ Ollama serves installed local LLMs. The Builder UI talks to Ollama via a bounded
 
 Work should evolve from read-only advice to supervised, bounded task execution. Each proposed operation must specify its target, side effects, permissions, and result. The user reviews consequential decisions; routine authorized technical work may be automated.
 
-The current integrated chat endpoint is **planning-only**, not a finished autonomous agent. Never claim source files have been modified or tests run merely because a model produced text.
+The integrated chat endpoint is planning-only. The separate user-triggered sandbox build runs a finite inspect → plan → generate workflow with explicit limits and a job journal. It writes reviewable text drafts only under sandbox/output using the existing Repo Bridge. It is **not** unrestricted autonomous development; shell tests, Git commits and source application are not automated. Never claim source files have been modified or tests run merely because a model produced text.
 
 ## Source and sandbox
 
