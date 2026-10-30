@@ -82,12 +82,12 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 ## Aktueller Ausbaustatus
 
 - [x] Architektur-Einstiegspunkte gelesen und WebUI-Kopplungen identifiziert.
-- [x] Entwicklungsbranch erstellt.
+- [x] Zunächst Entwicklungsbranch erstellt; anschließender direkter Ausbau auf `main` gemäß ausdrücklicher DOM-Freigabe.
 - [x] P1 Direkter, begrenzter Ollama-Modelladapter und gezielte Tests im Repository (noch nicht runtime-geprüft).
 - [x] P2 Erste integrierte KI-Aufgabenoberfläche und lokaler API-Endpunkt (read-only, noch keine Toolausführung).
 - [x] P2 (Teilpaket): Projektgebundene Konversations-Snapshots über die bereits vorhandene Sandbox-Metadatenstruktur; Speichern/Wiederherstellen/Löschen nur durch ausdrückliche Bedienaktion, kein implizites Langzeitgedächtnis.
 - [x] P3 Open-WebUI-Service aus Compose/Startpfad entfernt; eigene UI wird über bestehende CLI gestartet.
-- [x] P4 (Teilpaket): Architekturübersicht, streng begrenzte JSON-Baupläne und höchstens 3 nicht-überschreibende Sandbox-Textentwürfe über die vorhandene Repo Bridge.
+- [x] P4 (Teilpaket): Architekturübersicht, streng begrenzte JSON-Baupläne und bis zu sechs nicht-überschreibende Sandbox-Textentwürfe über die vorhandene Repo Bridge.
 - [x] P4 (Teilpaket): Aufgabenjournal, Fortschritt, Verlauf, Benutzerabbruch und sichere Unterbrechungsanzeige (keine automatische Wiederholung nach Neustart).
 - [x] P4 (Teilpaket): Explizite Wiederaufnahme nach Unterbrechung mit Prüfung des gespeicherten Bauplans, Projektkontexts, der Quell-Fingerabdrücke und bereits erzeugter Entwürfe.
 - [x] P4 (Teilpaket): Maximal sechs zusammenhängende Dateientwürfe pro Bauauftrag; bereits erzeugte Entwürfe dienen als begrenzter, ausdrücklich unzuverlässiger Kontext für folgende Dateien.
@@ -101,8 +101,9 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - [x] Gezielte Testdateien für Agent-Pfade, Journal, Abbruch, WebUI-freie Oberfläche und Repo-Bridge-Schreibschutz hinzugefügt.
 - [x] P4 (Teilpaket): Vor dem Speichern automatische, **nicht-ausführende Syntaxprüfung** für Python, JSON und TOML; bei Parserfehlern genau ein begrenzter Korrekturversuch über das vorhandene lokale LLM. Andere Dateitypen erscheinen ausdrücklich als *nicht geprüft*.
 - [x] CI-Testursache aus älterem Lauf eingegrenzt: dynamischer Import des Repo-Bridge-Moduls löste bei direkter Konstruktion von `WriteRequest` einen Pydantic-Typauflösungsfehler aus. Der Schreibschutztest verwendet jetzt ein schlichtes Request-Testobjekt, ohne das Produktionsmodell zu verändern.
-- [ ] Aktuellste GitHub-CI muss noch erfolgreich durchlaufen; ältere fehlgeschlagene Runs sind keine Nachweise für den neuen Commit.
-- [ ] GitHub-CI für den letzten Stand auswerten; DEV-/Runtime-Nachweise getrennt halten.
+- [x] GitHub-CI nach Modell-, UI-, Architektur-, Knowledge- und Konversations-Ausbau mehrfach grün; letzte bestätigte CI des Suchschutz-Commits `8f6b9773218f` ist erfolgreich. Für einen späteren Commit ist erneut dessen eigener Status maßgeblich.
+- [x] Repo-Bridge-Suche: Scan auf maximal 3000 Einträge begrenzt, Dateiinhalte nur bis zur vorgegebenen Bytegrenze eingelesen, keine Verfolgung von Dateisymlinks; gezielte Sicherheitstests ergänzt.
+- [ ] DEV-/Runtime-Nachweise weiterhin getrennt: Zielrechner, Ollama-Modell, Docker-Compose, GUI und tatsächlicher End-to-End-Bau sind noch nicht abgenommen.
 - [ ] Zielsystem-Test / GO-NO-GO.
 
 ## Begrenzte autonome Bauausführung (aktuelle Schnittstelle)
