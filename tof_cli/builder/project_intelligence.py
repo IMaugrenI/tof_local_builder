@@ -25,6 +25,7 @@ STOP = frozenset({
     "please", "create", "build", "write", "that", "with", "from", "this", "there",
     "update", "make", "into", "code", "file", "files", "project", "implement",
     "bitte", "einen", "einer", "eine", "sollen", "machen", "diese", "dieser",
+    "erweitere", "erweitern", "verbessere", "implementiere", "improve", "improving",
     "diesen", "funktion", "erstellen", "dateien", "projekt", "neuen",
 })
 PRIORITY_DIRS = ("src", "app", "tof_cli", "services", "lib", "backend", "frontend", "docs")
@@ -75,7 +76,7 @@ def _safe_entries(rows: list[dict[str, object]]) -> list[dict[str, str]]:
 def _terms(goal: str) -> list[str]:
     words = re.findall(r"[a-zA-Z_][a-zA-Z_0-9]{3,39}", goal.casefold())
     return sorted(set(word for word in words if word not in STOP and word.isascii()),
-                  key=lambda word: (-len(word), word))[:MAX_SEARCH_TERMS]
+                  key=lambda word: (-len(word), word))[:6]
 
 
 def _score(path: str, words: list[str]) -> tuple[int, str]:
@@ -126,6 +127,12 @@ def project_context(project: ReadOnlyProject, goal: str) -> str:
         sections.append(f"Inside {folder}/: " + ", ".join(row["path"] for row in sub[:25]))
         entries.extend(sub)
 
+    # Favor nouns already reflected in real filenames over generic task verbs.
+    words.sort(key=lambda word: (
+        -sum(word in row["path"].casefold() for row in entries),
+        -len(word), word,
+    ))
+    words = words[:MAX_SEARCH_TERMS]
     candidates = {row["path"] for row in entries if row["type"] == "file"}
     find = getattr(project, "find_names", None)
     if callable(find):
