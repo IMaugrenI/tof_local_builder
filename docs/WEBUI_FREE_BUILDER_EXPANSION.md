@@ -16,12 +16,12 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 | Bereich | Bestehend | Konsequenz |
 | --- | --- | --- |
 | Start | `run.py` → `tof_cli/cli.py` → Python-Commands | Wiederverwenden |
-| Laufzeit | `compose.yml`: ollama, repo-bridge, open-webui | WebUI später aus Compose entfernen |
+| Laufzeit | `compose.yml`: Ollama und Repo Bridge, ohne Open WebUI | Vorhandenen Compose-Startweg beibehalten |
 | Steuerung | `tof_cli/ui/app.py`, Port 8795 | Bestehende Oberfläche erweitern |
-| LLM | `tof_cli/builder/model_ops.py` (Ollama Tags/Modell-Pull) | Sichere Ollama Chat API ergänzen |
+| LLM | `model_ops.py` und direkter begrenzter `ollama_chat.py`-Adapter | Sichere Modellsteuerung erweitern |
 | Quellzugriff | `services/repo_bridge/app/main.py`: source read-only | Grenzen beibehalten |
 | Sandbox/Review | `tof_cli/builder/artifact_ops.py` | Weiterverwenden |
-| Aufgaben | `tof_cli/builder/task_ops.py`: Prompt/Handoff zu Open WebUI | Durch direkte Auftragsausführung ersetzen |
+| Aufgaben | Native Chat- und Sandbox-Bauaufträge mit `agent_ops.py` und Journal | Umfangreiche Entwicklungswerkzeuge kontrolliert ausbauen |
 | Setup | `scripts/wizard.py`, `tof_cli/commands/setup.py` | Eine vorhandene Wizard-Wahrheit behalten |
 
 ## Baupakete und Abhängigkeiten
@@ -88,7 +88,8 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - [x] P3 Open-WebUI-Service aus Compose/Startpfad entfernt; eigene UI wird über bestehende CLI gestartet.
 - [x] P4 (Teilpaket): Architekturübersicht, streng begrenzte JSON-Baupläne und höchstens 3 nicht-überschreibende Sandbox-Textentwürfe über die vorhandene Repo Bridge.
 - [x] P4 (Teilpaket): Aufgabenjournal, Fortschritt, Verlauf, Benutzerabbruch und sichere Unterbrechungsanzeige (keine automatische Wiederholung nach Neustart).
-- [ ] P4 offen: sichere Wiederaufnahme nach Unterbrechung, vertiefte Entwicklungswerkzeuge, gezielte Testausführung unter eigener Freigabe- und Sicherheitslogik.
+- [x] P4 (Teilpaket): Explizite Wiederaufnahme nach Unterbrechung mit Prüfung des gespeicherten Bauplans, Projektkontexts, der Quell-Fingerabdrücke und bereits erzeugter Entwürfe.
+- [ ] P4 offen: verbesserte Entwicklungstools, sichere isolierte Testausführung und umfassendere Entwicklungsautonomie.
 - [x] P5 (Teilpaket): Eigene Builder-Oberfläche wird bereits vor Docker-/Modellprüfung geöffnet, damit Fehler über die Oberfläche sichtbar bleiben.
 - [x] Ressourcenbegrenzung: höchstens ein aktiver Bauauftrag und kein paralleler Chat während einer Bauausführung.
 - [ ] P5–P6 offen: weitergehende sichere Selbstreparatur, optionale Knowledge-/Organizer-Schnittstellen.
@@ -103,7 +104,7 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - **Abbruch:** `POST /api/build/cancel`; laufende Modellantworten können nicht hart unterbrochen werden, vor dem nächsten Dateischritt wird der Abbruch berücksichtigt.
 - **Ablauf:** Read-only Repo-Bridge-Überblick → validierter JSON-Bauplan → höchstens drei vollständige Textdateientwürfe → ausschließliche nicht-überschreibende Repo-Bridge-Schreibvorgänge in `sandbox/output`.
 - **Journal:** `sandbox/workspace/.builder_runs/` enthält projektgebundene Status-Metadaten. Diese werden nicht als erzeugte Quellartefakte inventarisiert.
-- **Nach Neustart:** unterbrochener Auftrag wird angezeigt, niemals unkontrolliert fortgesetzt; sichere Wiederaufnahme ist noch offen.
+- **Nach Neustart:** unterbrochener Auftrag wird angezeigt; `POST /api/build/resume` beziehungsweise „Continue safely“ ist nur nach ausdrücklicher Benutzeraktion möglich. Vorher werden gespeicherte Baupläne, Quell- und Ausgabe-Fingerabdrücke sowie der aktuelle Repo-Bridge-Projektbezug kontrolliert. Bereits gültige Entwürfe werden übersprungen; ein vorhandener nicht erfasster Entwurf blockiert den Auftrag (kein Überschreiben). Für Altaufträge mit erzeugten Dateien, aber ohne gespeicherten Bauplan, ist keine automatische Wiederaufnahme erlaubt.
 - **Freigabe:** Vor einer manuellen Übernahme in das Originalprojekt gelten unverändert Vorschau, Vergleich und Review.
 
 Die automatische Ausführung von Shell-Befehlen, Build-Skripten, Tests, Git-Operationen und die Änderung der Quelle sind weiterhin **nicht Bestandteil** dieser Ausbaustufe.

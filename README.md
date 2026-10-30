@@ -14,12 +14,12 @@ Local Builder provides a workspace for AI-assisted implementation with **read-on
 
 **Who it serves:** builders, self-hosters, and small local teams that want a local model-backed workflow and a clear place to review generated work. The repo is the independent **Generate** tool, not a full knowledge-management system or an automatically connected multi-tool suite.
 
-****Workflow:** choose a project → use the local AI directly in Builder → review results. No Open WebUI.
+**Workflow:** choose a project → use the local AI directly in Builder → review results. No Open WebUI.
 
 
 ## Current main development state (2026-10-30)
 
-**Open WebUI is no longer a Compose runtime service.** The existing Builder control UI now hosts a bounded assistant connected directly to Ollama. The native UI supports **read-only dialogue** and a separate **Generate sandbox draft** workflow. That workflow inspects bounded source context, makes a plan and drafts up to three text files under sandbox/output; it never runs shell commands or changes the selected source. Original source stays read-only, sandbox review remains in place. Target-system acceptance is pending.
+**Open WebUI is no longer a Compose runtime service.** The existing Builder control UI now hosts a bounded assistant connected directly to Ollama. The native UI supports **read-only dialogue** and a separate **Generate sandbox draft** workflow. That workflow inspects bounded source context, makes a plan and drafts up to three text files under sandbox/output; it never runs shell commands or changes the selected source. If interrupted, the operator can explicitly continue after Builder verifies the plan, source fingerprints and saved drafts. Original source stays read-only, sandbox review remains in place. Target-system acceptance is pending.
 
 **Start:** `python run.py setup` (first run), `python run.py up`, `python run.py check`. `up` starts or reuses the native Builder UI at `http://127.0.0.1:8795` (configurable via `BUILDER_UI_PORT`).
 

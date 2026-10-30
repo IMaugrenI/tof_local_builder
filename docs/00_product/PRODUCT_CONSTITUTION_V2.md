@@ -32,7 +32,7 @@ The Builder shall automatically inspect readiness, start its own allowed service
 
 The current Python `run.py` CLI and Compose stack remain authoritative. Avoid destructive restarts. Existing Open WebUI volumes remain untouched during transition; orphan containers require a separate operator decision.
 
-Persist planned tasks and resume them safely only after implementing idempotency, state validation and cancellation. Do not silently repeat side effects.
+Persist planned tasks; allow explicit continuation only after validating project binding, saved plan, original source/context hashes and previously generated draft hashes. Never silently resume or repeat side effects. If a journal write was interrupted after a sandbox draft was created, the unexpected draft must block replay and be reviewed manually. Cancelling stops before the next file operation, not mid-model-call.
 
 ## Integration boundaries
 

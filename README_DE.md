@@ -14,12 +14,12 @@ Local Builder bietet einen Arbeitsbereich für KI-gestützte Implementierung mit
 
 **Für wen:** Entwickler, Self-Hoster und kleine lokale Teams, die lokal unterstützte KI-Arbeit mit klaren Prüfgrenzen möchten. Das Repository ist das eigenständige **Generate**-Werkzeug, kein vollständiges Wissensmanagement und keine automatisch verbundene Tool-Suite.
 
-****Ablauf:** Projekt wählen → lokale KI im Builder ansprechen → Ergebnisse prüfen. Kein Open WebUI.
+**Ablauf:** Projekt wählen → lokale KI im Builder ansprechen → Ergebnisse prüfen. Kein Open WebUI.
 
 
 ## Aktueller Entwicklungsstand auf main (30.10.2026)
 
-**Open WebUI ist nicht mehr Bestandteil der Compose-Runtime.** Die vorhandene Builder-Control-UI enthält jetzt einen direkt mit Ollama verbundenen, begrenzten Assistenten. Der KI-Dialog unterstützt weiterhin Fragen und Planung. Zusätzlich kann **„Generate sandbox draft“** auf ausdrücklichen Benutzerwunsch einen begrenzten Bauauftrag ausführen: Repository-Überblick lesen, Bauplan erstellen und höchstens drei Textdateien unter sandbox/output erzeugen. Originaldateien, Shell und Git bleiben unberührt. Source bleibt read-only, Ausgabe bleibt in der Sandbox. Die Zielsystem-Abnahme steht aus.
+**Open WebUI ist nicht mehr Bestandteil der Compose-Runtime.** Die vorhandene Builder-Control-UI enthält jetzt einen direkt mit Ollama verbundenen, begrenzten Assistenten. Der KI-Dialog unterstützt weiterhin Fragen und Planung. Zusätzlich kann **„Generate sandbox draft“** auf ausdrücklichen Benutzerwunsch einen begrenzten Bauauftrag ausführen: Repository-Überblick lesen, Bauplan erstellen und höchstens drei Textdateien unter sandbox/output erzeugen. Nach einer Unterbrechung kann der Benutzer den Auftrag ausdrücklich fortsetzen, wenn Bauplan, Projektkontext, Quell- und Entwurfsdateien noch zum gespeicherten Stand passen. Originaldateien, Shell und Git bleiben unberührt. Source bleibt read-only, Ausgabe bleibt in der Sandbox. Die Zielsystem-Abnahme steht aus.
 
 **Start:** `python run.py setup` (beim ersten Mal), `python run.py up`, `python run.py check`. `up` startet die bestehende Builder-Oberfläche lokal unter `http://127.0.0.1:8795` (konfigurierbar über `BUILDER_UI_PORT`), sofern nicht bereits gestartet.
 
