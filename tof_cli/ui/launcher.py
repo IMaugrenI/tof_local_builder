@@ -41,6 +41,11 @@ def _is_builder_ui(url: str) -> bool:
         return False
 
 
+def builder_ui_running(env: dict[str, str]) -> bool:
+    """Whether the configured port already serves this Builder, not another app."""
+    return _is_builder_ui(ui_url(env))
+
+
 def ensure_builder_ui(env: dict[str, str]) -> tuple[bool, str]:
     """Start the local UI on demand, never silently replace another process."""
     url = ui_url(env)
