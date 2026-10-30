@@ -1,6 +1,6 @@
 # ToF Local Builder — WebUI-freier Ausbauplan
 
-Status: **in Entwicklung**, Branch `work/webui-free-builder`. Dies ist eine Zielarchitektur, kein Runtime-Abnahmenachweis.
+Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies ist eine Zielarchitektur, kein Runtime-Abnahmenachweis.
 
 ## Betreiberentscheidung (DOM)
 
@@ -83,6 +83,9 @@ Status: **in Entwicklung**, Branch `work/webui-free-builder`. Dies ist eine Ziel
 
 - [x] Architektur-Einstiegspunkte gelesen und WebUI-Kopplungen identifiziert.
 - [x] Entwicklungsbranch erstellt.
-- [ ] P1 Modelladapter und minimale Tests.
-- [ ] P2–P6 Implementierung.
+- [x] P1 Direkter, begrenzter Ollama-Modelladapter und gezielte Tests im Repository (noch nicht runtime-geprüft).
+- [x] P2 Erste integrierte KI-Aufgabenoberfläche und lokaler API-Endpunkt (read-only, noch keine Toolausführung).
+- [x] P3 Open-WebUI-Service aus Compose/Startpfad entfernt; eigene UI wird über bestehende CLI gestartet.
+- [ ] P4–P6 Autonome Toolausführung, Wiederaufnahme, Selbstverwaltung und Integrationen.
+- [ ] Tests auf GitHub und DEV-Runtime nachziehen, bevor Aussagen zur Betriebsbereitschaft erfolgen.
 - [ ] Zielsystem-Test / GO-NO-GO.
