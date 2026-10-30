@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
@@ -111,7 +112,7 @@ def test_non_overwriting_bridge_writer_preserves_existing_artifact(sandbox_roots
     target = workspace / "draft.md"
     target.write_text("original", encoding="utf-8")
     with pytest.raises(HTTPException) as exc:
-        bridge.write_internal(bridge.WriteRequest(
+        bridge.write_internal(SimpleNamespace(
             target_root="workspace", relative_path="draft.md",
             content="new", overwrite=False,
         ))
