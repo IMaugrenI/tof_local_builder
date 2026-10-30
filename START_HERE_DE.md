@@ -84,8 +84,9 @@ Später wieder starten:
 
 ```bash
 python run.py up
-python run.py ui
 ```
+
+Die eigene Builder-Oberfläche wird über `up` unter `http://127.0.0.1:8795` geöffnet, sofern das automatische Browseröffnen aktiviert ist. Open WebUI wird nicht benötigt. Der aktuelle KI-Assistent liefert Planung und Analyse; autonome Dateibearbeitung ist noch nicht umgesetzt.
 
 Dein ausgewähltes Projekt und die lokalen Einstellungen bleiben erhalten.
 
@@ -114,4 +115,4 @@ Lies vorher [STANDARD_START_HOST_READER.md](STANDARD_START_HOST_READER.md). Nich
 - [Einsteiger-Quickstart](docs/00_beginner_quickstart_DE.md)
 - [Befehle](docs/commands_DE.md)
 - [Technische Projektverbindung](docs/repo_bridge.md)
-- [Product Constitution](docs/00_product/PRODUCT_CONSTITUTION_V1.md)
+- [Product Constitution](docs/00_product/PRODUCT_CONSTITUTION_V2.md)
