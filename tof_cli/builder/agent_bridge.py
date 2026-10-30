@@ -146,6 +146,23 @@ class AgentBridge:
             raise BridgeError("Source file is too large for safe complete-file generation")
         return result["content"]
 
+    def output_text(self, relative_file: str) -> str | None:
+        """Read a saved draft through the existing bridge, never directly from host."""
+        path = safe_relative_file(relative_file)
+        self.verify_roots()
+        try:
+            result = self._request("/read", params={
+                "root": "output", "path": path, "max_bytes": MAX_WRITE_CHARS * 4,
+            })
+        except SourceNotFound:
+            return None
+        if result.get("kind") != "text" or not isinstance(result.get("content"), str):
+            raise BridgeError("Saved draft is not UTF-8 text")
+        size = result.get("size")
+        if not isinstance(size, int) or size > MAX_WRITE_CHARS * 4:
+            raise BridgeError("Saved draft is too large to safely verify")
+        return result["content"]
+
     def write_output(self, relative_file: str, content: str) -> None:
         path = safe_relative_file(relative_file)
         if not isinstance(content, str) or not content.strip() or len(content) > MAX_WRITE_CHARS:
