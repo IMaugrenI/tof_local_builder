@@ -1,7 +1,7 @@
 """Read-only task and model planning from the existing Builder catalog.
 
 No installs, container control, source writes, or model switches happen here.
-The generated prompt is copied manually into the existing Open WebUI.
+The prepared prompt is used by the native Builder UI.
 """
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ def prepare_task(task: str, model: str, goal: str, env: dict[str, str] | None = 
         "task": task, "model": model, "prompt": prompt,
         "source": source["path"], "sandbox": sandbox["path"],
         "writes_performed": False, "model_changed": False,
-        "handoff": "Copy the prompt into Open WebUI and choose the installed model there.",
+        "handoff": "Use the native Builder UI to run the selected local model.",
     }
 
 
@@ -181,5 +181,5 @@ def task_guide(env: dict[str, str] | None = None) -> dict[str, object]:
         },
         "project": project_snapshot(values),
         "model_service_reachable": reachable,
-        "handoff": "Select the chosen installed model manually in Open WebUI.",
+        "handoff": "The selected installed model runs directly inside the native Builder UI.",
     }
