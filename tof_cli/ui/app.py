@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import threading
 import urllib.error
 import urllib.request
 import webbrowser
@@ -1465,6 +1466,8 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
     if not 1 <= port <= 65535:
         raise ValueError("Invalid Builder control UI port")
 
+    chat_limit = threading.BoundedSemaphore(value=1)
+
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code: int, content_type: str, body: bytes) -> None:
             self.send_response(code)
@@ -1559,18 +1562,25 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 if not 0 < length <= 16_384:
                     self._send(413, 'application/json; charset=utf-8', _json_bytes({'error': 'Request too large or empty'}))
                     return
-                try:
-                    payload = json.loads(self.rfile.read(length))
-                    if not isinstance(payload, dict):
-                        raise ValueError('Expected an object')
-                    result = run_task_once(
-                        task=payload.get('task'), model=payload.get('model'),
-                        goal=payload.get('goal'),
-                    )
-                except (ValueError, TypeError, ModelChatError) as exc:
-                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                if not chat_limit.acquire(blocking=False):
+                    self._send(429, 'application/json; charset=utf-8', _json_bytes(
+                        {'error': 'Builder is already handling another AI request'}))
                     return
-                self._send(200, 'application/json; charset=utf-8', _json_bytes(result))
+                try:
+                    try:
+                        payload = json.loads(self.rfile.read(length))
+                        if not isinstance(payload, dict):
+                            raise ValueError('Expected an object')
+                        result = run_task_once(
+                            task=payload.get('task'), model=payload.get('model'),
+                            goal=payload.get('goal'),
+                        )
+                    except (ValueError, TypeError, ModelChatError) as exc:
+                        self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                        return
+                    self._send(200, 'application/json; charset=utf-8', _json_bytes(result))
+                finally:
+                    chat_limit.release()
                 return
             action = parsed.path.removeprefix('/api/')
             if action in ACTIONS:
