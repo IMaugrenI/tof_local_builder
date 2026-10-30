@@ -4,6 +4,7 @@ import argparse
 
 from tof_cli.builder.model_ops import ollama_tags
 from tof_cli.builder.repo_bridge_ops import tool_server_url
+from tof_cli.ui.launcher import ui_url
 from tof_cli.core.env_ops import ensure_env_file, read_env
 from tof_cli.core.health_ops import check_url, print_health_result
 
@@ -20,7 +21,6 @@ def handle(_args: argparse.Namespace) -> int:
 
     targets = [
         ("ollama", f"http://localhost:{env.get('OLLAMA_PORT', '11434')}/api/tags"),
-        ("open_webui", f"http://localhost:{env.get('OPENWEBUI_PORT', '3000')}"),
         ("repo_bridge", f"{tool_server_url(env)}/health"),
         ("repo_bridge_openapi", f"{tool_server_url(env)}/openapi.json"),
     ]
