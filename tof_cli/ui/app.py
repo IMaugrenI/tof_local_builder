@@ -1653,7 +1653,7 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
         raise ValueError("Invalid Builder control UI port")
 
     chat_limit = threading.BoundedSemaphore(value=1)
-    agent_manager = AgentManager()
+    agent_manager = AgentManager(model_gate=chat_limit)
 
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code: int, content_type: str, body: bytes) -> None:
