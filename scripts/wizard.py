@@ -300,7 +300,7 @@ def open_builder_browser() -> int:
     env = merge_env(env)
     if env.get("BUILDER_OPEN_BROWSER", "1") != "1":
         return 0
-    url = f"http://localhost:{env.get('BUILDER_UI_PORT', '3000')}"
+    url = f"http://localhost:{env.get('BUILDER_UI_PORT', '8795')}"
     try:
         webbrowser.open(url, new=2)
     except Exception:
@@ -852,7 +852,7 @@ class WizardHandler(BaseHTTPRequestHandler):
         )
         write_env_file(state.env_path, merged, state.order)
 
-        target_url = f"http://localhost:{merged.get('BUILDER_UI_PORT', '3000')}"
+        target_url = f"http://localhost:{merged.get('BUILDER_UI_PORT', '8795')}"
         wait_url = spawn_redirect_bridge(target_url) if open_browser else None
 
         if wait_url:
