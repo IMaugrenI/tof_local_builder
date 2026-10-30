@@ -94,6 +94,9 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - [x] Ressourcenbegrenzung: höchstens ein aktiver Bauauftrag und kein paralleler Chat während einer Bauausführung.
 - [ ] P5–P6 offen: weitergehende sichere Selbstreparatur, optionale Knowledge-/Organizer-Schnittstellen.
 - [x] Gezielte Testdateien für Agent-Pfade, Journal, Abbruch, WebUI-freie Oberfläche und Repo-Bridge-Schreibschutz hinzugefügt.
+- [x] P4 (Teilpaket): Vor dem Speichern automatische, **nicht-ausführende Syntaxprüfung** für Python, JSON und TOML; bei Parserfehlern genau ein begrenzter Korrekturversuch über das vorhandene lokale LLM. Andere Dateitypen erscheinen ausdrücklich als *nicht geprüft*.
+- [x] CI-Testursache aus älterem Lauf eingegrenzt: dynamischer Import des Repo-Bridge-Moduls löste bei direkter Konstruktion von `WriteRequest` einen Pydantic-Typauflösungsfehler aus. Der Schreibschutztest verwendet jetzt ein schlichtes Request-Testobjekt, ohne das Produktionsmodell zu verändern.
+- [ ] Aktuellste GitHub-CI muss noch erfolgreich durchlaufen; ältere fehlgeschlagene Runs sind keine Nachweise für den neuen Commit.
 - [ ] GitHub-CI für den letzten Stand auswerten; DEV-/Runtime-Nachweise getrennt halten.
 - [ ] Zielsystem-Test / GO-NO-GO.
 
