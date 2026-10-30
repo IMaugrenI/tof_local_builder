@@ -118,3 +118,47 @@ def test_non_overwriting_bridge_writer_preserves_existing_artifact(sandbox_roots
         ))
     assert exc.value.status_code == 409
     assert target.read_text(encoding="utf-8") == "original"
+
+
+def test_text_search_never_reads_symlink_outside_selected_source(sandbox_roots):
+    source, _, _, outside = sandbox_roots
+    module = source / "module.py"
+    module.write_text("needle in allowed source", encoding="utf-8")
+    sensitive = outside / "external.py"
+    sensitive.write_text("needle outside source", encoding="utf-8")
+    alias = source / "alias.py"
+    try:
+        alias.symlink_to(sensitive)
+    except OSError:
+        pytest.skip("Symlinks unavailable")
+    result = bridge.search(
+        root="source", query="needle", path="", max_results=10, max_file_bytes=100,
+    )
+    assert [hit["path"] for hit in result["results"]] == ["module.py"]
+    found = bridge.find(
+        root="source", query=".py", path="", max_results=10,
+        include_files=True, include_dirs=False,
+    )
+    assert "alias.py" not in [hit["path"] for hit in found["results"]]
+
+
+def test_content_search_reads_only_configured_byte_window(sandbox_roots):
+    source, _, _, _ = sandbox_roots
+    (source / "large.py").write_bytes(b"x" * 16_000 + b"needle")
+    result = bridge.search(
+        root="source", query="needle", path="", max_results=10, max_file_bytes=100,
+    )
+    assert result["count"] == 0
+    assert result["files_scanned"] == 1
+
+
+def test_find_scans_only_limited_number_of_entries(sandbox_roots, monkeypatch):
+    source, _, _, _ = sandbox_roots
+    for index in range(8):
+        (source / f"component_{index}.py").write_text("ok", encoding="utf-8")
+    monkeypatch.setattr(bridge, "MAX_WALK_ENTRIES", 2)
+    result = bridge.find(
+        root="source", query="component", path="", max_results=50,
+        include_files=True, include_dirs=False,
+    )
+    assert result["count"] == 2
