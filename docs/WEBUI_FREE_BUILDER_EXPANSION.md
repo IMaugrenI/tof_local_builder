@@ -86,6 +86,10 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - [x] P1 Direkter, begrenzter Ollama-Modelladapter und gezielte Tests im Repository (noch nicht runtime-geprüft).
 - [x] P2 Erste integrierte KI-Aufgabenoberfläche und lokaler API-Endpunkt (read-only, noch keine Toolausführung).
 - [x] P3 Open-WebUI-Service aus Compose/Startpfad entfernt; eigene UI wird über bestehende CLI gestartet.
-- [ ] P4–P6 Autonome Toolausführung, Wiederaufnahme, Selbstverwaltung und Integrationen.
-- [ ] Tests auf GitHub und DEV-Runtime nachziehen, bevor Aussagen zur Betriebsbereitschaft erfolgen.
+- [x] P4 (Teilpaket): Architekturübersicht, streng begrenzte JSON-Baupläne und höchstens 3 nicht-überschreibende Sandbox-Textentwürfe über die vorhandene Repo Bridge.
+- [x] P4 (Teilpaket): Aufgabenjournal, Fortschritt, Verlauf, Benutzerabbruch und sichere Unterbrechungsanzeige (keine automatische Wiederholung nach Neustart).
+- [ ] P4 offen: sichere Wiederaufnahme nach Unterbrechung, vertiefte Entwicklungswerkzeuge, gezielte Testausführung unter eigener Freigabe- und Sicherheitslogik.
+- [ ] P5–P6 offen: nutzerfreundliche Selbstreparatur, optionale Knowledge-/Organizer-Schnittstellen.
+- [x] Gezielte Testdateien für Agent-Pfade, Journal, Abbruch, WebUI-freie Oberfläche und Repo-Bridge-Schreibschutz hinzugefügt.
+- [ ] GitHub-CI für den letzten Stand auswerten; DEV-/Runtime-Nachweise getrennt halten.
 - [ ] Zielsystem-Test / GO-NO-GO.
