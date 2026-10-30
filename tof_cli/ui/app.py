@@ -20,6 +20,7 @@ from tof_cli.builder.agent_ops import AgentManager, BuildError
 from tof_cli.builder.agent_bridge import AgentBridge, BridgeError
 from tof_cli.builder.project_intelligence import project_context
 from tof_cli.builder.knowledge_ops import KnowledgeError, search_knowledge
+from tof_cli.builder.conversation_store import ConversationError, ConversationStore
 from tof_cli.builder.job_journal import JournalError
 from tof_cli.builder.task_runner import run_task_once
 from tof_cli.builder.task_ops import task_guide
@@ -787,6 +788,10 @@ HTML = """<!doctype html>
           <textarea id="task-goal" maxlength="2000" rows="5" style="width:100%;padding:12px;margin:8px 0 14px" placeholder="Describe what you want to build, inspect or discuss."></textarea>
           <button class="btn btn-primary" id="task-send" type="button" onclick="sendTask()">Ask Builder</button>
           <button class="btn btn-quiet" type="button" onclick="clearTaskChat()">New conversation</button>
+          <button class="btn btn-quiet" type="button" onclick="saveLocalConversation()">Save locally</button>
+          <button class="btn btn-quiet" type="button" onclick="restoreLocalConversation()">Restore saved</button>
+          <button class="btn btn-quiet" type="button" onclick="deleteLocalConversation()">Delete saved</button>
+          <p class="service-hint" id="conversation-storage-status" role="status" aria-live="polite">Conversation saving is optional and only happens when you click Save locally. It stays in your project sandbox.</p>
           <p class="service-hint" id="task-message" role="status" aria-live="polite">Conversations stay in this browser tab. No model-generated file operations run automatically.</p>
           <div id="task-conversation" class="service-card" style="margin-top:18px;" aria-live="polite">
             <strong>Conversation</strong>
@@ -1091,6 +1096,67 @@ HTML = """<!doctype html>
             : 'No matching model profile installed; any installed model may be selected. ')
           + 'The selected model will be used directly here.'
         : 'Ollama unavailable. Start the workspace and check again.';
+    }
+
+    async function saveLocalConversation() {
+      const status = document.getElementById('conversation-storage-status');
+      if (!conversation.length) {
+        status.textContent = 'No conversation to save yet.';
+        return;
+      }
+      try {
+        const response = await fetch('/api/conversation/save', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json', 'X-Builder-Request': '1'},
+          body: JSON.stringify({messages: conversation}),
+        });
+        const data = await response.json();
+        status.textContent = response.ok
+          ? 'Conversation saved locally for this project. No cloud sync was started.'
+          : (data.error || 'Could not save the conversation.');
+      } catch (error) {
+        status.textContent = 'Could not save the conversation locally.';
+      }
+    }
+
+    async function restoreLocalConversation() {
+      const status = document.getElementById('conversation-storage-status');
+      try {
+        const response = await fetch('/api/conversation');
+        const data = await response.json();
+        if (!response.ok) {
+          status.textContent = data.error || 'Saved conversation is unavailable.';
+          return;
+        }
+        if (!data.saved || !Array.isArray(data.messages) || !data.messages.length) {
+          status.textContent = 'No saved conversation for this project.';
+          return;
+        }
+        clearTaskChat();
+        conversation = data.messages;
+        conversation.forEach(message => appendChat(message.role, message.content));
+        status.textContent = 'Saved conversation restored for this project. No model call was made.';
+      } catch (error) {
+        status.textContent = 'Could not restore the saved local conversation.';
+      }
+    }
+
+    async function deleteLocalConversation() {
+      const status = document.getElementById('conversation-storage-status');
+      if (!confirm('Delete the saved local conversation for this project? This does not delete the current browser conversation.')) return;
+      try {
+        const response = await fetch('/api/conversation/delete', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json', 'X-Builder-Request': '1'},
+          body: JSON.stringify({}),
+        });
+        const data = await response.json();
+        status.textContent = response.ok
+          ? 'Saved conversation deleted from the local project sandbox.'
+          : (data.error || 'Could not delete the saved conversation.');
+      } catch (error) {
+        status.textContent = 'Could not delete the local snapshot.';
+      }
     }
 
     async function sendTask() {
@@ -1831,6 +1897,14 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
             if parsed.path == '/api/summary':
                 self._send(200, 'application/json; charset=utf-8', _json_bytes(_summary_payload()))
                 return
+            if parsed.path == '/api/conversation':
+                try:
+                    result = ConversationStore(read_env()).load()
+                except (ConversationError, JournalError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(result))
+                return
             if parsed.path == '/api/build':
                 job_id = parse_qs(parsed.query).get('id', [''])[0]
                 try:
@@ -1893,6 +1967,31 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 self._send(403, 'application/json; charset=utf-8', _json_bytes({'error': 'forbidden'}))
                 return
             parsed = urlparse(self.path)
+            if parsed.path in ('/api/conversation/save', '/api/conversation/delete'):
+                if not self.headers.get('Content-Type', '').lower().startswith('application/json'):
+                    self._send(415, 'application/json; charset=utf-8', _json_bytes({'error': 'JSON required'}))
+                    return
+                try:
+                    length = int(self.headers.get('Content-Length', '0'))
+                except ValueError:
+                    length = 0
+                if not 0 < length <= 24_000:
+                    self._send(413, 'application/json; charset=utf-8', _json_bytes({'error': 'Invalid snapshot size'}))
+                    return
+                try:
+                    payload = json.loads(self.rfile.read(length))
+                    if not isinstance(payload, dict):
+                        raise ValueError('Expected a JSON object')
+                    store = ConversationStore(read_env())
+                    if parsed.path.endswith('/save'):
+                        result = store.save(payload.get('messages'))
+                    else:
+                        result = store.delete()
+                except (ConversationError, JournalError, ValueError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(result))
+                return
             if parsed.path == '/api/knowledge/search':
                 if not self.headers.get('Content-Type', '').lower().startswith('application/json'):
                     self._send(415, 'application/json; charset=utf-8', _json_bytes({'error': 'JSON required'}))
