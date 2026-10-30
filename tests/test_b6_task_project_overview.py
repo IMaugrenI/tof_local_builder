@@ -61,4 +61,6 @@ def test_ui_reuses_task_guide_without_model_installation():
     assert "renderProjectContext" in app.HTML
     assert "guide.preferred_models" in app.HTML
     assert "Suggested for this task" in app.HTML
-    assert "Copy &amp; open workspace" in app.HTML
+    assert "Generate sandbox draft" in app.HTML
+    assert "Ask Builder" in app.HTML
+    assert "Open WebUI" not in app.HTML
