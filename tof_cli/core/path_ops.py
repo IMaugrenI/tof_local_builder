@@ -6,7 +6,6 @@ from tof_cli.core.env_ops import REPO_ROOT
 
 DEFAULT_SETUP_DIRS = [
     REPO_ROOT / "data" / "ollama",
-    REPO_ROOT / "data" / "open-webui",
     REPO_ROOT / "sandbox" / "workspace",
     REPO_ROOT / "sandbox" / "output",
     REPO_ROOT / "sandbox" / "examples",
