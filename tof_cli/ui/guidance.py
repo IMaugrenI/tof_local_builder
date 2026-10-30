@@ -5,7 +5,7 @@ installs models, restarts Compose, or changes the selected project.
 """
 from __future__ import annotations
 
-ISSUE_ORDER = ("source", "sandbox", "ollama", "default_model", "repo_bridge", "webui")
+ISSUE_ORDER = ("source", "sandbox", "ollama", "default_model", "repo_bridge")
 HELP = {
     "source": (
         "Select an existing project folder in setup. The project stays read-only.",
@@ -26,10 +26,6 @@ HELP = {
     "repo_bridge": (
         "The project connection is not reachable. Check its status and use Find problems for details.",
         "doctor",
-    ),
-    "webui": (
-        "The AI workspace page is not reachable. Start the existing workspace, then check again.",
-        "up",
     ),
 }
 
