@@ -765,10 +765,11 @@ HTML = """<!doctype html>
           <label for="task-goal">Your task</label>
           <textarea id="task-goal" maxlength="2000" rows="5" style="width:100%;padding:12px;margin:8px 0 14px" placeholder="Describe what you want to build, inspect or discuss."></textarea>
           <button class="btn btn-primary" id="task-send" type="button" onclick="sendTask()">Ask Builder</button>
-          <p class="service-hint" id="task-message" role="status" aria-live="polite">This stage returns a plan or explanation. It does not execute tools or alter source files.</p>
+          <button class="btn btn-quiet" type="button" onclick="clearTaskChat()">New conversation</button>
+          <p class="service-hint" id="task-message" role="status" aria-live="polite">Conversations stay in this browser tab. No model-generated file operations run automatically.</p>
           <div id="task-conversation" class="service-card" style="margin-top:18px;" aria-live="polite">
-            <strong>Assistant response</strong>
-            <pre class="log" id="task-response" style="margin-top:12px;min-height:100px;white-space:pre-wrap;">No request sent yet.</pre>
+            <strong>Conversation</strong>
+            <div id="task-thread" style="margin-top:12px;">Describe a task to begin.</div>
           </div>
         </div>
       </section>
@@ -831,6 +832,34 @@ HTML = """<!doctype html>
 
   <script>
     let currentSummary = null;
+    let conversation = [];
+    let conversationScope = '';
+
+    function clearTaskChat() {
+      conversation = [];
+      const thread = document.getElementById('task-thread');
+      thread.textContent = 'Conversation cleared. Start a new task.';
+      document.getElementById('task-message').textContent = 'Ready for a new conversation.';
+    }
+
+    function appendChat(role, content) {
+      const thread = document.getElementById('task-thread');
+      if (conversation.length === 0) thread.replaceChildren();
+      const entry = document.createElement('article');
+      entry.className = 'service-card';
+      entry.style.marginTop = '10px';
+      const title = document.createElement('strong');
+      title.textContent = role === 'user' ? 'You' : 'Builder';
+      const message = document.createElement('pre');
+      message.className = 'log';
+      message.style.minHeight = '0';
+      message.style.maxHeight = 'none';
+      message.style.marginTop = '8px';
+      message.textContent = content;
+      entry.append(title, message);
+      thread.appendChild(entry);
+      while (thread.childElementCount > 12) thread.removeChild(thread.firstElementChild);
+    }
     const REVIEW_STORAGE_KEY = 'tof_builder_reviewed_v1';
     let reviewedTokens = new Set();
     const inspectedTokens = new Set();
@@ -1036,7 +1065,6 @@ HTML = """<!doctype html>
       const task = document.getElementById('task-type').value;
       const model = document.getElementById('task-model').value;
       const message = document.getElementById('task-message');
-      const output = document.getElementById('task-response');
       const button = document.getElementById('task-send');
       if (!goal || goal.length > 2000 || !(guide.installed_models || []).includes(model)) {
         message.textContent = 'Enter a task and select an installed local model.';
@@ -1048,15 +1076,20 @@ HTML = """<!doctype html>
           const response = await fetch('/api/task', {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'X-Builder-Request': '1'},
-            body: JSON.stringify({task, model, goal})
+            body: JSON.stringify({task, model, goal, history: conversation})
           });
           const data = await response.json();
           if (!response.ok) {
             message.textContent = data.error || 'The local AI could not process the task.';
             return;
           }
-          output.textContent = data.content || '(empty answer)';
-          message.textContent = 'Model: ' + data.model + '. Read-only assistance; no files were changed.';
+          appendChat('user', goal);
+          appendChat('assistant', data.content || '(empty answer)');
+          conversation.push({role: 'user', content: goal});
+          conversation.push({role: 'assistant', content: String(data.content || '').slice(0, 4000)});
+          conversation = conversation.slice(-10);
+          document.getElementById('task-goal').value = '';
+          message.textContent = 'Model: ' + data.model + '. No source files were changed.';
         } catch (error) {
           message.textContent = 'The local model request failed. Check readiness and try again.';
         }
@@ -1064,6 +1097,9 @@ HTML = """<!doctype html>
     }
 
     function applySummary(data) {
+      const source = String((data.task_guide || {}).project?.source_path || '');
+      if (conversationScope && conversationScope !== source) clearTaskChat();
+      conversationScope = source;
       currentSummary = data;
       renderTaskGuide(data.task_guide || {});
       renderProjectContext((data.task_guide || {}).project || {});
