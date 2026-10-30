@@ -19,6 +19,7 @@ from tof_cli.builder.ollama_chat import ModelChatError
 from tof_cli.builder.agent_ops import AgentManager, BuildError
 from tof_cli.builder.agent_bridge import AgentBridge, BridgeError
 from tof_cli.builder.project_intelligence import project_context
+from tof_cli.builder.knowledge_ops import KnowledgeError, search_knowledge
 from tof_cli.builder.job_journal import JournalError
 from tof_cli.builder.task_runner import run_task_once
 from tof_cli.builder.task_ops import task_guide
@@ -767,6 +768,15 @@ HTML = """<!doctype html>
           <p class="service-hint" id="architecture-status" role="status" aria-live="polite">Enter a task to focus the inspection.</p>
           <pre class="log" id="architecture-context" style="white-space:pre-wrap;max-height:28rem;overflow:auto;" hidden></pre>
         </div>
+        <div class="service-card" style="margin-top:14px;">
+          <strong>Optional local Knowledge search</strong>
+          <p class="service-hint">Only when you click Search and confirm: look up indexed, unverified excerpts from the separately running ToF Local Knowledge service. Results are not shared with your model or development job.</p>
+          <label for="knowledge-query">Document search phrase</label>
+          <input id="knowledge-query" type="text" maxlength="500" style="width:100%;padding:10px;margin:8px 0 12px" placeholder="Search my indexed local documents (optional)">
+          <button class="btn btn-quiet" id="knowledge-search" type="button" onclick="searchLocalKnowledge()">Search Knowledge</button>
+          <p class="service-hint" id="knowledge-status" role="status" aria-live="polite">Knowledge is optional and stays separate. No document access occurs automatically.</p>
+          <div id="knowledge-results"></div>
+        </div>
         <div class="service-card" style="margin-top:18px;">
           <label for="task-type">Task type</label>
           <select id="task-type" style="width:100%;padding:10px;margin:8px 0 14px" onchange="refreshTaskModels()"></select>
@@ -1213,6 +1223,57 @@ HTML = """<!doctype html>
       } catch (error) {
         document.getElementById('build-history').textContent = 'Local build history is unavailable.';
       }
+    }
+
+    async function searchLocalKnowledge() {
+      const query = document.getElementById('knowledge-query').value.trim();
+      const message = document.getElementById('knowledge-status');
+      const results = document.getElementById('knowledge-results');
+      if (!query || query.length > 500) {
+        message.textContent = 'Enter a document search phrase of up to 500 characters.';
+        return;
+      }
+      if (!confirm('Search all currently enabled sources in your local ToF Knowledge service? Indexed excerpts may contain private information. They will be shown here only and will not be sent to the Builder AI.')) {
+        message.textContent = 'Knowledge search cancelled. No document query was sent.';
+        return;
+      }
+      const button = document.getElementById('knowledge-search');
+      await withBusy(button, 'Searching…', async () => {
+        message.textContent = 'Searching local Knowledge (read-only).';
+        results.replaceChildren();
+        try {
+          const response = await fetch('/api/knowledge/search', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Builder-Request': '1'},
+            body: JSON.stringify({query}),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            message.textContent = data.error || 'Knowledge service is unavailable.';
+            return;
+          }
+          message.textContent = data.count
+            ? data.count + ' local indexed excerpt(s). Unverified references only.'
+            : 'No indexed excerpts found in enabled local Knowledge sources.';
+          (data.hits || []).forEach(hit => {
+            const card = document.createElement('article');
+            card.className = 'service-card';
+            card.style.marginTop = '8px';
+            const name = document.createElement('strong');
+            name.textContent = hit.citation_label || hit.relative_path || 'Indexed document';
+            const text = document.createElement('p');
+            text.className = 'service-hint';
+            text.textContent = hit.preview_text || '';
+            const meta = document.createElement('p');
+            meta.className = 'service-hint';
+            meta.textContent = 'Source: ' + (hit.relative_path || '?') + (hit.page_no == null ? '' : ' · Page ' + hit.page_no);
+            card.append(name, text, meta);
+            results.appendChild(card);
+          });
+        } catch (error) {
+          message.textContent = 'Could not reach the local Knowledge search service.';
+        }
+      });
     }
 
     async function inspectArchitecture() {
@@ -1832,6 +1893,26 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 self._send(403, 'application/json; charset=utf-8', _json_bytes({'error': 'forbidden'}))
                 return
             parsed = urlparse(self.path)
+            if parsed.path == '/api/knowledge/search':
+                if not self.headers.get('Content-Type', '').lower().startswith('application/json'):
+                    self._send(415, 'application/json; charset=utf-8', _json_bytes({'error': 'JSON required'}))
+                    return
+                try:
+                    length = int(self.headers.get('Content-Length', '0'))
+                except ValueError:
+                    length = 0
+                if not 0 < length <= 2048:
+                    self._send(413, 'application/json; charset=utf-8', _json_bytes({'error': 'Invalid request size'}))
+                    return
+                try:
+                    payload = json.loads(self.rfile.read(length))
+                    query = payload.get('query') if isinstance(payload, dict) else None
+                    result = search_knowledge(query, read_env())
+                except (KnowledgeError, TypeError, ValueError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(result))
+                return
             if parsed.path == '/api/project/inspect':
                 if not self.headers.get('Content-Type', '').lower().startswith('application/json'):
                     self._send(415, 'application/json; charset=utf-8', _json_bytes({'error': 'JSON required'}))
