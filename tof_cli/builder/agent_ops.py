@@ -221,8 +221,9 @@ def build_in_sandbox(
 class AgentManager:
     """One bounded local build at a time; no autonomous background scheduler."""
 
-    def __init__(self) -> None:
+    def __init__(self, model_gate: threading.BoundedSemaphore | None = None) -> None:
         self._lock = threading.Lock()
+        self._model_gate = model_gate
         self._active_id: str | None = None
         self._cancel: threading.Event | None = None
 
@@ -234,19 +235,26 @@ class AgentManager:
         with self._lock:
             if self._active_id is not None:
                 raise BuildError("Another build is active; wait or cancel it first")
-            env = read_env()
-            prepare_task(task, model, goal, env)
-            journal = JobJournal(env)
-            bridge = AgentBridge(env)
-            record = journal.create(goal, model, task)
-            job_id = str(record["id"])
-            cancel = threading.Event()
-            self._active_id, self._cancel = job_id, cancel
-            thread = threading.Thread(
-                target=self._worker, args=(env, job_id, journal, bridge, cancel),
-                daemon=True, name="tof-builder-build",
-            )
-            thread.start()
+            if self._model_gate is not None and not self._model_gate.acquire(blocking=False):
+                raise BuildError("The local model is busy. Finish the current request first.")
+            try:
+                env = read_env()
+                prepare_task(task, model, goal, env)
+                journal = JobJournal(env)
+                bridge = AgentBridge(env)
+                record = journal.create(goal, model, task)
+                job_id = str(record["id"])
+                cancel = threading.Event()
+                self._active_id, self._cancel = job_id, cancel
+                thread = threading.Thread(
+                    target=self._worker, args=(env, job_id, journal, bridge, cancel),
+                    daemon=True, name="tof-builder-build",
+                )
+                thread.start()
+            except BaseException:
+                if self._model_gate is not None:
+                    self._model_gate.release()
+                raise
         return self.status(job_id, env=env)
 
     def _worker(self, env: dict[str, str], job_id: str, journal: JobJournal,
@@ -267,6 +275,8 @@ class AgentManager:
             with self._lock:
                 if self._active_id == job_id:
                     self._active_id, self._cancel = None, None
+            if self._model_gate is not None:
+                self._model_gate.release()
 
     def status(self, job_id: str, *, env: dict[str, str] | None = None) -> dict[str, object]:
         journal = JobJournal(env or read_env())
