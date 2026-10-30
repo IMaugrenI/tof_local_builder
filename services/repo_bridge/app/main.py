@@ -330,7 +330,8 @@ def read(
     target = resolve_read_path(root, path)
     if not target.exists() or not target.is_file():
         raise HTTPException(status_code=404, detail="File not found")
-    raw = target.read_bytes()[:max_bytes]
+    with target.open("rb") as source_file:
+        raw = source_file.read(max_bytes)
     try:
         content = raw.decode("utf-8")
         kind = "text"
