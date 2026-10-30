@@ -1,3 +1,5 @@
+> **Superseded for new development by [Product Constitution v2](PRODUCT_CONSTITUTION_V2.md), approved 2026-10-30. This file records the historical Open WebUI-era product direction.**
+
 # Product Constitution v1
 
 ## Product identity
