@@ -16,6 +16,9 @@ from tof_cli.commands import check, doctor, down, setup, status, up
 from tof_cli.builder.artifact_ops import artifact_diff, artifact_handoff, artifact_inventory, artifact_preview
 from tof_cli.builder.model_ops import ollama_tags
 from tof_cli.builder.ollama_chat import ModelChatError
+from tof_cli.builder.agent_ops import AgentManager, BuildError
+from tof_cli.builder.agent_bridge import BridgeError
+from tof_cli.builder.job_journal import JournalError
 from tof_cli.builder.task_runner import run_task_once
 from tof_cli.builder.task_ops import task_guide
 from tof_cli.ui.guidance import explain_readiness
@@ -771,6 +774,16 @@ HTML = """<!doctype html>
             <strong>Conversation</strong>
             <div id="task-thread" style="margin-top:12px;">Describe a task to begin.</div>
           </div>
+          <div class="service-card" style="margin-top:18px;">
+            <strong>Build draft files in the sandbox</strong>
+            <p class="service-hint">One click starts a bounded architecture scan, plan and up to three draft files in sandbox/output. Existing draft files are never overwritten. The original project stays read-only.</p>
+            <button class="btn btn-secondary" type="button" id="build-start" onclick="startSandboxBuild()">Generate sandbox draft</button>
+            <button class="btn btn-quiet" type="button" id="build-cancel" onclick="cancelSandboxBuild()" disabled>Cancel build</button>
+            <p id="build-status" class="service-hint" role="status" aria-live="polite">No build is running.</p>
+            <div id="build-details" class="service-hint"></div>
+            <strong style="display:block;margin-top:18px;">Recent local builds</strong>
+            <div id="build-history" class="service-hint">No build history loaded yet.</div>
+          </div>
         </div>
       </section>
 
@@ -834,6 +847,8 @@ HTML = """<!doctype html>
     let currentSummary = null;
     let conversation = [];
     let conversationScope = '';
+    let currentBuildId = '';
+    let pollBuildTimer = null;
 
     function clearTaskChat() {
       conversation = [];
@@ -1093,6 +1108,139 @@ HTML = """<!doctype html>
           message.textContent = 'Model: ' + data.model + '. No source files were changed.';
         } catch (error) {
           message.textContent = 'The local model request failed. Check readiness and try again.';
+        }
+      });
+    }
+
+    function showBuild(record) {
+      if (!record || typeof record !== 'object') return;
+      currentBuildId = record.id;
+      const status = document.getElementById('build-status');
+      status.textContent = (record.status || 'unknown') + ': ' + (record.current_step || '') +
+        (record.error ? ' — ' + record.error : '');
+      const details = document.getElementById('build-details');
+      details.replaceChildren();
+      if (record.summary) {
+        const p = document.createElement('p');
+        p.textContent = record.summary;
+        details.appendChild(p);
+      }
+      if (Array.isArray(record.steps) && record.steps.length) {
+        const p = document.createElement('p');
+        p.textContent = 'Plan: ' + record.steps.join(' · ');
+        details.appendChild(p);
+      }
+      if (Array.isArray(record.files) && record.files.length) {
+        const p = document.createElement('p');
+        p.textContent = 'Sandbox output: ' + record.files.join(', ');
+        details.appendChild(p);
+      }
+      const running = ['queued', 'inspecting', 'planning', 'generating', 'cancelling'].includes(record.status);
+      document.getElementById('build-cancel').disabled = !running;
+      document.getElementById('build-start').disabled = running;
+      if (pollBuildTimer) { clearTimeout(pollBuildTimer); pollBuildTimer = null; }
+      if (running) {
+        pollBuildTimer = setTimeout(refreshActiveBuild, 2000);
+      } else if (record.status === 'completed' || record.status === 'failed' || record.status === 'cancelled') {
+        refreshArtifacts();
+        refreshBuildHistory();
+      }
+    }
+
+    async function refreshActiveBuild() {
+      if (!currentBuildId) return;
+      try {
+        const response = await fetch('/api/build?id=' + encodeURIComponent(currentBuildId));
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Build status unavailable');
+        showBuild(data);
+      } catch (error) {
+        document.getElementById('build-status').textContent =
+          'Could not fetch build progress. Use Recent local builds to inspect the journal.';
+        document.getElementById('build-cancel').disabled = true;
+      }
+    }
+
+    async function refreshBuildHistory() {
+      try {
+        const response = await fetch('/api/builds');
+        const data = await response.json();
+        const root = document.getElementById('build-history');
+        root.replaceChildren();
+        if (!response.ok) {
+          root.textContent = data.error || 'Configure a project and sandbox to view jobs.';
+          return;
+        }
+        if (!Array.isArray(data.items) || !data.items.length) {
+          root.textContent = 'No previous builds for this project.';
+          return;
+        }
+        data.items.slice(0, 10).forEach(job => {
+          const button = document.createElement('button');
+          button.className = 'btn btn-quiet';
+          button.style.margin = '5px 6px 0 0';
+          button.textContent = (job.status || '?') + ': ' + String(job.goal || '').slice(0, 44);
+          button.addEventListener('click', () => {
+            currentBuildId = job.id;
+            refreshActiveBuild();
+          });
+          root.appendChild(button);
+        });
+        if (!currentBuildId) {
+          currentBuildId = data.items[0].id;
+          refreshActiveBuild();
+        }
+      } catch (error) {
+        document.getElementById('build-history').textContent = 'Local build history is unavailable.';
+      }
+    }
+
+    async function startSandboxBuild() {
+      const guide = (currentSummary || {}).task_guide || {};
+      const goal = document.getElementById('task-goal').value.trim();
+      const task = document.getElementById('task-type').value;
+      const model = document.getElementById('task-model').value;
+      const state = document.getElementById('build-status');
+      if (!goal || goal.length > 2000 || !(guide.installed_models || []).includes(model)) {
+        state.textContent = 'Enter a development task and choose an installed model first.';
+        return;
+      }
+      const button = document.getElementById('build-start');
+      await withBusy(button, 'Starting build…', async () => {
+        try {
+          const response = await fetch('/api/build', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Builder-Request': '1'},
+            body: JSON.stringify({task, model, goal}),
+          });
+          const data = await response.json();
+          if (!response.ok) { state.textContent = data.error || 'Could not start build.'; return; }
+          showBuild(data);
+          refreshBuildHistory();
+        } catch (error) {
+          state.textContent = 'Could not start the build. Check readiness and retry.';
+        }
+      });
+    }
+
+    async function cancelSandboxBuild() {
+      if (!currentBuildId) return;
+      const button = document.getElementById('build-cancel');
+      await withBusy(button, 'Cancelling…', async () => {
+        try {
+          const response = await fetch('/api/build/cancel', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Builder-Request': '1'},
+            body: JSON.stringify({id: currentBuildId}),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            document.getElementById('build-status').textContent = data.error || 'Cannot cancel build.';
+            return;
+          }
+          showBuild(data);
+        } catch (error) {
+          document.getElementById('build-status').textContent = 'Cancellation request failed.';
         }
       });
     }
@@ -1380,6 +1528,7 @@ HTML = """<!doctype html>
 
     refreshSummary();
     refreshArtifacts();
+    refreshBuildHistory();
   </script>
 </body>
 </html>
@@ -1504,6 +1653,7 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
         raise ValueError("Invalid Builder control UI port")
 
     chat_limit = threading.BoundedSemaphore(value=1)
+    agent_manager = AgentManager()
 
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code: int, content_type: str, body: bytes) -> None:
@@ -1542,6 +1692,23 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 return
             if parsed.path == '/api/summary':
                 self._send(200, 'application/json; charset=utf-8', _json_bytes(_summary_payload()))
+                return
+            if parsed.path == '/api/build':
+                job_id = parse_qs(parsed.query).get('id', [''])[0]
+                try:
+                    result = agent_manager.status(job_id)
+                except (JournalError, ValueError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(result))
+                return
+            if parsed.path == '/api/builds':
+                try:
+                    result = agent_manager.recent()
+                except (JournalError, ValueError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes({'items': result}))
                 return
             if parsed.path == '/api/artifacts':
                 self._send(200, 'application/json; charset=utf-8', _json_bytes(artifact_inventory(read_env())))
@@ -1588,6 +1755,32 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                 self._send(403, 'application/json; charset=utf-8', _json_bytes({'error': 'forbidden'}))
                 return
             parsed = urlparse(self.path)
+            if parsed.path in ('/api/build', '/api/build/cancel'):
+                if not self.headers.get('Content-Type', '').lower().startswith('application/json'):
+                    self._send(415, 'application/json; charset=utf-8', _json_bytes({'error': 'JSON required'}))
+                    return
+                try:
+                    length = int(self.headers.get('Content-Length', '0'))
+                except ValueError:
+                    length = 0
+                if not 0 < length <= 8_192:
+                    self._send(413, 'application/json; charset=utf-8', _json_bytes({'error': 'Invalid request size'}))
+                    return
+                try:
+                    payload = json.loads(self.rfile.read(length))
+                    if not isinstance(payload, dict):
+                        raise ValueError('Expected a JSON object')
+                    if parsed.path.endswith('/cancel'):
+                        result = agent_manager.cancel(payload.get('id'))
+                    else:
+                        result = agent_manager.start(
+                            payload.get('task'), payload.get('model'), payload.get('goal'),
+                        )
+                except (BuildError, BridgeError, JournalError, ModelChatError, ValueError, TypeError, OSError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
+                    return
+                self._send(200, 'application/json; charset=utf-8', _json_bytes(result))
+                return
             if parsed.path == '/api/task':
                 if not self.headers.get('Content-Type', '').lower().startswith('application/json'):
                     self._send(415, 'application/json; charset=utf-8', _json_bytes({'error': 'JSON required'}))
