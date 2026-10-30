@@ -17,30 +17,6 @@ services:
       retries: 12
       start_period: 10s
 
-  open-webui:
-    image: ${OPENWEBUI_IMAGE:-ghcr.io/open-webui/open-webui:main}
-    container_name: tof_local_builder_openwebui
-    restart: unless-stopped
-    depends_on:
-      ollama:
-        condition: service_healthy
-    ports:
-      - "${BUILDER_BIND_HOST:-127.0.0.1}:${OPENWEBUI_PORT:-3000}:8080"
-    environment:
-      OLLAMA_BASE_URL: http://ollama:11434
-      WEBUI_NAME: tof_local_builder
-      TZ: ${TZ:-Europe/Berlin}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - ${OPENWEBUI_DATA_PATH:-./data/open-webui}:/app/backend/data
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080', timeout=2)"]
-      interval: 10s
-      timeout: 5s
-      retries: 18
-      start_period: 20s
-
 networks:
   default:
     name: tof_local_builder_host_bridge_net
