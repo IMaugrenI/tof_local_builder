@@ -784,7 +784,7 @@ HTML = """<!doctype html>
           </div>
           <div class="service-card" style="margin-top:18px;">
             <strong>Build draft files in the sandbox</strong>
-            <p class="service-hint">One click starts a bounded architecture scan, plan and up to three draft files in sandbox/output. After a restart, interrupted jobs can be continued only when the saved files and source still match. No draft is overwritten and the original project stays read-only.</p>
+            <p class="service-hint">One click starts a bounded architecture scan, plan and up to six draft files in sandbox/output. After a restart, interrupted jobs can be continued only when the saved files and source still match. No draft is overwritten and the original project stays read-only.</p>
             <button class="btn btn-secondary" type="button" id="build-start" onclick="startSandboxBuild()">Generate sandbox draft</button>
             <button class="btn btn-quiet" type="button" id="build-cancel" onclick="cancelSandboxBuild()" disabled>Cancel build</button>
             <button class="btn btn-secondary" type="button" id="build-resume" onclick="resumeSandboxBuild()" disabled>Continue safely</button>

@@ -89,7 +89,8 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - [x] P4 (Teilpaket): Architekturübersicht, streng begrenzte JSON-Baupläne und höchstens 3 nicht-überschreibende Sandbox-Textentwürfe über die vorhandene Repo Bridge.
 - [x] P4 (Teilpaket): Aufgabenjournal, Fortschritt, Verlauf, Benutzerabbruch und sichere Unterbrechungsanzeige (keine automatische Wiederholung nach Neustart).
 - [x] P4 (Teilpaket): Explizite Wiederaufnahme nach Unterbrechung mit Prüfung des gespeicherten Bauplans, Projektkontexts, der Quell-Fingerabdrücke und bereits erzeugter Entwürfe.
-- [ ] P4 offen: verbesserte Entwicklungstools, sichere isolierte Testausführung und umfassendere Entwicklungsautonomie.
+- [x] P4 (Teilpaket): Maximal sechs zusammenhängende Dateientwürfe pro Bauauftrag; bereits erzeugte Entwürfe dienen als begrenzter, ausdrücklich unzuverlässiger Kontext für folgende Dateien.
+- [ ] P4 offen: sichere isolierte Testausführung und umfassendere Entwicklungsautonomie.
 - [x] P5 (Teilpaket): Eigene Builder-Oberfläche wird bereits vor Docker-/Modellprüfung geöffnet, damit Fehler über die Oberfläche sichtbar bleiben.
 - [x] Ressourcenbegrenzung: höchstens ein aktiver Bauauftrag und kein paralleler Chat während einer Bauausführung.
 - [ ] P5–P6 offen: weitergehende sichere Selbstreparatur, optionale Knowledge-/Organizer-Schnittstellen.
@@ -105,7 +106,7 @@ Status: **in Entwicklung auf `main`** (DOM-Entscheidung vom 30.10.2026). Dies is
 - **Start:** `POST /api/build` mit Task, installiertem Modell und Benutzerziel; ausdrücklich ausgelöste Aktion in der bestehenden Builder-Oberfläche.
 - **Fortschritt:** `GET /api/build?id=<id>` und `GET /api/builds`.
 - **Abbruch:** `POST /api/build/cancel`; laufende Modellantworten können nicht hart unterbrochen werden, vor dem nächsten Dateischritt wird der Abbruch berücksichtigt.
-- **Ablauf:** Read-only Repo-Bridge-Überblick → validierter JSON-Bauplan → höchstens drei vollständige Textdateientwürfe → ausschließliche nicht-überschreibende Repo-Bridge-Schreibvorgänge in `sandbox/output`.
+- **Ablauf:** Read-only Repo-Bridge-Überblick → validierter JSON-Bauplan → höchstens sechs vollständige Textdateientwürfe → ausschließliche nicht-überschreibende Repo-Bridge-Schreibvorgänge in `sandbox/output`.
 - **Journal:** `sandbox/workspace/.builder_runs/` enthält projektgebundene Status-Metadaten. Diese werden nicht als erzeugte Quellartefakte inventarisiert.
 - **Nach Neustart:** unterbrochener Auftrag wird angezeigt; `POST /api/build/resume` beziehungsweise „Continue safely“ ist nur nach ausdrücklicher Benutzeraktion möglich. Vorher werden gespeicherte Baupläne, Quell- und Ausgabe-Fingerabdrücke sowie der aktuelle Repo-Bridge-Projektbezug kontrolliert. Bereits gültige Entwürfe werden übersprungen; ein vorhandener nicht erfasster Entwurf blockiert den Auftrag (kein Überschreiben). Für Altaufträge mit erzeugten Dateien, aber ohne gespeicherten Bauplan, ist keine automatische Wiederaufnahme erlaubt.
 - **Freigabe:** Vor einer manuellen Übernahme in das Originalprojekt gelten unverändert Vorschau, Vergleich und Review.

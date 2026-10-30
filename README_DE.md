@@ -19,7 +19,7 @@ Local Builder bietet einen Arbeitsbereich für KI-gestützte Implementierung mit
 
 ## Aktueller Entwicklungsstand auf main (30.10.2026)
 
-**Open WebUI ist nicht mehr Bestandteil der Compose-Runtime.** Die vorhandene Builder-Control-UI enthält jetzt einen direkt mit Ollama verbundenen, begrenzten Assistenten. Der KI-Dialog unterstützt weiterhin Fragen und Planung. Zusätzlich kann **„Generate sandbox draft“** auf ausdrücklichen Benutzerwunsch einen begrenzten Bauauftrag ausführen: Repository-Überblick lesen, Bauplan erstellen und höchstens drei Textdateien unter sandbox/output erzeugen. Nach einer Unterbrechung kann der Benutzer den Auftrag ausdrücklich fortsetzen, wenn Bauplan, Projektkontext, Quell- und Entwurfsdateien noch zum gespeicherten Stand passen. Vor dem Speichern werden Python-, JSON- und TOML-Entwürfe ohne Ausführung auf Syntax geprüft. Ein erkannter Syntaxfehler führt zu höchstens einem automatischen Korrekturversuch. Für andere Dateitypen wird keine Syntaxprüfung behauptet. Originaldateien, Shell und Git bleiben unberührt. Source bleibt read-only, Ausgabe bleibt in der Sandbox. Die Zielsystem-Abnahme steht aus.
+**Open WebUI ist nicht mehr Bestandteil der Compose-Runtime.** Die vorhandene Builder-Control-UI enthält jetzt einen direkt mit Ollama verbundenen, begrenzten Assistenten. Der KI-Dialog unterstützt weiterhin Fragen und Planung. Zusätzlich kann **„Generate sandbox draft“** auf ausdrücklichen Benutzerwunsch einen begrenzten Bauauftrag ausführen: Repository-Überblick lesen, Bauplan erstellen und höchstens sechs Textdateien unter sandbox/output erzeugen. Nach einer Unterbrechung kann der Benutzer den Auftrag ausdrücklich fortsetzen, wenn Bauplan, Projektkontext, Quell- und Entwurfsdateien noch zum gespeicherten Stand passen. Vor dem Speichern werden Python-, JSON- und TOML-Entwürfe ohne Ausführung auf Syntax geprüft. Ein erkannter Syntaxfehler führt zu höchstens einem automatischen Korrekturversuch. Für andere Dateitypen wird keine Syntaxprüfung behauptet. Originaldateien, Shell und Git bleiben unberührt. Source bleibt read-only, Ausgabe bleibt in der Sandbox. Die Zielsystem-Abnahme steht aus.
 
 **Start:** `python run.py setup` (beim ersten Mal), `python run.py up`, `python run.py check`. `up` startet die bestehende Builder-Oberfläche lokal unter `http://127.0.0.1:8795` (konfigurierbar über `BUILDER_UI_PORT`), sofern nicht bereits gestartet.
 
@@ -90,7 +90,7 @@ python run.py up
 python run.py check
 ```
 
-Danach arbeitet der Benutzer in der **eigenen Builder-Oberfläche**. Der Chat liest zur Orientierung höchstens einen begrenzten README-Ausschnitt und erzeugt eine Antwort. Die separate Funktion „Generate sandbox draft“ kann nach Benutzerauftrag höchstens drei neue, prüfbare Textdateien in der Sandbox erzeugen. Die vorhandenen Sandbox-Vorschau-, Vergleichs- und Review-Funktionen bleiben für alle generierten Artefakte verfügbar.
+Danach arbeitet der Benutzer in der **eigenen Builder-Oberfläche**. Der Chat liest zur Orientierung höchstens einen begrenzten README-Ausschnitt und erzeugt eine Antwort. Die separate Funktion „Generate sandbox draft“ kann nach Benutzerauftrag höchstens sechs neue, prüfbare Textdateien in der Sandbox erzeugen. Die vorhandenen Sandbox-Vorschau-, Vergleichs- und Review-Funktionen bleiben für alle generierten Artefakte verfügbar.
 
 **Betriebsgrenze:** kein automatischer Quell-Commit, kein Push, keine automatische Übernahme. Kein freigegebenes Release; auf dem Zielrechner noch nicht abgenommen.
 

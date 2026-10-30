@@ -74,6 +74,14 @@ class AgentTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises((BridgeError, BuildError)):
                 _plan_from_model(json.dumps(value))
 
+    def test_plan_supports_six_files_but_fails_closed_at_seven(self) -> None:
+        files = [{"path": f"src/component_{n}.py", "description": f"component {n}"} for n in range(7)]
+        accepted = _plan_from_model(json.dumps({"summary": "Feature", "steps": ["inspect", "build"],
+                                                 "files": files[:6]}))
+        self.assertEqual(len(accepted["files"]), 6)
+        with self.assertRaises(BuildError):
+            _plan_from_model(json.dumps({"summary": "Too many", "steps": ["inspect"], "files": files}))
+
     def test_job_journal_is_scoped_and_writes_only_to_workspace_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source, sandbox = Path(tmp) / "source", Path(tmp) / "sandbox"
