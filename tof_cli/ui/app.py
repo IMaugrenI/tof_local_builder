@@ -844,7 +844,7 @@ HTML = """<!doctype html>
 
     function appendChat(role, content) {
       const thread = document.getElementById('task-thread');
-      if (conversation.length === 0) thread.replaceChildren();
+      if (!thread.querySelector('article')) thread.replaceChildren();
       const entry = document.createElement('article');
       entry.className = 'service-card';
       entry.style.marginTop = '10px';
@@ -1088,6 +1088,7 @@ HTML = """<!doctype html>
           conversation.push({role: 'user', content: goal});
           conversation.push({role: 'assistant', content: String(data.content || '').slice(0, 4000)});
           conversation = conversation.slice(-10);
+          while (conversation.reduce((size, item) => size + item.content.length, 0) > 9000) conversation.shift();
           document.getElementById('task-goal').value = '';
           message.textContent = 'Model: ' + data.model + '. No source files were changed.';
         } catch (error) {
