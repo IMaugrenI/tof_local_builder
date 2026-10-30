@@ -14,6 +14,8 @@ from typing import Any
 MAX_PROMPT_CHARS = 12_000
 MAX_REPLY_CHARS = 40_000
 MAX_RESPONSE_BYTES = 512_000
+MAX_HISTORY_TURNS = 10
+MAX_HISTORY_CHARS = 12_000
 DEFAULT_TIMEOUT_SECONDS = 90
 
 
@@ -61,6 +63,7 @@ def chat_once(
     ollama_port: str = "11434",
     installed_models: set[str] | None = None,
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+    history: list[dict[str, str]] | None = None,
 ) -> ChatReply:
     """Call the local Ollama chat API once, without executing its output.
 
@@ -77,10 +80,27 @@ def chat_once(
     if not isinstance(timeout_seconds, int) or not 1 <= timeout_seconds <= 300:
         raise ModelChatError("Invalid model timeout")
 
+    # Conversation context is only text. Never accept tool/command objects,
+    # system roles, or arbitrarily large browser-provided histories.
+    prior: list[dict[str, str]] = []
+    if history is not None:
+        if not isinstance(history, list) or len(history) > MAX_HISTORY_TURNS:
+            raise ModelChatError("Conversation history is too long")
+        total = 0
+        for entry in history:
+            if not isinstance(entry, dict) or entry.get("role") not in ("user", "assistant"):
+                raise ModelChatError("Invalid conversation role")
+            content = entry.get("content")
+            if not isinstance(content, str) or not content.strip() or len(content) > 4000:
+                raise ModelChatError("Invalid conversation entry")
+            total += len(content)
+            prior.append({"role": entry["role"], "content": content})
+        if total > MAX_HISTORY_CHARS:
+            raise ModelChatError("Conversation history exceeded the size limit")
     endpoint = f"http://127.0.0.1:{_local_port(ollama_port)}/api/chat"
     body = json.dumps({
         "model": model,
-        "messages": [{"role": "user", "content": prompt.strip()}],
+        "messages": prior + [{"role": "user", "content": prompt.strip()}],
         "stream": False,
     }).encode("utf-8")
     request = urllib.request.Request(
