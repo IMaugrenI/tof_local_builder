@@ -196,7 +196,15 @@ def resolve_write_path(root_name: WRITE_ROOT_NAME | str, rel_path: str) -> tuple
     base = resolve_root(root_name)
     if base == SOURCE_ROOT:
         raise HTTPException(status_code=400, detail="Writes into source are not allowed")
-    candidate = (base / clean_relative_path(rel_path)).resolve()
+    normalized = clean_relative_path(rel_path)
+    # Reject symlink aliases even when their final destination is still
+    # inside the sandbox. The operator must see the path that was requested.
+    candidate_path = base
+    for component in normalized.split("/"):
+        candidate_path = candidate_path / component
+        if candidate_path.is_symlink():
+            raise HTTPException(status_code=400, detail="Symlink components are not writable")
+    candidate = candidate_path.resolve()
     if not within(base, candidate):
         raise HTTPException(status_code=400, detail="Path escapes writable sandbox root")
     return base, candidate
@@ -238,7 +246,21 @@ def write_internal(req: WriteRequest) -> dict[str, str]:
         if not req.overwrite:
             raise HTTPException(status_code=409, detail="Target exists")
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(req.content, encoding="utf-8")
+    # Repeat containment after parent creation. New autonomous drafts use
+    # overwrite=False and must never replace an existing file or symlink.
+    _, checked_target = resolve_write_path(req.target_root, req.relative_path)
+    if checked_target != target:
+        raise HTTPException(status_code=409, detail="Target changed while preparing write")
+    if req.overwrite:
+        target.write_text(req.content, encoding="utf-8")
+    else:
+        try:
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+            fd = os.open(target, flags, 0o600)
+        except FileExistsError as exc:
+            raise HTTPException(status_code=409, detail="Target exists") from exc
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(req.content)
     return {
         "status": "ok",
         "action": "write",
