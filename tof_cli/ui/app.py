@@ -1573,7 +1573,7 @@ def run_ui(host: str = '127.0.0.1', port: int = 8795, open_browser: bool = True)
                             raise ValueError('Expected an object')
                         result = run_task_once(
                             task=payload.get('task'), model=payload.get('model'),
-                            goal=payload.get('goal'),
+                            goal=payload.get('goal'), history=payload.get('history'),
                         )
                     except (ValueError, TypeError, ModelChatError) as exc:
                         self._send(400, 'application/json; charset=utf-8', _json_bytes({'error': str(exc)}))
