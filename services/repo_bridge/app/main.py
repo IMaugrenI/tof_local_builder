@@ -42,6 +42,8 @@ SANDBOX_HOST_PATH = (os.getenv("SANDBOX_HOST_PATH", "") or "").strip() or None
 MAX_FIND_RESULTS = 200
 MAX_SEARCH_RESULTS = 50
 MAX_SEARCH_FILES = 500
+MAX_WALK_ENTRIES = 3000
+SKIP_SCAN_DIRS = frozenset({'.git', '.venv', 'venv', 'node_modules', '__pycache__', '.next'})
 DEFAULT_MAX_BYTES = 200_000
 
 
@@ -369,6 +371,36 @@ def read(
     }
 
 
+def walk_bounded(start: Path, base: Path):
+    """Traverse a deterministic, bounded set without materializing a whole repo.
+
+    Skip symlinks even if they would resolve inside the selected root. The
+    reading API must never follow recursive aliases outside its root.
+    """
+    visited = 0
+    for current, dirs, files in os.walk(start, topdown=True, followlinks=False):
+        parent = Path(current)
+        dirs[:] = sorted(
+            name for name in dirs
+            if name not in SKIP_SCAN_DIRS
+            and not (parent / name).is_symlink()
+            and within(base, (parent / name).resolve())
+        )
+        for name in sorted([*dirs, *files]):
+            child = parent / name
+            if child.is_symlink():
+                continue
+            try:
+                if not within(base, child.resolve()):
+                    continue
+            except OSError:
+                continue
+            visited += 1
+            if visited > MAX_WALK_ENTRIES:
+                return
+            yield child
+
+
 @app.get("/find", summary="Find names / Namen finden")
 def find(
     root: ROOT_NAME = Query(default="source", description="Root to search in. / Wurzel, in der gesucht wird."),
@@ -388,7 +420,7 @@ def find(
     base = resolve_root(root)
     results: list[dict[str, str]] = []
 
-    for child in sorted(target.rglob("*")):
+    for child in walk_bounded(target, base):
         is_dir = child.is_dir()
         if is_dir and not include_dirs:
             continue
@@ -434,14 +466,15 @@ def search(
     results: list[dict[str, object]] = []
     files_scanned = 0
 
-    for child in sorted(target.rglob("*")):
+    for child in walk_bounded(target, base):
         if not child.is_file():
             continue
         files_scanned += 1
         if files_scanned > MAX_SEARCH_FILES:
             break
         try:
-            raw = child.read_bytes()[:max_file_bytes]
+            with child.open("rb") as stream:
+                raw = stream.read(max_file_bytes)
             text = raw.decode("utf-8")
         except (OSError, UnicodeDecodeError):
             continue
