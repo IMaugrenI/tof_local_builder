@@ -6,6 +6,7 @@ running bridge from quietly pointing at a different project after config edits.
 from __future__ import annotations
 
 import json
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -82,7 +83,7 @@ class AgentBridge:
 
     def _request(self, endpoint: str, *, params: dict[str, object] | None = None,
                  payload: dict[str, object] | None = None) -> dict[str, object]:
-        if endpoint not in ("/roots", "/tree", "/read", "/write"):
+        if endpoint not in ("/roots", "/tree", "/read", "/write", "/find", "/search"):
             raise BridgeError("Operation is not permitted by the agent")
         url = self.base + endpoint
         if params:
@@ -145,6 +146,61 @@ class AgentBridge:
         if not isinstance(result.get("size"), int) or result["size"] > max_bytes:
             raise BridgeError("Source file is too large for safe complete-file generation")
         return result["content"]
+
+    def find_names(self, fragment: str, max_results: int = 20) -> list[str]:
+        """Use existing read-only name search; return only safe source file paths."""
+        if not isinstance(fragment, str) or not re.fullmatch(r"[A-Za-z0-9_-]{3,40}", fragment):
+            raise BridgeError("File search requires a simple bounded keyword")
+        if not 1 <= max_results <= 30:
+            raise BridgeError("Invalid source search limit")
+        reply = self._request("/find", params={
+            "root": "source", "path": "", "query": fragment,
+            "max_results": max_results, "include_files": "true",
+            "include_dirs": "false",
+        })
+        rows = reply.get("results")
+        if not isinstance(rows, list):
+            raise BridgeError("Repository name search response is invalid")
+        paths: list[str] = []
+        for row in rows[:max_results]:
+            if not isinstance(row, dict) or row.get("type") != "file":
+                continue
+            path = row.get("path")
+            try:
+                paths.append(safe_relative_file(path))
+            except BridgeError:
+                continue
+        return sorted(set(paths))
+
+    def search_source_text(self, keyword: str, max_results: int = 8) -> list[dict[str, object]]:
+        """Bounded read-only code search; snippets are untrusted context only."""
+        if not isinstance(keyword, str) or not re.fullmatch(r"[A-Za-z0-9_-]{4,40}", keyword):
+            raise BridgeError("Code search requires a simple bounded keyword")
+        if not 1 <= max_results <= 12:
+            raise BridgeError("Invalid code search limit")
+        reply = self._request("/search", params={
+            "root": "source", "path": "", "query": keyword,
+            "max_results": max_results, "max_file_bytes": 3000,
+        })
+        rows = reply.get("results")
+        if not isinstance(rows, list):
+            raise BridgeError("Repository code search response is invalid")
+        cleaned: list[dict[str, object]] = []
+        for row in rows[:max_results]:
+            if not isinstance(row, dict):
+                continue
+            try:
+                path = safe_relative_file(row.get("path"))
+            except BridgeError:
+                continue
+            line = row.get("line_number")
+            snippet = row.get("snippet")
+            if not isinstance(line, int) or not 1 <= line <= 100000:
+                continue
+            if not isinstance(snippet, str):
+                continue
+            cleaned.append({"path": path, "line_number": line, "snippet": snippet[:160]})
+        return cleaned
 
     def output_text(self, relative_file: str) -> str | None:
         """Read a saved draft through the existing bridge, never directly from host."""
