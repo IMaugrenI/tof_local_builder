@@ -251,7 +251,8 @@ class AgentManager:
                     daemon=True, name="tof-builder-build",
                 )
                 thread.start()
-            except BaseException:
+            except Exception:
+                self._active_id, self._cancel = None, None
                 if self._model_gate is not None:
                     self._model_gate.release()
                 raise
